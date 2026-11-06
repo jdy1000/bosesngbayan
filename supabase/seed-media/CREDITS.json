@@ -1,0 +1,82 @@
+[
+  {
+    "file": "hero-community.jpg",
+    "photographer": "Bhong Bahala",
+    "source_page": "https://unsplash.com/photos/a-group-of-young-people-standing-next-to-each-other-gXAJxOFRCEI",
+    "license": "Unsplash License",
+    "subject": "DEMO: group of young people standing together outdoors (from Unsplash 'filipino friends' search; location not stated on page)",
+    "alt_text_fil": "Grupo ng mga kabataang magkakasamang nakangiti sa labas"
+  },
+  {
+    "file": "jeepney.jpg",
+    "photographer": "Sadia Afreen",
+    "source_page": "https://unsplash.com/photos/a-colorful-jeepney-drives-down-a-sunny-street-arotIBcpPBA",
+    "license": "Unsplash License",
+    "subject": "DEMO: colorful jeepney on a sunny city street, Manila, Philippines",
+    "alt_text_fil": "Makulay na dyip na bumabagtas sa maaraw na kalye sa Maynila"
+  },
+  {
+    "file": "classroom.jpg",
+    "photographer": "Vishnu Mehra",
+    "source_page": "https://unsplash.com/photos/students-attending-a-lecture-in-a-modern-classroom-v3P_spLsOH0",
+    "license": "Unsplash License",
+    "subject": "DEMO: students attending a lecture in a modern classroom (Asian university, not Philippines)",
+    "alt_text_fil": "Mga estudyanteng nakikinig sa lektyur sa loob ng silid-aralan"
+  },
+  {
+    "file": "healthcare.jpg",
+    "photographer": "EqualStock",
+    "source_page": "https://unsplash.com/photos/a-smiling-woman-in-surgical-attire-YkRpDEdkkRY",
+    "license": "Unsplash License",
+    "subject": "DEMO: smiling health worker in surgical cap and scrubs",
+    "alt_text_fil": "Nakangiting health worker na nakasuot ng scrubs at surgical cap"
+  },
+  {
+    "file": "crowd-flag.jpg",
+    "photographer": "Meg Landrito",
+    "source_page": "https://unsplash.com/photos/a-large-group-of-people-standing-next-to-each-other-qwt4PsadIaM",
+    "license": "Unsplash License",
+    "subject": "DEMO: large dense crowd in Manila, Philippines (no flag visible; religious procession crowd)",
+    "alt_text_fil": "Napakaraming tao na nagsisiksikan sa isang pagtitipon sa Maynila"
+  },
+  {
+    "file": "manila-skyline.jpg",
+    "photographer": "JC Gellidon",
+    "source_page": "https://unsplash.com/photos/city-buildings-under-cloudy-sky-during-daytime-pxrn4Z671BI",
+    "license": "Unsplash License",
+    "subject": "DEMO: Makati skyline under a cloudy sky, Metro Manila, Philippines",
+    "alt_text_fil": "Mga gusali ng Makati sa ilalim ng maulap na kalangitan"
+  },
+  {
+    "file": "market.jpg",
+    "photographer": "Frank Lloyd de la Cruz",
+    "source_page": "https://unsplash.com/photos/people-walking-on-market-store-_1DIKCetFFk",
+    "license": "Unsplash License",
+    "subject": "DEMO: shoppers and vendors at Bankerohan Public Market, Davao, Philippines",
+    "alt_text_fil": "Mga mamimili at tindera sa pampublikong palengke ng Bankerohan sa Davao"
+  },
+  {
+    "file": "rice-field.jpg",
+    "photographer": "Omri D. Cohen",
+    "source_page": "https://unsplash.com/photos/a-view-of-a-rice-field-with-mountains-in-the-background-n0cIllz0s08",
+    "license": "Unsplash License",
+    "subject": "DEMO: Batad Rice Terraces, Banaue, Ifugao, Philippines",
+    "alt_text_fil": "Luntiang hagdan-hagdang palayan ng Batad sa Ifugao"
+  },
+  {
+    "file": "office-workers.jpg",
+    "photographer": "Gatot Adri",
+    "source_page": "https://unsplash.com/photos/a-team-of-professionals-is-gathered-around-a-table-uZzjOm5vSls",
+    "license": "Unsplash License",
+    "subject": "DEMO: team of young professionals gathered around a table with a laptop (location not stated)",
+    "alt_text_fil": "Grupo ng mga propesyonal na nagtitipon sa paligid ng mesa sa opisina"
+  },
+  {
+    "file": "coastal-town.jpg",
+    "photographer": "MacroLingo LLC",
+    "source_page": "https://unsplash.com/photos/tricycle-and-parked-motorcycles-by-the-sea-at-sunset-QPaC5VwQPSs",
+    "license": "Unsplash License",
+    "subject": "DEMO: tricycle and parked motorcycles on a seaside boulevard at sunset, Dumaguete City, Negros Oriental, Philippines",
+    "alt_text_fil": "Traysikel at mga nakaparadang motorsiklo sa tabing-dagat ng Dumaguete sa paglubog ng araw"
+  }
+]

@@ -1,0 +1,106 @@
+Boses ng Bayan — progress log
+=============================
+Timezone: Asia/Manila. Status categories: VERIFIED / IMPLEMENTED (not fully verified) / BLOCKED / NOT DONE.
+
+Environment constraints (2026-11-06)
+- Owner instruction: do NOT create a Supabase project, GitHub repo, or Vercel project. Client accounts
+  will be handed over later. All work is local; cloud wiring is environment configuration only.
+- Docker Desktop on this machine never leaves "starting" (waited ~45 min) -> `supabase start` (local
+  PostgREST/GoTrue/Storage) unavailable. Database verification uses PGlite (real Postgres 17 in WASM)
+  with Supabase platform stubs (scripts/lib/pglite-supabase.ts). Full HTTP stack runtime = BLOCKED.
+
+Phase 0 — Reconnaissance: DONE
+- Repo contained only CLAUDE.md, master spec, reference image. No existing code to preserve.
+- Spec moved to docs/BOSES_NG_BAYAN_MASTER_SPEC.md (CLAUDE.md import path).
+
+Phase 3 — Database (done before UI so the UI codes against real contracts)
+- Migrations: supabase/migrations/2026110600010{0..4}00_*.sql (core RBAC, content, engagement, storage).
+- Seed: supabase/seed.sql (production-safe baseline: categories, regions, menus, settings, draft pages,
+  homepage draft+published). No fake articles, votes, metrics or people.
+- VERIFIED: `pnpm test` -> 2 files, 49 tests passed (tests/db/editorial.test.ts, engagement.test.ts):
+  RLS denials, editorial state machine, scheduling, vote integrity, newsletter privacy, moderation,
+  team-management guards, homepage publish, storage folder policies.
+- VERIFIED: `pnpm db:types` generates src/lib/database.types.ts from the migrations (34 tables, 40 fns).
+- VERIFIED: `pnpm typecheck` clean.
+
+Failures, root causes and fixes
+1. npm install hung for >20 min (network fine at 6 MB/s). Cause: npm resolver stall on Windows with the
+   scaffold lock. Fix: killed processes, switched to pnpm (packageManager pnpm@11.13.1). Verified install.
+2. SECURITY: is_service_context() originally trusted current_user, which is the function OWNER inside
+   SECURITY DEFINER functions, so every definer RPC looked like service context. Fix: use JWT role claim
+   plus session_user. Covered by tests "cast_vote denied for anon/staff" and scheduler denial tests.
+3. profiles_guard used a session flag that definer functions could not set reliably. Fix: guard on
+   current_user in ('authenticated','anon') (direct API) vs definer RPC owner. Test: is_active direct update blocked.
+4. can_view_article referenced article_contributors before creation -> migration failed. Fix: reorder.
+5. Route module exported REPORT_REASONS (Next route files may only export handlers) -> moved to src/lib/report-reasons.ts.
+6. pnpm 11 refused to run scripts: "ERR_PNPM_IGNORED_BUILDS esbuild". Fix: allowBuilds.esbuild=true in
+   pnpm-workspace.yaml. Verified `pnpm db:types` runs.
+7. typecheck: RPC args passed as `?? undefined` for parameters WITHOUT SQL defaults. Root cause: omitted
+   keys make PostgREST look up a different function signature (404 at runtime). Fix: pass `null`
+   explicitly; type generator now emits `T | null` for RPC args. Verified typecheck + tests.
+
+Phase 2 — Public site (primary agent): IMPLEMENTED
+- Routes: / (published homepage blocks), /balita (+?rehiyon), /balita/[slug] (JSON-LD, tracker,
+  comments), /paksa, /paksa/[slug], /tag/[slug], /rehiyon/[slug], /botohan (+#metodolohiya),
+  /botohan/[slug], /usap-bayan (+?uri, submission form), /usap-bayan/[id], /hanap (rate-limited),
+  /[slug] CMS pages, /newsletter/unsubscribe, 404/error, sitemap.xml, robots.txt, rss.xml (?paksa=).
+- Public API /api/public/v1/*: articles, articles/[slug], categories(+slug), polls (+[id] uuid|slug,
+  [id]/vote), homepage, pages/[slug], trending, search, newsletter(+unsubscribe), comments,
+  community/posts, reports, track. Cron: /api/cron/publish, /api/cron/retention (vercel.json daily).
+- 17 homepage block renderers (src/components/public/blocks). Data-dependent blocks hide when empty.
+- NOT VERIFIED in a browser (no Supabase HTTP stack). Typecheck clean.
+
+Phase 7 — scripts/docs (primary agent)
+- scripts/bootstrap-owner.ts (refuses if an owner exists; temp password shown once; audited).
+- scripts/seed-demo.ts (refuses non-local URL; [Demo]-labelled articles via transition_article as the
+  demo editor; polls with 0 votes; seed-media with credits; publishes homepage). Run with
+  `tsx --conditions=react-server` so render.ts's "server-only" import resolves. Typecheck clean;
+  render import probe VERIFIED; full run BLOCKED (no local stack).
+- docs/: PRD, ARCHITECTURE (ADR-001..011), DESIGN_SYSTEM, SECURITY, ADMIN_RBAC (matrix generated from
+  the migration), EDITORIAL_WORKFLOW, TESTING_STRATEGY, IMPLEMENTATION_PLAN, DEPLOYMENT. Pending:
+  DATABASE_SCHEMA, API_CONTRACTS (after Studio agents finish their migrations).
+- Nonce CSP added in src/proxy.ts (all pages); root layout force-dynamic so the nonce reaches every page.
+- Upload limit lowered 10 MB -> 4 MB + experimental.serverActions.bodySizeLimit 5mb. Cause: uploads go
+  through a server action (1 MB default) and Vercel caps function bodies at 4.5 MB (reported by the
+  media agent). Upgrade path: signed direct-to-storage uploads.
+- tests/unit/security-content.test.ts: 11 pass (sanitizer XSS, render, cron auth, hashes, bot filter,
+  same-origin, mime sniffing, safeHref, block defaults, format). Failure 8 below.
+
+8. security-content test: assumed every block's defaultSettings() parses. quote_of_day and news_quiz
+   defaults are intentionally incomplete (builder adds them disabled until valid). Fix: test asserts
+   those two stay invalid; others parse. Also the first cold TipTap import exceeded the 60 s test
+   timeout under parallel-agent load -> warmed in beforeAll (hookTimeout 180 s). Rerun: 11/11 pass.
+
+Studio admin modules — Dashboard, Analytics, Team, Navigation, Settings, SEO/Redirects, Audit (2026-11-06)
+- IMPLEMENTED: /admin dashboard (real counts by status via RLS, published today in Manila, publication
+  activity, active writers, recent content_activity_logs, analytics_summary panels only with analytics.view,
+  polls panel with polls.view_results|manage, newsletter with newsletter.view, ?denied=1 notice, range filter
+  today/7/30/90/custom validated in src/lib/studio/range.ts, "Paano binibilang" metric definitions).
+- IMPLEMENTED: /admin/analytics (Recharts trends, top articles/categories/referrers/polls, newsletter growth).
+- IMPLEMENTED: /admin/team (+ /admin/team/[id]): invite via Supabase Auth admin then set_user_role on the
+  session client with rollback (deleteUser) on failure; change role; deactivate/reactivate = set_user_active
+  then Auth ban/unban; profile edit (self or users.manage, write_audit); permission matrix view; owner-only
+  per-role editing via set_role_permission.
+- IMPLEMENTED: /admin/navigation (add/edit/reorder/show-hide/delete, one dropdown level, safeHref).
+- IMPLEMENTED: /admin/settings (tab per key, SETTINGS_SCHEMAS validation), /admin/seo (seo key, redirects
+  CRUD with reserved-path + loop detection), /admin/audit (filters, pagination, details as text).
+- DB: migration 20261106000800_staff_directory.sql — staff_directory() definer RPC exposing staff email,
+  invited/confirmed/last sign-in from auth.users to users.view holders only. Types regenerated.
+- VERIFIED: tests/db/studio-admin.test.ts (4 pass), tests/unit/studio-helpers.test.ts (5 pass); typecheck
+  clean for these files.
+- NOT VERIFIED (no running Supabase stack): invite email delivery (needs Supabase Auth SMTP), Auth ban/unban,
+  PostgREST embeds, UI in a browser.
+- Known limits: redirects only apply where a public route would 404 (src/lib/cms/redirects.ts); redirects
+  hit_count is never incremented so it is not shown; purge_old_analytics() runs from /api/cron/retention (daily, vercel.json).
+
+## 2026-11-06 — Performance audit (static phase) + local stack blocker
+- Failure: `supabase start` (also with -x studio,realtime,edge-runtime,imgproxy,logflare,vector,postgres-meta,supavisor,mailpit)
+  -> HealthCheckTimeoutError. Cause: Postgres crash-recovery fsync of the existing boses-ng-bayan DB volume
+  (~10 s per file under Docker I/O load from the fennel + rapidpoll stacks). CLI removes the container on timeout.
+  Not app code. Options: user stops other stacks temporarily, or drop only this project's local volume
+  (`supabase stop --no-backup`; demo data is regenerable via db reset + seed:demo) — awaiting user decision.
+- Runtime Lighthouse baseline (LCP/CLS/INP/TBT) NOT measured yet — needs the stack.
+- Measured from `.next` build: framework JS 132 KB gz (shared), public route JS 18–20 KB gz,
+  TipTap (154 KB gz) and Recharts (114 KB gz) load only on their Studio routes.
+  Fonts: 6 preloaded woff2 files ≈ 236 KB (serif normal+italic, sans; latin + latin-ext each).
+- Ranked findings presented to user; no code changed pending approval.

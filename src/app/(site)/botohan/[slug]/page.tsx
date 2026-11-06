@@ -1,0 +1,69 @@
+import Link from "next/link";
+import { PollWidget } from "@/components/public/poll-widget";
+import { ShareButtons } from "@/components/public/share-buttons";
+import { getPublicPollBySlug, isPollOpen } from "@/lib/cms/polls";
+import { redirectOrNotFound } from "@/lib/cms/redirects";
+import { siteUrl } from "@/lib/env";
+import { formatDateTime } from "@/lib/format";
+import { buildMetadata } from "@/lib/seo";
+
+type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const poll = await getPublicPollBySlug(slug);
+  if (!poll) return {};
+  return buildMetadata({ title: poll.question, description: poll.description, path: `/botohan/${poll.slug}` });
+}
+
+export default async function PollPage({ params }: Props) {
+  const { slug } = await params;
+  const poll = await getPublicPollBySlug(slug);
+  if (!poll) return redirectOrNotFound(`/botohan/${slug}`);
+  const open = isPollOpen(poll);
+
+  return (
+    <div className="container-site max-w-3xl py-10 md:py-14">
+      <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted">
+        <Link href="/botohan" className="hover:text-brand">
+          ← Lahat ng botohan
+        </Link>
+      </nav>
+      {poll.category && (
+        <Link href={`/paksa/${poll.category.slug}`} className="category-badge">
+          {poll.category.name}
+        </Link>
+      )}
+      <h1 className="mt-4 font-serif text-4xl font-bold leading-tight text-navy">{poll.question}</h1>
+      {poll.description && <p className="mt-3 text-lg text-ink-soft">{poll.description}</p>}
+      <div className="mt-6">
+        <PollWidget poll={poll} />
+      </div>
+      <dl className="mt-6 grid gap-3 text-sm text-ink-soft sm:grid-cols-2">
+        {poll.opens_at && (
+          <div>
+            <dt className="font-semibold text-ink">Nagbukas</dt>
+            <dd>{formatDateTime(poll.opens_at)}</dd>
+          </div>
+        )}
+        <div>
+          <dt className="font-semibold text-ink">{open ? "Magsasara" : "Nagsara"}</dt>
+          <dd>{poll.closes_at || poll.closed_at ? formatDateTime(poll.closed_at ?? poll.closes_at) : "Walang itinakdang petsa"}</dd>
+        </div>
+      </dl>
+      <div className="mt-6">
+        <ShareButtons url={siteUrl(`/botohan/${poll.slug}`)} title={poll.question} />
+      </div>
+      <aside className="mt-10 rounded-2xl bg-surface p-6">
+        <h2 className="font-serif text-xl font-bold text-navy">Metodolohiya</h2>
+        {poll.methodology_note && <p className="mt-2 whitespace-pre-line text-[0.95rem] text-ink-soft">{poll.methodology_note}</p>}
+        <p className="mt-2 text-[0.95rem] text-ink-soft">
+          Ito ay boluntaryong online poll at hindi kumakatawan sa buong populasyon ng Pilipinas.{" "}
+          <Link href="/botohan#metodolohiya" className="font-semibold text-brand hover:underline">
+            Paano binibilang ang boto
+          </Link>
+        </p>
+      </aside>
+    </div>
+  );
+}

@@ -1,0 +1,116 @@
+import Link from "next/link";
+import { requireStaffPage } from "@/lib/auth/session";
+import { ActionForm, SubmitButton } from "@/components/studio/action-form";
+import { Empty, Field, Notice, PageHeader, Pagination, Panel, Table, withParams } from "@/components/studio/ui";
+import { deleteTag, saveTag } from "../actions";
+import { TaxonomyTabs } from "../tabs";
+
+export const metadata = { title: "Mga tag" };
+
+const PAGE_SIZE = 50;
+
+export default async function TagsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const ctx = await requireStaffPage("taxonomy.manage");
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim().slice(0, 80);
+  const page = Math.max(1, Number(sp.page) || 1);
+  let query = ctx.supabase
+    .from("tags")
+    .select("id, name, slug, description, article_tags(count)", { count: "exact" })
+    .order("name")
+    .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  if (q) {
+    const like = `%${q.replace(/[%_,()]/g, " ")}%`;
+    query = query.or(`name.ilike.${like},slug.ilike.${like}`);
+  }
+  const { data: tags, count, error } = await query;
+
+  return (
+    <>
+      <PageHeader title="Kategorya at Tag" description="Ang mga tag ay tiyak na paksa (hal. “jeepney modernization”) na maaaring ikabit sa maraming artikulo." />
+      <TaxonomyTabs current="/admin/taxonomy/tags" />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div>
+          <form className="mb-4 flex flex-wrap gap-3" role="search">
+            <label htmlFor="q" className="sr-only">
+              Hanapin ang tag
+            </label>
+            <input id="q" name="q" type="search" defaultValue={q} placeholder="Hanapin ang tag…" className="field min-w-56 flex-1" />
+            <button type="submit" className="btn btn-outline min-h-11 px-4 text-sm">
+              Hanapin
+            </button>
+          </form>
+          {error ? (
+            <Notice tone="error">Hindi makuha ang mga tag.</Notice>
+          ) : !tags?.length ? (
+            <Empty title={q ? "Walang tumugmang tag" : "Wala pang tag"}>Gumawa ng tag sa kanang panel o habang nag-e-edit ng artikulo.</Empty>
+          ) : (
+            <>
+              <Table head={["Tag", "Mga artikulo", "Aksyon"]}>
+                {tags.map((t) => {
+                  const used = t.article_tags[0]?.count ?? 0;
+                  return (
+                    <tr key={t.id}>
+                      <td>
+                        <p className="font-semibold text-ink">{t.name}</p>
+                        <p className="text-xs text-muted">
+                          <Link href={`/tag/${t.slug}`} target="_blank" className="hover:text-brand">
+                            /tag/{t.slug}
+                          </Link>
+                        </p>
+                      </td>
+                      <td className="tabular-nums">{used}</td>
+                      <td>
+                        <details>
+                          <summary className="cursor-pointer text-sm font-semibold text-brand">I-edit</summary>
+                          <ActionForm action={saveTag} className="mt-3 space-y-3">
+                            <input type="hidden" name="id" value={t.id} />
+                            <TagFields name={t.name} slug={t.slug} description={t.description} idPrefix={t.id} />
+                            <SubmitButton variant="outline">I-save</SubmitButton>
+                          </ActionForm>
+                          <ActionForm
+                            action={deleteTag}
+                            className="mt-3"
+                            confirm={used ? `Burahin ang tag? Aalisin ito sa ${used} artikulo.` : "Burahin ang tag na ito?"}
+                          >
+                            <input type="hidden" name="id" value={t.id} />
+                            <SubmitButton variant="ghost" pendingLabel="Binubura…">
+                              Burahin
+                            </SubmitButton>
+                          </ActionForm>
+                        </details>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </Table>
+              <Pagination page={page} totalPages={Math.ceil((count ?? 0) / PAGE_SIZE)} hrefFor={(n) => withParams("/admin/taxonomy/tags", { q, page: n })} />
+            </>
+          )}
+        </div>
+        <Panel title="Bagong tag">
+          <ActionForm action={saveTag} resetOnSuccess className="space-y-3">
+            <TagFields idPrefix="new" />
+            <SubmitButton>Gumawa ng tag</SubmitButton>
+          </ActionForm>
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+function TagFields({ name, slug, description, idPrefix }: { name?: string; slug?: string; description?: string | null; idPrefix: string }) {
+  return (
+    <>
+      <Field label="Pangalan" htmlFor={`${idPrefix}-name`}>
+        <input id={`${idPrefix}-name`} name="name" required maxLength={80} defaultValue={name} className="field" />
+      </Field>
+      <Field label="Slug" htmlFor={`${idPrefix}-slug`} hint="Blangko = mula sa pangalan.">
+        <input id={`${idPrefix}-slug`} name="slug" maxLength={140} pattern="[a-z0-9]+(-[a-z0-9]+)*" defaultValue={slug} className="field" />
+      </Field>
+      <Field label="Paglalarawan" htmlFor={`${idPrefix}-description`}>
+        <textarea id={`${idPrefix}-description`} name="description" rows={2} maxLength={600} defaultValue={description ?? ""} className="field py-2" />
+      </Field>
+    </>
+  );
+}
