@@ -177,3 +177,8 @@ Checks: tsc, lint, vitest 95/95, build OK, e2e 10/10; /api/public/v1/articles st
 - New src/components/studio/password-input.tsx (eye button, aria-pressed, type="button" so it never submits). Used by login, the reset "new password" page (both fields) and Aking Account (current, new, confirm). Login's inline toggle replaced by the shared component; update-password labels now use htmlFor instead of wrapping.
 Checks: tsc, lint clean, build OK; Playwright: login and all three account fields switch password -> text -> password, typed value kept, form not submitted; screenshot reviewed. e2e 10/10.
 Not browser-checked: the reset "new password" page (needs a recovery session); it uses the same component.
+
+[2026-11-06] Owner request: align homepage sections to the same level
+- Top stories: the right rail's divider/list sat ~24px above the story row's divider because each column stacked on its own. Fix: lg grid with two shared rows (CSS subgrid); lead + rail top card share row 1, story row + rail list share row 2, both rules start on the same line.
+- Balitang Rehiyon: story lists started at different heights because the region chips wrap to 2-4 lines per column. Fix: each column spans three shared subgrid rows (head, chips, stories) from md up; empty chip slot keeps the row; chips pinned with content-start.
+Checks: tsc, lint clean, build OK, e2e 10/10. Measured: story row vs rail list top 585/585 (1440, 1280), 685/685 (1024); region lists 4203 x3 (1440/1280), 4348 x3 (1024), paired columns level at 820. Screenshots reviewed.

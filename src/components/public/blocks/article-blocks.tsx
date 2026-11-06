@@ -65,8 +65,9 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
 
   return (
     <section aria-label="Mga pangunahing balita" className="pb-8 pt-8 md:pb-10 md:pt-10">
-      <div className="container-site grid gap-10 lg:grid-cols-12 lg:gap-8">
-        <div className="space-y-10 lg:col-span-8">
+      {/* lg: two shared rows (subgrid), so the story row and the rail list start on the same rule. */}
+      <div className="container-site grid gap-10 lg:grid-cols-12 lg:gap-x-8">
+        <div className="grid content-start gap-10 lg:col-span-8 lg:row-span-2 lg:grid-rows-subgrid">
           <ArticleCard article={lead} variant="feature" priority />
           {below.length > 0 && (
             <div className="grid gap-8 border-t border-line pt-8 sm:grid-cols-3 sm:gap-6">
@@ -77,10 +78,13 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
           )}
         </div>
         {railTop && (
-          <aside aria-label="Iba pang balita" className="lg:col-span-4 lg:border-l lg:border-line lg:pl-8">
+          <aside
+            aria-label="Iba pang balita"
+            className="grid content-start gap-6 lg:col-span-4 lg:row-span-2 lg:grid-rows-subgrid lg:gap-10 lg:border-l lg:border-line lg:pl-8"
+          >
             <ArticleCard article={railTop} />
             {railList.length > 0 && (
-              <ul className="mt-6 space-y-5 border-t border-line pt-6">
+              <ul className="space-y-5 self-start border-t border-line pt-6 lg:pt-8">
                 {railList.map((a) => (
                   <li key={a.id}>
                     <ArticleCard article={a} variant="compact" />
@@ -411,12 +415,13 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
     <section className={`bg-surface ${section}`}>
       <div className="container-site">
         <SectionHeading title={title ?? "Balitang Rehiyon"} description={description} />
-        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+        {/* md+: each column spans three shared rows (head, region chips, stories), so story lists start level however the chips wrap. */}
+        <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
           {groups.map(({ loc, children, items }) => (
-            <div key={loc.id}>
+            <div key={loc.id} className="md:row-span-3 md:grid md:grid-rows-subgrid md:gap-y-0">
               <ColumnHead title={loc.name} href={`/rehiyon/${loc.slug}`} linkLabel="Lahat" />
-              {children.length > 0 && (
-                <ul className="mb-6 flex flex-wrap gap-2" aria-label={`Mga rehiyon sa ${loc.name}`}>
+              {children.length > 0 ? (
+                <ul className="mb-6 flex flex-wrap content-start gap-2" aria-label={`Mga rehiyon sa ${loc.name}`}>
                   {children.map((c) => (
                     <li key={c.id}>
                       <Link
@@ -428,15 +433,17 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
                     </li>
                   ))}
                 </ul>
+              ) : (
+                <div />
               )}
               {items.length ? (
-                <div className="space-y-5">
+                <div className="space-y-5 self-start">
                   {items.map((a) => (
                     <ArticleCard key={a.id} article={a} variant="compact" />
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted">Wala pang balita mula sa {loc.name}.</p>
+                <p className="self-start text-sm text-muted">Wala pang balita mula sa {loc.name}.</p>
               )}
             </div>
           ))}
