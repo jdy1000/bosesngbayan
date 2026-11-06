@@ -149,3 +149,11 @@ Checks: typecheck OK, lint clean, vitest 89/89, build OK, db reset + bootstrap +
 - Failure: TS2339 `credit_required` not on type Credit. Cause: field added to CREDITS.json but not the interface. Fix: added to interface; tsc clean.
 Checks: db reset + bootstrap:owner + seed:demo OK; build OK; vitest 89/89; lint clean; tsc clean; rendered HTML of /, /balita, /balita/klinika-sa-barangay, /botohan, /usap-bayan, /paksa has no "demo", "halimbawang", "Larawan:", "Unsplash" or "Wikimedia"; screenshots 1440/768/375 reviewed.
 Not run: Playwright e2e suite, Lighthouse after this change.
+
+[2026-11-06] Owner requests: modern login page; organize admin console like RapidPoll; forgot password on login; change password + email in settings
+- Login: split-screen AuthShell (CC0 Manila street photo + dateline, form column), show/hide password, "Nakalimutan?" reset mode with its own heading, email kept across modes. New-password page uses the same shell.
+- Account: /admin/account for every staff member: change email (double confirmation), change password (requires current password), profile summary. Rate-limited, audited. Shared password schema src/lib/auth/password.ts (+ unit test).
+- Studio shell matched to D:/thirdcode/rapidpoll console: fixed sidebar + mobile drawer (Escape closes), top bar with search, notification bell (src/lib/studio/notices.ts), user menu. Nav regrouped. Panels/tables/stat tiles restyled.
+- Failure: reset/email links would have landed on :3000 because supabase/config.toml only allowed http://localhost:3000/admin/auth/callback while the local server runs on :3210 (NEXT_PUBLIC_SITE_URL). Fix: added the :3210 callback to additional_redirect_urls; restarted Supabase.
+Checks: tsc clean, lint clean, vitest 95/95, build OK. Browser run (Playwright, local stack + Mailpit): forgot password -> email -> link -> new password -> /admin OK; wrong current password refused; password change OK; email change sent to both addresses, pending notice shown, both confirmed, re-login with new email OK (writer email then restored via admin API). Screenshots: login 1440/768/390, Studio dashboard/articles/account/moderation 1440/390, bell, user menu, drawer.
+Not run: Playwright e2e suite, Lighthouse.

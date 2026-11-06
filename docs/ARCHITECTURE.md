@@ -145,6 +145,8 @@ Hidden sidebar items are only a convenience.
 - Photos are CC0, public domain or Unsplash License only (no attribution required); provenance stays in `supabase/seed-media/CREDITS.json`. CC BY / BY-SA photos were removed because they legally require a visible credit.
 - Before launch, the newsroom replaces all preview content with real reporting (a fresh production database never runs the seed).
 
+**ADR-014 — Studio shell follows the RapidPoll console (2026-11-06).** At the owner's request the Studio uses the same console layout as the team's RapidPoll admin: fixed navy sidebar grouped Pangkalahatan / Nilalaman / Homepage at Site / Komunidad / Administrasyon / Ikaw, a white top bar with article search, a notification bell (pending review, moderation queues) and a user menu (Aking Account, view site, logout), and rounded-2xl panels with a soft card shadow. Boses colours, logo and Filipino labels are kept. The signed-out screens (login, forgot password, new password) share `AuthShell`.
+
 ## 6. Environment variables
 
 See `.env.example`. Public values (`NEXT_PUBLIC_*`) are validated by `src/lib/env.ts`; secrets by `src/lib/server-env.ts`, which is server-only:

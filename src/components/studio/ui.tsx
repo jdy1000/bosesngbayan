@@ -28,8 +28,8 @@ export function PageHeader({
             ))}
           </nav>
         )}
-        <h1 className="text-2xl font-bold tracking-tight text-ink md:text-[1.65rem]">{title}</h1>
-        {description && <p className="mt-1 max-w-3xl text-[0.95rem] text-ink-soft">{description}</p>}
+        <h1 className="text-2xl font-extrabold tracking-tight text-navy sm:text-[1.75rem]">{title}</h1>
+        {description && <p className="mt-1 max-w-3xl text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -38,12 +38,12 @@ export function PageHeader({
 
 export function Panel({ title, description, actions, children, className = "" }: { title?: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`rounded-xl border border-line bg-white ${className}`}>
+    <section className={`rounded-2xl bg-white shadow-card ring-1 ring-line ${className}`}>
       {(title || actions) && (
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div>
-            {title && <h2 className="text-[0.95rem] font-bold text-ink">{title}</h2>}
-            {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
+            {title && <h2 className="text-base font-bold text-navy">{title}</h2>}
+            {description && <p className="mt-0.5 text-xs text-muted">{description}</p>}
           </div>
           {actions}
         </div>
@@ -84,7 +84,7 @@ export function StatusBadge({ status, map = ARTICLE_STATUS }: { status: string; 
 
 export function Empty({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-white px-6 py-12 text-center">
+    <div className="rounded-2xl border border-dashed border-line bg-white px-6 py-12 text-center">
       <p className="font-semibold text-ink">{title}</p>
       {children && <div className="mx-auto mt-1 max-w-md text-sm text-muted">{children}</div>}
     </div>
@@ -98,13 +98,13 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warn" | "
     error: "border-red-200 bg-red-50 text-accent-700",
     success: "border-emerald-200 bg-emerald-50 text-emerald-800",
   }[tone];
-  return <div className={`rounded-lg border px-4 py-3 text-sm ${cls}`}>{children}</div>;
+  return <div className={`rounded-xl border px-4 py-3 text-sm ${cls}`}>{children}</div>;
 }
 
 /** Plain table shell: pass <tr> rows. Scrolls horizontally on small screens instead of breaking layout. */
 export function Table({ head, children }: { head: React.ReactNode[]; children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-white">
+    <div className="overflow-x-auto rounded-2xl bg-white shadow-card ring-1 ring-line">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead className="border-b border-line bg-surface text-xs font-semibold uppercase tracking-wide text-muted">
           <tr>
@@ -130,12 +130,12 @@ export function Pagination({ page, totalPages, hrefFor }: { page: number; totalP
       </span>
       <div className="flex gap-2">
         {page > 1 && (
-          <Link href={hrefFor(page - 1)} className="rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-brand">
+          <Link href={hrefFor(page - 1)} className="rounded-full bg-white px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
             ← Nauna
           </Link>
         )}
         {page < totalPages && (
-          <Link href={hrefFor(page + 1)} className="rounded-lg border border-line bg-white px-3 py-1.5 font-semibold hover:border-brand">
+          <Link href={hrefFor(page + 1)} className="rounded-full bg-white px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
             Susunod →
           </Link>
         )}

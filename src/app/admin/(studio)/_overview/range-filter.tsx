@@ -5,7 +5,7 @@ import { Notice } from "@/components/studio/ui";
 export function RangeFilter({ action, range, today }: { action: string; range: DateRange; today: string }) {
   return (
     <div className="mb-6 space-y-3">
-      <form method="get" action={action} className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-white p-4">
+      <form method="get" action={action} className="flex flex-wrap items-end gap-3 rounded-2xl bg-white p-4 ring-1 ring-line">
         <div>
           <label htmlFor="range" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
             Saklaw
@@ -44,9 +44,9 @@ export function RangeFilter({ action, range, today }: { action: string; range: D
 
 export function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-white px-4 py-3.5">
+    <div className="rounded-2xl bg-white shadow-card ring-1 ring-line p-5">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-bold tabular-nums text-ink">{value}</p>
+      <p className="mt-2 text-[1.75rem] font-extrabold tabular-nums text-navy">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
     </div>
   );

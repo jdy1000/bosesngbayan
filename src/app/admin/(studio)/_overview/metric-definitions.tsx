@@ -1,7 +1,7 @@
 /** "Paano binibilang" — how every number on the dashboard and analytics screens is computed. */
 export function MetricDefinitions({ showAnalytics }: { showAnalytics: boolean }) {
   return (
-    <section aria-labelledby="metric-defs" className="rounded-xl border border-line bg-white p-5 text-sm text-ink-soft">
+    <section aria-labelledby="metric-defs" className="rounded-2xl bg-white shadow-card ring-1 ring-line p-5 text-sm text-ink-soft">
       <h2 id="metric-defs" className="mb-3 text-[0.95rem] font-bold text-ink">
         Paano binibilang
       </h2>

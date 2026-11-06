@@ -32,8 +32,9 @@ file_size_limit = "10MiB"
 
 [auth]
 enabled = true
+# Local: `pnpm dev` serves :3000, `pnpm start -p 3210` serves :3210. Production values go in the dashboard.
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000/admin/auth/callback"]
+additional_redirect_urls = ["http://localhost:3000/admin/auth/callback", "http://localhost:3210/admin/auth/callback"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10

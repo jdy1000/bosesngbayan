@@ -31,6 +31,20 @@ const dateTimeFmt = new Intl.DateTimeFormat("fil-PH", {
   minute: "2-digit",
 });
 
+const datelineFmt = new Intl.DateTimeFormat("fil-PH", {
+  timeZone: SITE_TIMEZONE,
+  weekday: "long",
+  month: "long",
+  day: "numeric",
+  year: "numeric",
+});
+
+/** "Biyernes, Nobyembre 6, 2026" in Manila time, for mastheads. */
+export function formatDateline(value: Date = new Date()): string {
+  const s = datelineFmt.format(value);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return "";
   return dateFmt.format(new Date(value));

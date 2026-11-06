@@ -163,7 +163,7 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {(items ?? []).map((m) => (
             <li key={m.id}>
-              <Link href={`/admin/media/${m.id}`} className="group block overflow-hidden rounded-xl border border-line bg-white hover:border-brand">
+              <Link href={`/admin/media/${m.id}`} className="group block overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line hover:ring-brand">
                 <Thumb kind={m.kind} url={mediaUrl(m)} alt={m.alt_text} />
                 <div className="px-2.5 py-2">
                   <p className="truncate text-sm font-semibold text-ink">{m.title || m.file_name}</p>

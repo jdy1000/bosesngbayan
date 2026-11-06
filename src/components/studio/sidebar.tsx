@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRouteOpen } from "@/components/use-route-open";
+import { useEffect, useState } from "react";
 import {
   BarChart3, FileText, FolderTree, Home, Image as ImageIcon, LayoutDashboard, Mail, Menu, Navigation, Newspaper,
-  Search, Settings, ShieldAlert, ScrollText, Users, Vote, X, type LucideIcon,
+  Search, Settings, ShieldAlert, ScrollText, UserRound, Users, Vote, X, type LucideIcon,
 } from "lucide-react";
+import { Logo } from "@/components/public/logo";
 import type { StudioIcon, StudioNavItem } from "@/components/studio/nav";
 
 const ICONS: Record<StudioIcon, LucideIcon> = {
@@ -25,22 +26,22 @@ const ICONS: Record<StudioIcon, LucideIcon> = {
   seo: Search,
   settings: Settings,
   audit: ScrollText,
+  account: UserRound,
 };
+
+type Group = { group: string; items: StudioNavItem[] };
 
 function isActive(pathname: string, href: string) {
   return href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function StudioSidebar({ groups, footer }: { groups: { group: string; items: StudioNavItem[] }[]; footer: React.ReactNode }) {
-  const pathname = usePathname();
-  const [open, setOpen] = useRouteOpen();
-
-  const nav = (
-    <nav aria-label="Studio" className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+function NavList({ groups, pathname }: { groups: Group[]; pathname: string }) {
+  return (
+    <nav aria-label="Studio" className="space-y-6">
       {groups.map((g) => (
         <div key={g.group}>
-          <p className="px-3 pb-2 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white/45">{g.group}</p>
-          <ul className="space-y-0.5">
+          <p className="px-3 text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-white/45">{g.group}</p>
+          <ul className="mt-2 space-y-0.5">
             {g.items.map((item) => {
               const Icon = ICONS[item.icon];
               const active = isActive(pathname, item.href);
@@ -49,11 +50,11 @@ export function StudioSidebar({ groups, footer }: { groups: { group: string; ite
                   <Link
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                       active ? "bg-white/12 text-white" : "text-white/70 hover:bg-white/6 hover:text-white"
                     }`}
                   >
-                    <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                    <Icon className="size-4 shrink-0" aria-hidden="true" />
                     {item.label}
                   </Link>
                 </li>
@@ -64,36 +65,67 @@ export function StudioSidebar({ groups, footer }: { groups: { group: string; ite
       ))}
     </nav>
   );
+}
+
+function Brand() {
+  return (
+    <Link href="/admin" className="flex items-center gap-2.5 px-3" aria-label="Boses ng Bayan Studio, dashboard">
+      <Logo siteName="Boses ng Bayan" inverted size="sm" />
+      <span className="text-xs font-semibold uppercase tracking-wider text-white/60">Studio</span>
+    </Link>
+  );
+}
+
+export function StudioSidebar({ groups }: { groups: Group[] }) {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  // Close the drawer after navigation (state adjusted during render, not in an effect).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <>
-      <div className="sticky top-0 z-30 flex h-14 items-center justify-between bg-navy px-4 text-white lg:hidden">
-        <Link href="/admin" className="font-serif text-lg font-bold">
-          Boses ng Bayan <span className="font-sans text-xs font-bold uppercase tracking-widest text-white/60">Studio</span>
-        </Link>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls="studio-sidebar"
-          aria-label={open ? "Isara ang menu" : "Buksan ang menu"}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-white/10"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-      <aside
-        id="studio-sidebar"
-        className={`${open ? "flex" : "hidden"} fixed inset-y-0 left-0 z-40 w-64 flex-col bg-navy text-white lg:sticky lg:top-0 lg:flex lg:h-dvh`}
-      >
-        <Link href="/admin" className="hidden h-16 items-center gap-2 border-b border-white/10 px-6 lg:flex">
-          <span className="font-serif text-xl font-bold">Boses ng Bayan</span>
-          <span className="text-[0.65rem] font-bold uppercase tracking-widest text-white/55">Studio</span>
-        </Link>
-        {nav}
-        <div className="border-t border-white/10 p-4">{footer}</div>
+      <aside className="hidden w-64 shrink-0 flex-col gap-8 overflow-y-auto bg-navy py-6 lg:fixed lg:inset-y-0 lg:left-0 lg:flex">
+        <Brand />
+        <div className="px-3">
+          <NavList groups={groups} pathname={pathname} />
+        </div>
       </aside>
-      {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
+
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="fixed left-3 top-3 z-40 inline-flex size-10 items-center justify-center rounded-full bg-navy text-white lg:hidden"
+        aria-label="Buksan ang menu"
+        aria-expanded={open}
+      >
+        <Menu className="size-5" aria-hidden="true" />
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Studio menu">
+          <button type="button" className="absolute inset-0 bg-navy/50" aria-label="Isara ang menu" onClick={() => setOpen(false)} />
+          <div className="relative flex h-full w-72 flex-col gap-8 overflow-y-auto bg-navy py-6">
+            <div className="flex items-center justify-between pr-3">
+              <Brand />
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-white/80 hover:bg-white/10" aria-label="Isara ang menu">
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+            <div className="px-3">
+              <NavList groups={groups} pathname={pathname} />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

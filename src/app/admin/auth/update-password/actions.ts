@@ -1,30 +1,16 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import { createSessionClient } from "@/lib/supabase/server";
+import { newPasswordSchema } from "@/lib/auth/password";
 import { logServerError } from "@/lib/log";
 
 export interface PasswordState {
   error?: string;
 }
 
-const schema = z
-  .object({
-    password: z
-      .string()
-      .min(12, "Hindi bababa sa 12 karakter.")
-      .max(200)
-      // Mirrors the Supabase Auth policy (supabase/config.toml: lower_upper_letters_digits).
-      .regex(/[a-z]/, "Kailangan ng maliit na titik.")
-      .regex(/[A-Z]/, "Kailangan ng malaking titik.")
-      .regex(/[0-9]/, "Kailangan ng numero."),
-    confirm: z.string(),
-  })
-  .refine((v) => v.password === v.confirm, { message: "Hindi magkatugma ang mga password.", path: ["confirm"] });
-
 export async function updatePassword(_prev: PasswordState, formData: FormData): Promise<PasswordState> {
-  const parsed = schema.safeParse({ password: formData.get("password"), confirm: formData.get("confirm") });
+  const parsed = newPasswordSchema.safeParse({ password: formData.get("password"), confirm: formData.get("confirm") });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const supabase = await createSessionClient();
   const { data } = await supabase.auth.getUser();
@@ -34,5 +20,6 @@ export async function updatePassword(_prev: PasswordState, formData: FormData): 
     logServerError("password_update_failed", error);
     return { error: "Hindi na-update ang password. Subukan ang mas mahabang password." };
   }
+  await supabase.rpc("write_audit", { p_action: "password_reset_completed", p_entity_type: "auth_user", p_entity_id: data.user.id });
   redirect("/admin");
 }

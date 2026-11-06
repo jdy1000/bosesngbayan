@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createSessionClient } from "@/lib/supabase/server";
 
-const ALLOWED_NEXT = new Set(["/admin", "/admin/auth/update-password"]);
+const ALLOWED_NEXT = new Set(["/admin", "/admin/auth/update-password", "/admin/account"]);
 const OTP_TYPES = new Set<EmailOtpType>(["invite", "recovery", "magiclink", "email", "signup", "email_change"]);
 
 /**

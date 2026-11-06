@@ -133,7 +133,7 @@ export default async function HomepageBuilderPage() {
 
 function Summary({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-xl border border-line bg-white px-5 py-4">
+    <div className="rounded-2xl bg-white shadow-card ring-1 ring-line px-5 py-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums text-ink">{value}</p>
       <p className="mt-0.5 text-sm text-muted">{note}</p>

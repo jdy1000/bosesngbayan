@@ -18,7 +18,9 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
 - `src/proxy.ts` refreshes the session on every `/admin` request and redirects signed-out users to `/admin/login`. Admin responses carry `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
 - **No public registration.** Staff join only through invitations sent by a user with `users.manage`, using the Auth admin API on the server. The callback (`/admin/auth/callback`) restricts `next` to an allowlist of internal paths, so it cannot be used as an open redirect.
 - Sign-in is rate-limited (10 per 15 minutes per network) and returns one generic error. Password reset returns the same message whether or not the account exists.
-- Passwords need at least 12 characters with lower case, upper case and a digit. This is enforced both by Supabase Auth (`config.toml`; mirror it in the production dashboard) and by `/admin/auth/update-password`.
+- Passwords need at least 12 characters with lower case, upper case and a digit. This is enforced both by Supabase Auth (`config.toml`; mirror it in the production dashboard) and by `/admin/auth/update-password` and `/admin/account` (shared schema `src/lib/auth/password.ts`).
+- Changing a password from `/admin/account` requires the current password (re-verified with Supabase before `updateUser`), so an unattended open session cannot be used to take over the account. Email changes need confirmation from both addresses (`double_confirm_changes`). The auth callback only redirects to an allowlist (`/admin`, `/admin/auth/update-password`, `/admin/account`).
+- Production: add `https://<domain>/admin/auth/callback` to the Supabase Auth redirect URLs, or reset and email-change links fall back to the site URL.
 - Deactivated accounts (`profiles.is_active = false`) fail `requireStaff*`, and `has_permission()` returns false for them.
 - **Owner bootstrap:** `pnpm bootstrap:owner --email …`
   - runs once with the service-role key from a trusted terminal, and refuses if an Owner exists;

@@ -10,6 +10,7 @@ import {
 } from "@/lib/cms/articles";
 import { listApprovedPosts, COMMUNITY_KIND_LABELS } from "@/lib/cms/community";
 import { listCategories, listLocations, listTrendingTopics, type CategorySummary } from "@/lib/cms/site";
+import { formatDateline } from "@/lib/format";
 
 type ListSettings = BlockSettings<"article_grid">;
 export type ListLayout = "grid" | "list" | "side";
@@ -281,15 +282,13 @@ export async function BreakingNewsBlock({ settings }: { settings: BlockSettings<
   );
 }
 
-const manilaDate = new Intl.DateTimeFormat("fil-PH", { timeZone: "Asia/Manila", weekday: "long", month: "long", day: "numeric", year: "numeric" });
-
 /** Dateline + editorially managed trending topics (Istorya strip under the masthead). */
 export async function TrendingTopicsBlock({ title, settings }: { title: string | null; settings: BlockSettings<"trending_topics"> }) {
   const topics = await listTrendingTopics();
   return (
     <section aria-label={title ?? "Trending"} className="border-b border-line bg-white">
       <div className="container-site flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-6">
-        <p className="shrink-0 text-[0.8rem] font-medium text-ink-soft first-letter:uppercase">{manilaDate.format(new Date())}</p>
+        <p className="shrink-0 text-[0.8rem] font-medium text-ink-soft">{formatDateline()}</p>
         {topics.length > 0 && (
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <h2 className="inline-flex shrink-0 items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-brand-700">

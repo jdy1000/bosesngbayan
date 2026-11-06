@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createSessionClient } from "@/lib/supabase/server";
+import { AuthShell } from "@/components/studio/auth-shell";
+import { PASSWORD_RULES } from "@/lib/auth/password";
 import { UpdatePasswordForm } from "@/app/admin/auth/update-password/update-password-form";
 
 export const metadata: Metadata = { title: "Bagong password — Boses ng Bayan Studio", robots: { index: false } };
@@ -10,12 +12,12 @@ export default async function UpdatePasswordPage() {
   const { data } = await supabase.auth.getUser();
   if (!data.user) redirect("/admin/login?error=link");
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-surface px-4 py-12">
-      <div className="card w-full max-w-md p-8">
-        <h1 className="font-serif text-2xl font-bold text-ink">Magtakda ng password</h1>
-        <p className="mt-1 text-sm text-ink-soft">Para sa {data.user.email}. Hindi bababa sa 12 karakter, may malaki at maliit na titik at numero.</p>
-        <UpdatePasswordForm />
-      </div>
-    </div>
+    <AuthShell>
+      <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Gumawa ng bagong password</h1>
+      <p className="mt-3 text-base leading-relaxed text-ink-soft">
+        Para sa <strong className="font-semibold text-ink">{data.user.email}</strong>.
+      </p>
+      <UpdatePasswordForm email={data.user.email ?? ""} rules={PASSWORD_RULES} />
+    </AuthShell>
   );
 }

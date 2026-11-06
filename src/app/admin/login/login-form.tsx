@@ -1,49 +1,133 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ReactNode } from "react";
+import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { requestPasswordReset, signIn, type LoginState } from "@/app/admin/login/actions";
 
-export function LoginForm() {
+const fieldClass = "field h-12 text-base";
+const labelClass = "text-sm font-semibold text-ink";
+
+function Notice({ tone, children }: { tone: "error" | "info"; children: ReactNode }) {
+  const styles = tone === "error" ? "bg-accent/8 text-accent-700" : "bg-brand-50 text-brand-700";
+  return (
+    <p role={tone === "error" ? "alert" : "status"} className={`rounded px-3.5 py-3 text-sm leading-snug ${styles}`}>
+      {children}
+    </p>
+  );
+}
+
+function SubmitButton({ pending, idle, busy }: { pending: boolean; idle: string; busy: string }) {
+  return (
+    <button type="submit" className="btn btn-primary h-12 w-full text-[0.95rem]" disabled={pending} aria-busy={pending}>
+      {pending && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
+      {pending ? busy : idle}
+    </button>
+  );
+}
+
+export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
   const [mode, setMode] = useState<"login" | "reset">("login");
+  // Focus moves to the email field only after the reader switches mode, never on first load.
+  const [switched, setSwitched] = useState(false);
+  const [email, setEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loginState, loginAction, loginPending] = useActionState<LoginState, FormData>(signIn, {});
   const [resetState, resetAction, resetPending] = useActionState<LoginState, FormData>(requestPasswordReset, {});
 
+  function switchTo(next: "login" | "reset") {
+    setSwitched(true);
+    setMode(next);
+  }
+
+  const emailField = (
+    <label className="flex flex-col gap-2">
+      <span className={labelClass}>Email</span>
+      <input
+        name="email"
+        type="email"
+        required
+        autoComplete={mode === "login" ? "username" : "email"}
+        autoFocus={switched}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className={fieldClass}
+      />
+    </label>
+  );
+
   if (mode === "reset") {
     return (
-      <form action={resetAction} className="mt-6 space-y-4">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Email</span>
-          <input name="email" type="email" required autoComplete="email" className="field" />
-        </label>
-        {resetState.error && <p role="alert" className="text-sm text-accent-700">{resetState.error}</p>}
-        {resetState.message && <p role="status" className="text-sm text-brand-700">{resetState.message}</p>}
-        <button type="submit" className="btn btn-primary w-full" disabled={resetPending}>
-          {resetPending ? "Ipinapadala…" : "Magpadala ng reset link"}
-        </button>
-        <button type="button" className="w-full text-sm font-semibold text-brand hover:underline" onClick={() => setMode("login")}>
+      <div>
+        <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">I-reset ang password</h1>
+        <p className="mt-3 text-base leading-relaxed text-ink-soft">
+          Ilagay ang email ng iyong account at padadalhan ka namin ng link para gumawa ng bagong password.
+        </p>
+        <form action={resetAction} className="mt-8 flex flex-col gap-5">
+          {emailField}
+          {resetState.error && <Notice tone="error">{resetState.error}</Notice>}
+          {resetState.message && <Notice tone="info">{resetState.message}</Notice>}
+          <SubmitButton pending={resetPending} idle="Ipadala ang reset link" busy="Ipinapadala…" />
+        </form>
+        <button
+          type="button"
+          onClick={() => switchTo("login")}
+          className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-700"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
           Bumalik sa login
         </button>
-      </form>
+      </div>
     );
   }
 
   return (
-    <form action={loginAction} className="mt-6 space-y-4">
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-ink">Email</span>
-        <input name="email" type="email" required autoComplete="username" className="field" />
-      </label>
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-ink">Password</span>
-        <input name="password" type="password" required autoComplete="current-password" className="field" />
-      </label>
-      {loginState.error && <p role="alert" className="text-sm text-accent-700">{loginState.error}</p>}
-      <button type="submit" className="btn btn-primary w-full" disabled={loginPending}>
-        {loginPending ? "Nagla-login…" : "Mag-login"}
-      </button>
-      <button type="button" className="w-full text-sm font-semibold text-brand hover:underline" onClick={() => setMode("reset")}>
-        Nakalimutan ang password?
-      </button>
-    </form>
+    <div>
+      <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Mag-login sa Studio</h1>
+      <p className="mt-3 text-base leading-relaxed text-ink-soft">Gamitin ang email at password ng iyong newsroom account.</p>
+
+      <form action={loginAction} className="mt-8 flex flex-col gap-5">
+        {linkExpired && <Notice tone="error">Nag-expire o hindi wasto ang link. Humingi ng bagong imbitasyon o i-reset ang password.</Notice>}
+        {emailField}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-4">
+            <label htmlFor="login-password" className={labelClass}>
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={() => switchTo("reset")}
+              className="text-sm font-semibold text-brand transition-colors hover:text-brand-700"
+            >
+              Nakalimutan?
+            </button>
+          </div>
+          <div className="relative">
+            <input
+              id="login-password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              autoComplete="current-password"
+              className={`${fieldClass} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Itago ang password" : "Ipakita ang password"}
+              aria-pressed={showPassword}
+              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r text-muted transition-colors hover:text-ink"
+            >
+              {showPassword ? <EyeOff aria-hidden="true" className="size-[18px]" /> : <Eye aria-hidden="true" className="size-[18px]" />}
+            </button>
+          </div>
+        </div>
+        {loginState.error && <Notice tone="error">{loginState.error}</Notice>}
+        <SubmitButton pending={loginPending} idle="Mag-login" busy="Nagla-login…" />
+      </form>
+
+      <p className="mt-6 text-sm leading-relaxed text-muted">
+        Walang account? Ang mga account ay sa pamamagitan lamang ng imbitasyon mula sa editor o administrator ng site.
+      </p>
+    </div>
   );
 }

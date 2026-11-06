@@ -69,6 +69,8 @@ Administrators hold `users.manage`, so they can invite, deactivate and assign no
 
 Each Studio page calls `requireStaffPage(permission)` on the server, and each server action calls `requirePermission(permission)` again. The sidebar (`src/components/studio/nav.ts`) only hides links the user cannot use.
 
+`/admin/account` (Aking Account) is open to every signed-in staff member and acts only on the caller's own auth user: change email (Supabase sends a confirmation link to both the old and the new address) and change password (the current password is re-verified first). Both actions are rate-limited and audited (`account_email_change_requested`, `account_password_changed`). The top-bar bell counts pending work only for queues the member can act on (`articles.review`, `moderation.manage`), through their own session so RLS applies.
+
 | Route | Visible with any of |
 | --- | --- |
 | `/admin` | `dashboard.view` |

@@ -51,7 +51,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         title="Audit Log"
         description="Append-only na tala ng mga sensitibong pagbabago: roles, permissions, settings, redirects, pag-deactivate ng account, at iba pa. Hindi ito nae-edit o nabubura mula sa Studio."
       />
-      <form method="get" className="mb-5 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-2 lg:grid-cols-6">
+      <form method="get" className="mb-5 grid gap-3 rounded-2xl bg-white p-4 ring-1 ring-line sm:grid-cols-2 lg:grid-cols-6">
         <Field label="Aksyon" htmlFor="a-action">
           <input id="a-action" name="action" list="audit-actions" defaultValue={f.action} className="field min-h-10 py-1.5" />
           <datalist id="audit-actions">{KNOWN_ACTIONS.map((a) => <option key={a} value={a} />)}</datalist>
