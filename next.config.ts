@@ -29,6 +29,9 @@ const nextConfig: NextConfig = {
           },
         ]
       : [],
+    // Local Supabase serves media from 127.0.0.1, which the optimizer blocks as an SSRF guard.
+    // Allowed only when the configured Supabase host is itself loopback; remotePatterns still pins host/port/path.
+    dangerouslyAllowLocalIP: supabaseUrl ? ["127.0.0.1", "localhost", "[::1]"].includes(supabaseUrl.hostname) : false,
   },
   turbopack: {
     rules: {
