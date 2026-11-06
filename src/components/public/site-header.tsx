@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Logo } from "@/components/public/logo";
-import { MainNav } from "@/components/public/main-nav";
+import { DesktopNav, MainNav } from "@/components/public/main-nav";
 import type { NavItem } from "@/lib/cms/site";
 
-/** Navy masthead bar: wordmark, CMS category navigation, search, CTA (Morning reference). */
+/** Navy masthead: wordmark, search and CTA; on lg+ a second row carries the CMS category navigation (Morning reference). */
 export function SiteHeader({
   siteName,
   logoUrl,
@@ -18,7 +18,7 @@ export function SiteHeader({
 }) {
   return (
     <header className="sticky top-0 z-40 bg-navy-900 text-white">
-      <div className="container-site flex h-16 items-center gap-4 lg:gap-8">
+      <div className="container-site flex h-16 items-center gap-4">
         <Link href="/" className="shrink-0 rounded" aria-label={`${siteName} — Bahay`}>
           <Logo siteName={siteName} logoUrl={logoUrl} size="sm" inverted priority />
         </Link>
@@ -33,6 +33,13 @@ export function SiteHeader({
           </Link>
         </MainNav>
       </div>
+      {items.length > 0 && (
+        <div className="hidden border-t border-white/10 lg:block">
+          <div className="container-site">
+            <DesktopNav items={items} />
+          </div>
+        </div>
+      )}
     </header>
   );
 }

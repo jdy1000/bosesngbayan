@@ -12,16 +12,16 @@ Starter homepage, top to bottom (all CMS blocks, reorderable in Studio):
 
 | Section | Implementation |
 | --- | --- |
-| Navy masthead: wordmark, category nav (uppercase, accent underline on the active item), search, red "Mag-subscribe" CTA | `site-header.tsx` + `main-nav.tsx`; items from the `header` menu, CTA from Settings `header_cta`. |
+| Navy masthead, two rows on desktop: wordmark + search + red "Mag-subscribe" CTA, then the category row (uppercase, 3px accent underline on the active item, scrolls sideways if the CMS menu outgrows the width). Phones: one row + hamburger panel. | `site-header.tsx`, `main-nav.tsx` (`MainNav`, `DesktopNav`); items from the `header` menu, CTA from Settings `header_cta`. Nav styles live in `globals.css` (`.nav-link`). |
 | Dateline (Asia/Manila) + #trending chips | `TrendingTopicsBlock`. |
 | Breaking strip (only when a breaking story exists) | `BreakingNewsBlock`. |
 | Top stories: lead story (text beside a 4:3 image) with a 3-story row below and a right rail (one card plus compact items) | `TopStoriesBlock`, `ArticleCard` variants `feature`, `grid`, `compact`. |
-| "Pinakabagong Balita" list with optional ranked "Trending" sidebar | `ArticleListBlock` layout `list`, `with_sidebar`. |
+| "Pinakabagong Balita" list with a sticky sidebar: ranked "Trending" when tracked views exist, otherwise a "Mga Paksa" section index; then the latest approved Usap Bayan posts | `ArticleListBlock` layout `list`, `with_sidebar`. |
 | "Pili ng Editor" two-column headline-left/thumb-right list | `ArticleListBlock` layout `side`. |
 | Newsletter card (red top rule) | `NewsletterBlock`. |
 | "Mga Seksyon": three category columns | `CategoryShowcaseBlock`. |
 | "Balitang Rehiyon": Luzon / Visayas / Mindanao with region chips and stories | `RegionalNewsBlock`. |
-| "Botohan ng Araw" poll module with methodology caveat | `PollShowcaseBlock`. |
+| "Botohan ng Araw": ballot (7 cols) beside a panel with the counting rules and other open/closed polls | `PollShowcaseBlock`. |
 | Navy footer | `site-footer.tsx`. |
 
 The original poll hero (`blocks/hero-block.tsx`) remains available as the `hero` block.
@@ -127,7 +127,9 @@ Blocks that depend on data that does not exist yet are hidden rather than shown 
 - Images use `next/image` with `sizes` set per slot.
 - Alt text comes from the media library and editors are warned when it is missing; credit and caption render under figures.
 - When no image exists, a brand gradient with the category name stands in. Stock "fake product" shots are never substituted.
-- Development photographs in `supabase/seed-media/` carry licences and credits in `CREDITS.json`.
+- Development photographs in `supabase/seed-media/` carry licences and credits in `CREDITS.json`. Every preview photo is CC0, public domain or Unsplash License (no attribution required), so no credit line is shown; a photo with `credit_required: true` would get one. Story photos (`ph-*.jpg`) are real Philippine scenes matched to each preview story; captions describe only what is in the photo and never name real places or people (ADR-013). Photos are never copied from other publishers' articles (copyright).
+- Story meta (category · author · time · reading time) wraps flush left: each item carries its separator in a clipped gutter. Phones hide reading time; grid cards show time only so rows line up.
+- Below `sm`, `grid` and `list` cards become thumbnail rows (112px, 4:3) to keep long pages scannable; the lead story keeps its full image.
 
 ## 8. Motion
 

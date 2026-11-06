@@ -5,7 +5,7 @@ import { EmptyState, SectionHeading } from "@/components/public/article-card";
 import { NewsletterForm } from "@/components/public/newsletter-form";
 import { PollWidget } from "@/components/public/poll-widget";
 import type { BlockSettings } from "@/lib/homepage/blocks";
-import { getPublicPollById, listPublicPolls } from "@/lib/cms/polls";
+import { getPublicPollById, isPollOpen, listPublicPolls } from "@/lib/cms/polls";
 import { COMMUNITY_KIND_LABELS, listApprovedPosts } from "@/lib/cms/community";
 import { getMediaById, getSiteSettings } from "@/lib/cms/site";
 import { timeAgo, truncate } from "@/lib/format";
@@ -22,36 +22,80 @@ const ICONS: Record<BlockSettings<"custom_cta">["items"][number]["icon"], Lucide
   shield: ShieldCheck,
 };
 
+function PollSidePanel({ others }: { others: Awaited<ReturnType<typeof listPublicPolls>> }) {
+  return (
+    <aside className="space-y-8">
+      <div className="rounded-md border-t-[3px] border-ink bg-surface p-6">
+        <h3 className="text-lg font-semibold text-ink">Paano binibilang ang boto</h3>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-ink-soft">
+          Isang boto bawat browser ang pinapayagan (may ilang botohan na naglilimita rin bawat network), at sa server sinusuri ang bawat boto. Ang mga online
+          poll ay boluntaryo at hindi kumakatawan sa buong populasyon ng Pilipinas.
+        </p>
+        <Link href="/botohan#metodolohiya" className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
+          Basahin ang metodolohiya <span aria-hidden="true">→</span>
+        </Link>
+      </div>
+      {others.length > 0 && (
+        <div>
+          <h3 className="border-b-2 border-ink pb-2 text-lg font-semibold text-ink">Iba pang botohan</h3>
+          <ul className="divide-y divide-line">
+            {others.map((p) => (
+              <li key={p.id}>
+                <Link href={`/botohan/${p.slug}`} className="group block py-3">
+                  <span className={`text-[0.7rem] font-bold uppercase tracking-[0.08em] ${isPollOpen(p) ? "text-accent" : "text-muted"}`}>
+                    {isPollOpen(p) ? "Bukas" : "Sarado"}
+                  </span>
+                  <span className="mt-0.5 block text-[0.95rem] font-medium leading-snug text-ink group-hover:text-brand">{p.question}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </aside>
+  );
+}
+
 export async function PollShowcaseBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"poll_showcase"> }) {
-  const [primary, active] = await Promise.all([
+  const [primary, active, recent] = await Promise.all([
     settings.poll_id ? getPublicPollById(settings.poll_id) : Promise.resolve(null),
     settings.show_active_list ? listPublicPolls("active", settings.limit + 1) : Promise.resolve([]),
+    listPublicPolls("all", 6),
   ]);
   const polls = [primary, ...active.filter((p) => p.id !== primary?.id)].filter((p) => p !== null).slice(0, settings.limit);
   if (polls.length === 0 && !settings.show_active_list) return null; // A single-poll module with no open poll stays out of the way.
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-10 md:py-12">
       <div className="container-site">
         <SectionHeading title={title ?? "Mga Botohan"} description={description} action={{ label: "Lahat ng botohan", href: "/botohan" }} />
         {polls.length === 1 ? (
-          <div className="max-w-2xl">
-            <PollWidget poll={polls[0]} />
-          </div>
-        ) : polls.length ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {polls.map((p) => (
-              <PollWidget key={p.id} poll={p} />
-            ))}
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-7">
+              <PollWidget poll={polls[0]} />
+            </div>
+            <div className="lg:col-span-5">
+              <PollSidePanel others={recent.filter((p) => p.id !== polls[0].id).slice(0, 4)} />
+            </div>
           </div>
         ) : (
-          <EmptyState title="Walang bukas na botohan ngayon.">Bumalik muli—maglalabas ang newsroom ng bagong tanong.</EmptyState>
+          <>
+            {polls.length ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {polls.map((p) => (
+                  <PollWidget key={p.id} poll={p} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="Walang bukas na botohan ngayon.">Bumalik muli—maglalabas ang newsroom ng bagong tanong.</EmptyState>
+            )}
+            <p className="mt-6 text-sm text-muted">
+              Ang mga online poll ay boluntaryo at hindi kumakatawan sa buong populasyon ng Pilipinas.{" "}
+              <Link href="/botohan#metodolohiya" className="font-semibold text-brand hover:underline">
+                Alamin kung paano binibilang
+              </Link>
+            </p>
+          </>
         )}
-        <p className="mt-6 text-sm text-muted">
-          Ang mga online poll ay boluntaryo at hindi kumakatawan sa buong populasyon ng Pilipinas.{" "}
-          <Link href="/botohan#metodolohiya" className="font-semibold text-brand hover:underline">
-            Alamin kung paano binibilang
-          </Link>
-        </p>
       </div>
     </section>
   );
@@ -97,7 +141,7 @@ export async function NewsletterBlock({ title, description, settings }: { title:
   const site = await getSiteSettings();
   if (!site.newsletter.enabled) return null;
   return (
-    <section className="py-12 md:py-16">
+    <section className="py-10 md:py-12">
       <div className="container-site">
         <div className="grid items-center gap-8 border-t-[3px] border-accent bg-white p-8 shadow-[var(--shadow-card)] md:p-12 lg:grid-cols-2 lg:gap-14">
           <div>

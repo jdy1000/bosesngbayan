@@ -8,7 +8,8 @@ import {
   listPublicArticles,
   type ArticleCard as Article,
 } from "@/lib/cms/articles";
-import { listCategories, listLocations, listTrendingTopics } from "@/lib/cms/site";
+import { listApprovedPosts, COMMUNITY_KIND_LABELS } from "@/lib/cms/community";
+import { listCategories, listLocations, listTrendingTopics, type CategorySummary } from "@/lib/cms/site";
 
 type ListSettings = BlockSettings<"article_grid">;
 export type ListLayout = "grid" | "list" | "side";
@@ -33,7 +34,7 @@ async function resolveArticles(s: ListSettings): Promise<Article[]> {
   }
 }
 
-const section = "py-12 md:py-16";
+const section = "py-10 md:py-12";
 
 /** Lead story, right rail, and a row of three (Morning "hero"). The lead image is the page's LCP. */
 export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"top_stories"> }) {
@@ -62,7 +63,7 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
   const below = rest.slice(settings.rail_count, settings.rail_count + settings.below_count);
 
   return (
-    <section aria-label="Mga pangunahing balita" className="pb-12 pt-8 md:pb-16 md:pt-10">
+    <section aria-label="Mga pangunahing balita" className="pb-8 pt-8 md:pb-10 md:pt-10">
       <div className="container-site grid gap-10 lg:grid-cols-12 lg:gap-8">
         <div className="space-y-10 lg:col-span-8">
           <ArticleCard article={lead} variant="feature" priority />
@@ -118,6 +119,56 @@ function RankedList({ title, articles, note }: { title: string; articles: Articl
   );
 }
 
+function SideTitle({ children }: { children: React.ReactNode }) {
+  return <h3 className="border-b-2 border-ink pb-2 text-lg font-semibold text-ink">{children}</h3>;
+}
+
+/** Section index: always available, so the sidebar never sits empty before view data exists. */
+function TopicIndex({ categories }: { categories: CategorySummary[] }) {
+  return (
+    <div>
+      <SideTitle>Mga Paksa</SideTitle>
+      <ul className="divide-y divide-line">
+        {categories.map((c) => (
+          <li key={c.id}>
+            <Link href={`/paksa/${c.slug}`} className="group flex min-h-11 items-center justify-between gap-3 py-2 text-[0.95rem] font-medium text-ink hover:text-brand">
+              {c.name}
+              <span aria-hidden="true" className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-brand">→</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+type Post = Awaited<ReturnType<typeof listApprovedPosts>>["items"][number];
+
+function CommunityPicks({ posts }: { posts: Post[] }) {
+  return (
+    <div>
+      <SideTitle>Usap Bayan</SideTitle>
+      <ul className="divide-y divide-line">
+        {posts.map((p) => (
+          <li key={p.id} className="py-3.5">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-accent">{COMMUNITY_KIND_LABELS[p.kind]}</p>
+            <Link href={`/usap-bayan/${p.id}`} className="mt-1 block text-[0.95rem] font-medium leading-snug text-ink hover:text-brand">
+              {p.title}
+            </Link>
+            <p className="mt-1 text-[0.75rem] text-muted">
+              {p.author_name}
+              {p.author_location ? ` · ${p.author_location}` : ""}
+            </p>
+          </li>
+        ))}
+      </ul>
+      <Link href="/usap-bayan#magbahagi" className="btn mt-4 min-h-10 w-full border border-ink px-4 text-sm text-ink hover:bg-ink hover:text-white">
+        Ibahagi ang iyong boses
+      </Link>
+    </div>
+  );
+}
+
 export async function ArticleListBlock({
   title,
   description,
@@ -132,12 +183,17 @@ export async function ArticleListBlock({
   tone?: "default" | "surface";
 }) {
   const sidebarWanted = layout === "list" && settings.with_sidebar;
-  const [articles, trending] = await Promise.all([
+  const [articles, trending, categories, posts] = await Promise.all([
     resolveArticles(settings),
     sidebarWanted ? getMostReadArticles(7, 5) : Promise.resolve([] as Article[]),
+    sidebarWanted ? listCategories() : Promise.resolve([] as CategorySummary[]),
+    sidebarWanted ? listApprovedPosts({ pageSize: 3 }).then((r) => r.items) : Promise.resolve([] as Post[]),
   ]);
   if (articles.length === 0 && layout !== "list") return null; // Secondary lists hide when empty.
-  const hasSidebar = trending.length > 0; // Ranking needs real page-view data; never invent one.
+  // Ranking needs real page-view data and is never invented; until it exists the sidebar shows the section index.
+  const featured = categories.filter((c) => c.is_featured);
+  const topics = (featured.length >= 4 ? featured : categories).slice(0, 8);
+  const hasSidebar = sidebarWanted && articles.length > 0 && (trending.length > 0 || topics.length > 0 || posts.length > 0);
 
   const body =
     articles.length === 0 ? (
@@ -171,8 +227,13 @@ export async function ArticleListBlock({
         {hasSidebar ? (
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-8">{body}</div>
-            <aside className="lg:col-span-4">
-              <RankedList title="Trending" articles={trending} note="Batay sa pagbisita sa nakalipas na 7 araw." />
+            <aside className="space-y-10 lg:sticky lg:top-32 lg:col-span-4 lg:self-start">
+              {trending.length > 0 ? (
+                <RankedList title="Trending" articles={trending} note="Batay sa pagbisita sa nakalipas na 7 araw." />
+              ) : (
+                topics.length > 0 && <TopicIndex categories={topics} />
+              )}
+              {posts.length > 0 && <CommunityPicks posts={posts} />}
             </aside>
           </div>
         ) : (
@@ -283,7 +344,8 @@ export async function CategoryShowcaseBlock({ title, description, settings }: { 
     chosen.map(async (c) => ({ category: c, items: (await listPublicArticles({ categoryId: c.id, pageSize: settings.per_category })).items })),
   );
   // Default selection: the first three featured sections that actually have stories.
-  const filled = groups.filter((g) => g.items.length > 0).slice(0, settings.category_ids.length ? 8 : 3);
+  const nonEmpty = groups.filter((g) => g.items.length > 0);
+  const filled = settings.category_ids.length ? nonEmpty.slice(0, 8) : [...nonEmpty].sort((a, b) => b.items.length - a.items.length).slice(0, 3);
   if (filled.length === 0) return null;
   return (
     <section className={section}>

@@ -92,20 +92,7 @@ export function MainNav({
 
   return (
     <>
-      <nav aria-label="Pangunahing navigation" className="hidden min-w-0 flex-1 lg:flex">
-        <ul className="flex items-center">
-          {items.map((item) =>
-            item.children.length > 0 ? (
-              <DesktopGroup key={item.id} item={item} pathname={pathname} />
-            ) : (
-              <li key={item.id}>
-                <NavLink item={item} pathname={pathname} className="nav-link" />
-              </li>
-            ),
-          )}
-        </ul>
-      </nav>
-      <div className="ml-auto flex items-center gap-2 lg:ml-0">
+      <div className="ml-auto flex items-center gap-2">
         {children}
         {cta && (
           <Link href={cta.href} className="btn hidden min-h-9 bg-accent px-4 text-white hover:bg-accent-700 sm:inline-flex">
@@ -157,14 +144,26 @@ export function MainNav({
           )}
         </nav>
       </div>
-      <style>{`
-        .nav-link { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.7rem;
-          font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-          color: rgb(255 255 255 / 0.82); white-space: nowrap; transition: color 150ms ease; }
-        .nav-link:hover, .nav-link[data-active] { color: #fff; }
-        .nav-link[data-active]::after { content: ""; position: absolute; left: 0.7rem; right: 0.7rem; bottom: 6px;
-          height: 2px; background: var(--color-accent); }
-      `}</style>
     </>
+  );
+}
+
+/** Desktop category row (second masthead row, lg and up). Scrolls sideways instead of colliding when a CMS menu grows. */
+export function DesktopNav({ items }: { items: NavItem[] }) {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Pangunahing navigation" className="-mx-[0.7rem] overflow-x-auto [scrollbar-width:none]">
+      <ul className="flex items-center">
+        {items.map((item) =>
+          item.children.length > 0 ? (
+            <DesktopGroup key={item.id} item={item} pathname={pathname} />
+          ) : (
+            <li key={item.id}>
+              <NavLink item={item} pathname={pathname} className="nav-link" />
+            </li>
+          ),
+        )}
+      </ul>
+    </nav>
   );
 }

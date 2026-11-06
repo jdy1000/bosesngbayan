@@ -98,7 +98,7 @@ export default async function CommunityPage({ searchParams }: Props) {
           )}
         </section>
 
-        <aside id="magbahagi" aria-labelledby="submit-heading" className="h-fit rounded-md border border-line p-6 lg:sticky lg:top-28">
+        <aside id="magbahagi" aria-labelledby="submit-heading" className="h-fit rounded-md border border-line p-6 lg:sticky lg:top-32">
           <h2 id="submit-heading" className="text-2xl font-semibold text-ink">Ibahagi ang iyong boses</h2>
           {settings.community.submissions_enabled ? (
             <div className="mt-4">

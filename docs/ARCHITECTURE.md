@@ -139,6 +139,12 @@ Hidden sidebar items are only a convenience.
 - Inter is the single font family; `--font-serif` maps to it so legacy classes stay harmless.
 - The `hero` block remains available in the homepage builder.
 
+**ADR-013 — Unlabelled local preview content (2026-11-06).** The owner asked for the local site to read as a real publication, with no "[Demo]" labels, disclaimers or photo credits. The spec (section 0) asks for clearly labelled demo content, so the following safeguards replace the visible labels:
+- `pnpm seed:demo` refuses any non-local Supabase URL (`assertLocal`), so this content cannot reach production.
+- Content is generic: no real people, quotes, statistics, named institutions or events; bylines are newsroom desks (`Editorial Desk`, `Boses ng Bayan Newsroom`); polls start with zero votes.
+- Photos are CC0, public domain or Unsplash License only (no attribution required); provenance stays in `supabase/seed-media/CREDITS.json`. CC BY / BY-SA photos were removed because they legally require a visible credit.
+- Before launch, the newsroom replaces all preview content with real reporting (a fresh production database never runs the seed).
+
 ## 6. Environment variables
 
 See `.env.example`. Public values (`NEXT_PUBLIC_*`) are validated by `src/lib/env.ts`; secrets by `src/lib/server-env.ts`, which is server-only:

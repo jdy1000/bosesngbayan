@@ -46,26 +46,45 @@ function Thumb({
   );
 }
 
-function Meta({ article, showAuthor = true, showCategory = false }: { article: Article; showAuthor?: boolean; showCategory?: boolean }) {
-  const parts: React.ReactNode[] = [];
-  if (showCategory && article.category) parts.push(<span key="c" className="font-medium text-brand-700">{article.category.name}</span>);
-  if (showAuthor && article.author) parts.push(<span key="a" className="font-medium text-ink-soft">{article.author.display_name}</span>);
+function Meta({
+  article,
+  showAuthor = true,
+  showCategory = false,
+  showReading = true,
+}: {
+  article: Article;
+  showAuthor?: boolean;
+  showCategory?: boolean;
+  showReading?: boolean;
+}) {
+  const parts: { key: string; node: React.ReactNode; wide?: boolean }[] = [];
+  if (showCategory && article.category) parts.push({ key: "c", node: <span className="font-medium text-brand-700">{article.category.name}</span> });
+  if (showAuthor && article.author) parts.push({ key: "a", node: <span className="font-medium text-ink-soft">{article.author.display_name}</span> });
   if (article.published_at)
-    parts.push(
-      <time key="t" dateTime={article.published_at} title={formatDate(article.published_at)}>
-        {timeAgo(article.published_at)}
-      </time>,
-    );
-  if (article.reading_minutes > 0) parts.push(<span key="r">{article.reading_minutes} min basa</span>);
+    parts.push({
+      key: "t",
+      node: (
+        <time dateTime={article.published_at} title={formatDate(article.published_at)}>
+          {timeAgo(article.published_at)}
+        </time>
+      ),
+    });
+  // Reading time is secondary: hidden on phones so narrow rows stay on one or two lines.
+  if (showReading && article.reading_minutes > 0) parts.push({ key: "r", node: <span>{article.reading_minutes} min basa</span>, wide: true });
   return (
-    <p className="flex flex-wrap items-center gap-y-1 text-[0.78rem] text-muted">
-      {parts.map((p, i) => (
-        <span key={i} className="inline-flex items-center">
-          {i > 0 && <span className="mx-2 h-3 w-px bg-line" aria-hidden="true" />}
-          {p}
-        </span>
-      ))}
-    </p>
+    // Each item carries its own "·" in a left gutter that the wrapper clips, so a wrapped line starts flush left.
+    <div className="overflow-hidden">
+      <p className="-ml-3 flex flex-wrap items-center gap-y-0.5 text-[0.78rem] text-muted">
+        {parts.map((p) => (
+          <span
+            key={p.key}
+            className={`relative pl-3 pr-0.5 before:absolute before:left-[0.3rem] before:text-muted/60 before:content-['·'] ${p.wide ? "hidden sm:inline" : ""}`}
+          >
+            {p.node}
+          </span>
+        ))}
+      </p>
+    </div>
   );
 }
 
@@ -115,11 +134,11 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
   if (variant === "list") {
     return (
       <article className="group">
-        <Link href={href} className="grid gap-4 sm:grid-cols-[minmax(0,240px)_1fr] sm:items-center sm:gap-6">
-          <Thumb article={article} sizes="(min-width: 640px) 240px, 100vw" className="aspect-[16/10] w-full rounded" />
-          <div className="space-y-2">
-            <h3 className={`text-[1.15rem] font-medium leading-snug md:text-[1.3rem] ${headline}`}>{article.title}</h3>
-            {article.excerpt && <p className="line-clamp-2 text-[0.92rem] text-ink-soft">{article.excerpt}</p>}
+        <Link href={href} className="grid grid-cols-[112px_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[minmax(0,240px)_1fr] sm:items-center sm:gap-6">
+          <Thumb article={article} sizes="(min-width: 640px) 240px, 112px" className="aspect-[4/3] w-full rounded sm:aspect-[16/10]" />
+          <div className="min-w-0 space-y-1.5 sm:space-y-2">
+            <h3 className={`line-clamp-3 text-[0.98rem] font-medium leading-snug sm:text-[1.15rem] md:text-[1.3rem] ${headline}`}>{article.title}</h3>
+            {article.excerpt && <p className="hidden text-[0.92rem] text-ink-soft sm:line-clamp-2">{article.excerpt}</p>}
             <Meta article={article} showAuthor={false} showCategory />
           </div>
         </Link>
@@ -133,7 +152,7 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
         <Link href={href} className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-8">
           <div className="order-2 flex flex-col gap-4 md:order-1">
             <Labels article={article} />
-            <h2 className={`text-[1.75rem] font-semibold leading-[1.15] tracking-[-0.015em] md:text-[2.25rem] ${headline}`}>
+            <h2 className={`text-[1.75rem] font-semibold leading-[1.15] tracking-[-0.015em] md:text-[2rem] xl:text-[2.25rem] ${headline}`}>
               {article.title}
             </h2>
             {article.excerpt && <p className="text-[1rem] leading-relaxed text-ink-soft">{article.excerpt}</p>}
@@ -154,17 +173,20 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
 
   return (
     <article className="group flex flex-col">
-      <Link href={href} className="flex h-full flex-col gap-3">
+      {/* Phones: thumbnail row (keeps long pages scannable); sm and up: image over headline. */}
+      <Link href={href} className="grid h-full grid-cols-[112px_minmax(0,1fr)] items-start gap-3.5 sm:flex sm:flex-col sm:gap-3">
         <Thumb
           article={article}
           priority={priority}
-          sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
-          className="aspect-[16/10] w-full rounded"
+          sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 112px"
+          className="aspect-[4/3] w-full rounded sm:aspect-[16/10]"
         />
-        <Labels article={article} />
-        <h3 className={`text-[1.08rem] font-medium leading-snug ${headline}`}>{article.title}</h3>
-        <div className="mt-auto">
-          <Meta article={article} />
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:gap-3">
+          <Labels article={article} />
+          <h3 className={`line-clamp-3 text-[0.95rem] font-medium leading-snug sm:line-clamp-none sm:text-[1.08rem] ${headline}`}>{article.title}</h3>
+          <div className="mt-auto hidden sm:block">
+            <Meta article={article} showAuthor={false} showReading={false} />
+          </div>
         </div>
       </Link>
     </article>

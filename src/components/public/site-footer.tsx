@@ -90,7 +90,7 @@ export function SiteFooter({
         <FooterLinks title="Mga Paksa" items={categoryLinks} />
 
         {newsletter.enabled && (
-          <div id="newsletter" className="scroll-mt-24">
+          <div id="newsletter" className="scroll-mt-24 lg:scroll-mt-32">
             <h2 className="text-xl font-semibold text-white">{footer.newsletter_title}</h2>
             {footer.newsletter_description && <p className="mt-2 text-[0.95rem] text-white/75">{footer.newsletter_description}</p>}
             <div className="mt-5">

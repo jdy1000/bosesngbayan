@@ -31,7 +31,7 @@ This project is **not** a static landing-page exercise. It is a complete Filipin
 - Preserve working code and inspect the repository before choosing or changing the stack.
 - Do not claim a feature is complete because its screen exists. It must persist data, enforce permissions, handle errors, and pass relevant tests.
 - Where an integration requires unavailable credentials, build a safe, typed integration boundary and document the exact configuration needed. Do not pretend the integration is live.
-- Do not invent real-world news, sources, statistics, poll results, analytics, author identities, or subscriber counts. Use clearly labelled seed/demo content only in development.
+- Do not invent real-world news, sources, statistics, poll results, analytics, author identities, or subscriber counts. Use clearly labelled seed/demo content only in development. *(Owner decision 2026-11-06: local preview content carries no visible labels; see ADR-013 for the replacement safeguards: local-only seed, generic content, no-attribution photos.)*
 - Do not publish user-submitted content automatically. Community content must pass moderation when moderation is enabled.
 - Do not represent voluntary online poll results as statistically representative of the Philippine population.
 

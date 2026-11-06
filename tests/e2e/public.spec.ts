@@ -18,10 +18,10 @@ test("admin requires sign-in", async ({ page }) => {
   await expect(page).toHaveURL(/\/admin\/login/);
 });
 
-test("a reader can vote once on the featured demo poll", async ({ page }) => {
-  await page.goto("/botohan/demo-pinakamahalagang-isyu");
+test("a reader can vote once on the featured poll", async ({ page }) => {
+  await page.goto("/botohan/pinakamahalagang-isyu");
   const first = page.getByRole("radio").first();
-  test.skip((await first.count()) === 0, "Demo poll not seeded (run pnpm seed:demo).");
+  test.skip((await first.count()) === 0, "Preview poll not seeded (run pnpm seed:demo).");
   await first.check();
   await page.getByRole("button", { name: /bumoto/i }).click();
   await expect(page.getByText(/salamat/i).first()).toBeVisible();

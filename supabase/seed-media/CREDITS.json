@@ -5,7 +5,8 @@
     "source_page": "https://unsplash.com/photos/a-group-of-young-people-standing-next-to-each-other-gXAJxOFRCEI",
     "license": "Unsplash License",
     "subject": "DEMO: group of young people standing together outdoors (from Unsplash 'filipino friends' search; location not stated on page)",
-    "alt_text_fil": "Grupo ng mga kabataang magkakasamang nakangiti sa labas"
+    "alt_text_fil": "Grupo ng mga kabataang magkakasamang nakangiti sa labas",
+    "credit_required": false
   },
   {
     "file": "jeepney.jpg",
@@ -13,7 +14,8 @@
     "source_page": "https://unsplash.com/photos/a-colorful-jeepney-drives-down-a-sunny-street-arotIBcpPBA",
     "license": "Unsplash License",
     "subject": "DEMO: colorful jeepney on a sunny city street, Manila, Philippines",
-    "alt_text_fil": "Makulay na dyip na bumabagtas sa maaraw na kalye sa Maynila"
+    "alt_text_fil": "Makulay na dyip na bumabagtas sa maaraw na kalye",
+    "credit_required": false
   },
   {
     "file": "classroom.jpg",
@@ -21,7 +23,8 @@
     "source_page": "https://unsplash.com/photos/students-attending-a-lecture-in-a-modern-classroom-v3P_spLsOH0",
     "license": "Unsplash License",
     "subject": "DEMO: students attending a lecture in a modern classroom (Asian university, not Philippines)",
-    "alt_text_fil": "Mga estudyanteng nakikinig sa lektyur sa loob ng silid-aralan"
+    "alt_text_fil": "Mga estudyanteng nakikinig sa loob ng silid-aralan",
+    "credit_required": false
   },
   {
     "file": "healthcare.jpg",
@@ -29,7 +32,8 @@
     "source_page": "https://unsplash.com/photos/a-smiling-woman-in-surgical-attire-YkRpDEdkkRY",
     "license": "Unsplash License",
     "subject": "DEMO: smiling health worker in surgical cap and scrubs",
-    "alt_text_fil": "Nakangiting health worker na nakasuot ng scrubs at surgical cap"
+    "alt_text_fil": "Nakangiting health worker na nakasuot ng scrubs at surgical cap",
+    "credit_required": false
   },
   {
     "file": "crowd-flag.jpg",
@@ -37,7 +41,8 @@
     "source_page": "https://unsplash.com/photos/a-large-group-of-people-standing-next-to-each-other-qwt4PsadIaM",
     "license": "Unsplash License",
     "subject": "DEMO: large dense crowd in Manila, Philippines (no flag visible; religious procession crowd)",
-    "alt_text_fil": "Napakaraming tao na nagsisiksikan sa isang pagtitipon sa Maynila"
+    "alt_text_fil": "Maraming tao na nagtipon sa isang pampublikong pagtitipon",
+    "credit_required": false
   },
   {
     "file": "manila-skyline.jpg",
@@ -45,7 +50,8 @@
     "source_page": "https://unsplash.com/photos/city-buildings-under-cloudy-sky-during-daytime-pxrn4Z671BI",
     "license": "Unsplash License",
     "subject": "DEMO: Makati skyline under a cloudy sky, Metro Manila, Philippines",
-    "alt_text_fil": "Mga gusali ng Makati sa ilalim ng maulap na kalangitan"
+    "alt_text_fil": "Mga matataas na gusali sa ilalim ng maulap na kalangitan",
+    "credit_required": false
   },
   {
     "file": "market.jpg",
@@ -53,7 +59,8 @@
     "source_page": "https://unsplash.com/photos/people-walking-on-market-store-_1DIKCetFFk",
     "license": "Unsplash License",
     "subject": "DEMO: shoppers and vendors at Bankerohan Public Market, Davao, Philippines",
-    "alt_text_fil": "Mga mamimili at tindera sa pampublikong palengke ng Bankerohan sa Davao"
+    "alt_text_fil": "Mga mamimili at tindera sa isang pampublikong palengke",
+    "credit_required": false
   },
   {
     "file": "rice-field.jpg",
@@ -61,7 +68,8 @@
     "source_page": "https://unsplash.com/photos/a-view-of-a-rice-field-with-mountains-in-the-background-n0cIllz0s08",
     "license": "Unsplash License",
     "subject": "DEMO: Batad Rice Terraces, Banaue, Ifugao, Philippines",
-    "alt_text_fil": "Luntiang hagdan-hagdang palayan ng Batad sa Ifugao"
+    "alt_text_fil": "Luntiang hagdan-hagdang palayan",
+    "credit_required": false
   },
   {
     "file": "office-workers.jpg",
@@ -69,7 +77,8 @@
     "source_page": "https://unsplash.com/photos/a-team-of-professionals-is-gathered-around-a-table-uZzjOm5vSls",
     "license": "Unsplash License",
     "subject": "DEMO: team of young professionals gathered around a table with a laptop (location not stated)",
-    "alt_text_fil": "Grupo ng mga propesyonal na nagtitipon sa paligid ng mesa sa opisina"
+    "alt_text_fil": "Mga propesyonal na nagpupulong sa paligid ng mesa",
+    "credit_required": false
   },
   {
     "file": "coastal-town.jpg",
@@ -77,6 +86,97 @@
     "source_page": "https://unsplash.com/photos/tricycle-and-parked-motorcycles-by-the-sea-at-sunset-QPaC5VwQPSs",
     "license": "Unsplash License",
     "subject": "DEMO: tricycle and parked motorcycles on a seaside boulevard at sunset, Dumaguete City, Negros Oriental, Philippines",
-    "alt_text_fil": "Traysikel at mga nakaparadang motorsiklo sa tabing-dagat ng Dumaguete sa paglubog ng araw"
+    "alt_text_fil": "Mga sasakyang nakaparada sa isang kalsada sa tabing-dagat",
+    "credit_required": false
+  },
+  {
+    "file": "ph-jeepney-metro-manila.jpg",
+    "photographer": "Aliceinthealice (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Jeepney_in_Metro_Manila_2025_01.jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Real photo (Wikimedia Commons): Jeepney in Metro Manila 2025 01",
+    "alt_text_fil": "Dyip na bumabagtas sa isang kalsada sa lungsod",
+    "credit_required": false
+  },
+  {
+    "file": "ph-classroom-chairs.jpg",
+    "photographer": "Gunnery Sgt. J. L. Wright Jr. (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Philippine_School_Dedicated_As_Part_of_Phiblex_%2711_DVIDS330684.jpg",
+    "license": "public domain",
+    "license_url": "https://creativecommons.org/publicdomain/mark/1.0/",
+    "subject": "Real photo (Wikimedia Commons): Philippine School Dedicated As Part of Phiblex '11 DVIDS330684",
+    "alt_text_fil": "Mga bakanteng upuan sa loob ng isang silid-aralan",
+    "credit_required": false
+  },
+  {
+    "file": "ph-computer-lab.jpg",
+    "photographer": "UndueMarmot (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:De_La_Salle_University_%E2%80%93_Dasmari%C3%B1as_(DLSU%E2%80%93D)_Information_and_Communications_Technology_Center_(ICTC)_laboratory_room_203_(ICT203)_%E2%80%94_normal_view.jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Real photo (Wikimedia Commons): De La Salle University – Dasmariñas (DLSU–D) Information and Communications Technology Center (ICTC) laboratory room 203 (ICT203) — normal view",
+    "alt_text_fil": "Computer laboratory na may hanay ng mga kompyuter",
+    "credit_required": false
+  },
+  {
+    "file": "ph-mrt-edsa.jpg",
+    "photographer": "Judgefloro (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/w/index.php?curid=54696775",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Wikimedia Commons: 09967jfNorth Avenue MRT Station EDSA Metro Rail Transit Line 7 LRVs Quezon Cityfvf",
+    "alt_text_fil": "Tren na dumaraan sa riles sa itaas ng isang abalang kalsada",
+    "credit_required": false
+  },
+  {
+    "file": "ph-beach-fishing.jpg",
+    "photographer": "Bernard Spragg (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Beach_Fishing_in_the_Philippines.jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Wikimedia Commons: Beach Fishing in the Philippines",
+    "alt_text_fil": "Mga mangingisdang humihila ng lambat sa dalampasigan",
+    "credit_required": false
+  },
+  {
+    "file": "ph-fishermen-boat.jpg",
+    "photographer": "Bernard Spragg. NZ from Christchurch, New Zealand (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Fishermen_Hauling_ashore_their_boat._(15512953214).jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Wikimedia Commons: Fishermen Hauling ashore their boat. (15512953214)",
+    "alt_text_fil": "Mga mangingisdang sama-samang humihila ng bangka papunta sa pampang",
+    "credit_required": false
+  },
+  {
+    "file": "ph-produce-market.jpg",
+    "photographer": "Bernard Spragg. NZ from Christchurch, New Zealand (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Produce_market._Batac_City._Philippines._(16830189588).jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Wikimedia Commons: Produce market. Batac City. Philippines. (16830189588)",
+    "alt_text_fil": "Mga tindahan ng gulay at prutas sa loob ng isang pampublikong palengke",
+    "credit_required": false
+  },
+  {
+    "file": "ph-metro-manila-night.jpg",
+    "photographer": "YZJay (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Nighttime_Metro_Manila_skyline_seen_from_atop_of_Metrobank_Center_in_Taguig_City.jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Wikimedia Commons: Nighttime Metro Manila skyline seen from atop of Metrobank Center in Taguig City",
+    "alt_text_fil": "Tanaw ng Metro Manila sa gabi mula sa itaas ng isang gusali",
+    "credit_required": false
+  },
+  {
+    "file": "rice-harvest.jpg",
+    "photographer": "Mx. Granger (Wikimedia Commons)",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Harvesting_rice_in_Canggu.jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "subject": "Wikimedia Commons: Harvesting rice in Canggu",
+    "alt_text_fil": "Palayang handa nang anihin sa ilalim ng maaliwalas na langit",
+    "credit_required": false
   }
 ]

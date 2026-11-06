@@ -130,3 +130,22 @@ Done (implemented and verified locally):
 Checks: typecheck OK, lint clean, vitest 89/89, build OK, `supabase db reset` + bootstrap:owner + seed:demo OK.
 Lighthouse mobile (median of 3): / 87 (LCP 3833), /balita 90 (3527), /balita/demo-palayan 93 (3255, CLS 0), /botohan 100, /usap-bayan 100. Fonts 48 KB, JS 152–156 KB.
 Next: approved perf fixes #3 (fewer query hops), #4 (Suspense streaming), #5 (drop unused exact counts), one commit each with Lighthouse.
+
+## 2026-11-06 — Fill every section, real photos, navbar (owner requests)
+Done (implemented and verified locally):
+- Real images: 11 demo stories now use matching, openly licensed Philippine photos from Wikimedia Commons (jeepney, palengke, RHU, barangay hall, EDSA, bangka, palay drying, Makati, computer lab...). Credits/licences in supabase/seed-media/CREDITS.json; captions say what each photo really shows. Did not copy photos from news publishers' articles (copyright); 2 stories keep earlier generic photos (no honest match without pinning demo text on identifiable real people).
+- seed-demo: media captions; 4 approved [Demo] community posts (local only, service client, idempotent by title).
+- Gaps filled: latest-news sidebar (Trending if real views, else "Mga Paksa" index, plus Usap Bayan posts; sticky); poll module two columns (counting rules + other polls); "Mga Seksyon" prefers sections with most stories; tighter section spacing.
+- Phones: grid/list cards become thumbnail rows; homepage 12.2k px -> ~10k px tall at 375.
+- Meta alignment (owner screenshots): wrapped meta started with an indented divider. Cause: separator rendered before each item. Fix: separator in a clipped left gutter; grid cards show time only.
+- Navbar: at 1024-1180px the 820px menu collided with search/CTA (measured nav scrollWidth 820 vs box 613/769). Fix: two-row desktop masthead; nav CSS moved from an inline <style> into globals.css; sticky offsets lg:top-32.
+Checks: typecheck OK, lint clean, vitest 89/89, build OK, db reset + bootstrap + seed:demo OK, screenshots 1440/1180/1024/768/375 reviewed.
+
+[2026-11-06] Owner request: "remove all demo info, realistic website with no demo or credits"
+- Seed rewritten (scripts/seed-demo.ts): 13 generic Filipino feature stories with real bodies/excerpts, no "[Demo]" titles, disclaimers or "Demo content" attribution; slugs without "demo-"; staff bylines are desks (Editorial Desk, Boses ng Bayan Newsroom, Community Desk, Audience Desk, Site Administrator); polls `pinakamahalagang-isyu`, `paraan-ng-pagbiyahe` (0 votes, methodology note); 4 approved community posts.
+- Photos: removed 8 CC BY/BY-SA files (credit legally required); added CC0 replacements. All seed media now CC0/PD/Unsplash, credit null, captions describe the photo only. No publisher photos scraped (copyright).
+- Safeguards documented in ADR-013 (local-only seed guard, no real people/stats/institutions) + spec section 0 note.
+- e2e poll test + Lighthouse script now use non-demo slugs.
+- Failure: TS2339 `credit_required` not on type Credit. Cause: field added to CREDITS.json but not the interface. Fix: added to interface; tsc clean.
+Checks: db reset + bootstrap:owner + seed:demo OK; build OK; vitest 89/89; lint clean; tsc clean; rendered HTML of /, /balita, /balita/klinika-sa-barangay, /botohan, /usap-bayan, /paksa has no "demo", "halimbawang", "Larawan:", "Unsplash" or "Wikimedia"; screenshots 1440/768/375 reviewed.
+Not run: Playwright e2e suite, Lighthouse after this change.
