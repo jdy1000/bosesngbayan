@@ -104,3 +104,16 @@ Studio admin modules — Dashboard, Analytics, Team, Navigation, Settings, SEO/R
   TipTap (154 KB gz) and Recharts (114 KB gz) load only on their Studio routes.
   Fonts: 6 preloaded woff2 files ≈ 236 KB (serif normal+italic, sans; latin + latin-ext each).
 - Ranked findings presented to user; no code changed pending approval.
+- Local stack fixed: root cause was stale Docker port forwards on 5432x (CLI 127.0.0.1:54322 timed out while
+  Postgres was ready). Moved project to 5632x (commit 343d63e). Local images were 400 (next/image private-IP
+  guard); allowed only for a loopback Supabase host (a50759c). Local site: http://localhost:3210 (3000/3100 used
+  by other apps; .env.local NEXT_PUBLIC_SITE_URL=http://localhost:3210).
+- Lighthouse mobile baseline (median of 3, prod build, local DB):
+  / 82 LCP 4862 TBT 82 CLS 0 | /balita 79 LCP 5318 | /balita/demo-palayan 81 LCP 4422 CLS 0.105 |
+  /botohan 100 LCP 761 | /usap-bayan 100 LCP 767. JS 152–156 KB, fonts 236 KB (6 preloads).
+- Fix #1 fonts (latin preload only, no serif italic): / 90 LCP 3615 | /balita 91 LCP 3561 |
+  article 91 LCP 3155. Fonts 236 -> 77 KB.
+- Open perf findings: hero img lacks fetchpriority=high (Next 16 `priority` = preload only); homepage
+  preloads below-fold card images; article page CLS 0.105 at the featured <figure>. Remaining approved fixes
+  (#3-#6) paused: user requested a full public-site redesign (news-first, refs morning-template.webflow.io,
+  istorya.news); re-apply on the new layout.

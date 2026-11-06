@@ -5,16 +5,17 @@ import "./globals.css";
 // Every page renders per request so the proxy's CSP nonce reaches Next's inline scripts (ADR-004).
 export const dynamic = "force-dynamic";
 
+// Preload the basic Latin files only (covers Filipino incl. ñ); latin-ext loads on demand via unicode-range.
+// No serif italic: italic styles in globals.css use the sans text font.
 const display = Source_Serif_4({
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: ["600", "700", "800"],
-  style: ["normal", "italic"],
   variable: "--font-display",
   display: "swap",
 });
 
 const text = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
+  subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-text",
   display: "swap",
