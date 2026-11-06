@@ -93,6 +93,8 @@ Recreate the visual identity, hierarchy, section structure, and overall experien
 
 ## 2.2 Design direction
 
+> **Updated 2026-11-06:** the editorial serif was replaced by one sans family (Inter) for headlines and body, following the owner-chosen Morning/Istorya references. Colours below are unchanged. `docs/DESIGN_SYSTEM.md` is the current source.
+
 Use:
 
 - Primary: cobalt / royal blue.
@@ -177,6 +179,8 @@ Requirements:
 - Trending indicators must be based on an explainable source or editorial configuration, not fabricated activity.
 
 ## 3.3 Homepage hero
+
+> **Product decision (2026-11-06, owner request):** Boses ng Bayan is a news website first, not a voting website. The default homepage now opens with a `top_stories` block (lead story, right rail, story row) styled after the Morning template (morning-template.webflow.io) and structured like Istorya (istorya.news). The poll moves down to a "Botohan ng Araw" module. The poll hero described below still exists as the CMS block `hero` and can be re-enabled from the homepage builder, but it is no longer part of the starter layout. See ADR-012 in `docs/ARCHITECTURE.md`.
 
 Recreate the supplied screenshot composition.
 

@@ -6,18 +6,25 @@ Tokens live in `src/app/globals.css` (`:root` + Tailwind v4 `@theme inline`). Br
 
 ## 1. Reference reconstruction
 
-The reference composition, top to bottom, and how it was rebuilt:
+**2026-11-06 redesign (ADR-012).** The owner asked for a news site that looks like the Morning template (https://morning-template.webflow.io) and Istorya (https://istorya.news), instead of the original poll-led landing reference. Morning supplies the visual language: a white editorial grid, ruled section heads, square controls and small-caps category labels. Istorya supplies the structure: dateline with trending chips, regional discovery and daily modules. Brand colours are unchanged.
 
-| Reference | Implementation |
+Starter homepage, top to bottom (all CMS blocks, reorderable in Studio):
+
+| Section | Implementation |
 | --- | --- |
-| White sticky header: logo left, centred nav (Bahay, Mga Balita, Usap Bayan, Mga Paksa, Tungkol), search icon, blue pill CTA "Sumali sa Botohan" | `components/public/site-header.tsx` + `main-nav.tsx`. Items come from the `header` navigation menu in the CMS; the CTA label and link come from Settings (`header_cta`), and leaving them blank hides it. |
-| Hero split: left eyebrow, large serif headline with one highlighted word, supporting copy, two CTAs (filled "Bumoto ngayon", outlined "Tingnan ang resulta"), community microcopy; right a large community photo with a floating poll card | `blocks/hero-block.tsx`. Every field is a CMS setting. The ballot count in the microcopy is the real `get_total_ballots()` total, and it is hidden when zero. |
-| Row of topic chips ("Trending:" Transportasyon, Edukasyon …) | `TrendingTopicsBlock`, from `trending_topics` rows ordered by the editor. |
-| "Mga Balita" section with a short red rule above the heading, then a card grid (image, category badge, headline, excerpt, meta) | `SectionHeading` (`.section-kicker`) + `ArticleCard` variant `grid`. |
-| Feature tiles explaining why to join | `CustomCtaBlock` variant `feature_tiles` (icon from a fixed Lucide set, title, text). |
-| Wide blue banner "Tayo ang Bayan. Tayo ang Boses." with a photo and CTA | `CustomCtaBlock` variant `banner`. |
-| Newsletter strip | `NewsletterBlock` + `newsletter-form.tsx`. |
-| Navy footer: brand column, link columns, social icons, legal line | `site-footer.tsx`, built from the `footer_main` and `footer_legal` menus plus settings. |
+| Navy masthead: wordmark, category nav (uppercase, accent underline on the active item), search, red "Mag-subscribe" CTA | `site-header.tsx` + `main-nav.tsx`; items from the `header` menu, CTA from Settings `header_cta`. |
+| Dateline (Asia/Manila) + #trending chips | `TrendingTopicsBlock`. |
+| Breaking strip (only when a breaking story exists) | `BreakingNewsBlock`. |
+| Top stories: lead story (text beside a 4:3 image) with a 3-story row below and a right rail (one card plus compact items) | `TopStoriesBlock`, `ArticleCard` variants `feature`, `grid`, `compact`. |
+| "Pinakabagong Balita" list with optional ranked "Trending" sidebar | `ArticleListBlock` layout `list`, `with_sidebar`. |
+| "Pili ng Editor" two-column headline-left/thumb-right list | `ArticleListBlock` layout `side`. |
+| Newsletter card (red top rule) | `NewsletterBlock`. |
+| "Mga Seksyon": three category columns | `CategoryShowcaseBlock`. |
+| "Balitang Rehiyon": Luzon / Visayas / Mindanao with region chips and stories | `RegionalNewsBlock`. |
+| "Botohan ng Araw" poll module with methodology caveat | `PollShowcaseBlock`. |
+| Navy footer | `site-footer.tsx`. |
+
+The original poll hero (`blocks/hero-block.tsx`) remains available as the `hero` block.
 
 ## 2. Colour
 
@@ -51,27 +58,24 @@ All of these pass AA for body text. The placeholder grey `#8a94ad` is 3.03:1, so
 
 ## 3. Typography
 
-- **Display:** Source Serif 4 (600/700/800, italic). Used for headlines, hero, article titles, pull quotes and serif `h2` in article bodies.
-- **Text:** Plus Jakarta Sans (400–800). Used for navigation, body, labels, buttons and Studio.
-- Both load via `next/font/google` with `display: swap` and `latin-ext` (for ñ and accented names).
-
-Scale in use:
+- **One family: Inter** (variable), via `next/font/google`, `display: swap`, preloading the `latin` subset only (covers Filipino incl. ñ; latin-ext loads on demand). `--font-serif` maps to the same family.
+- Hierarchy comes from size and weight (semibold 600 for headlines, medium 500 for card titles), not from a second face.
 
 | Role | Size | Line height |
 | --- | --- | --- |
-| Hero headline | 2.6rem → 3.4rem (sm) → 4rem (lg), tracking −0.015em | 1.04 |
-| Article title | 2.2rem → 3rem (md) | 1.1 |
-| Section heading | ~1.75–2.25rem, serif | — |
-| Article body (`.prose-bnb`) | 1.125rem, h2 1.75rem serif, h3 1.3rem | 1.75 |
-| UI body | 16px | 1.55 |
-| Metadata | 0.8–0.875rem | — |
-| Category badge | 0.72rem uppercase, 800 weight, 0.04em tracking | — |
+| Lead story headline | 1.75rem → 2.25rem (md), semibold, tracking −0.015em | 1.15 |
+| Article title | 2rem → 2.75rem (md), semibold, tracking −0.02em | 1.12 |
+| Section heading | 1.6rem → 1.9rem, semibold, inside `.section-rule` | 1.25 |
+| Card headline | 0.92–1.3rem, medium | snug |
+| Article body (`.prose-bnb`) | 1.125rem | 1.75 |
+| Metadata | 0.78rem, hairline dividers | — |
+| Category label | 0.72rem uppercase, brand-700 text (red tile for Breaking) | — |
 
 Headings use `text-wrap: balance`.
 
 ## 4. Space, layout, breakpoints
 
-- **Container:** `.container-site`, max 1200px, with side gutters of 16px (<640), 24px (≥640) and 32px (≥1024).
+- **Container:** `.container-site`, max 1240px, with side gutters of 16px (<640), 24px (≥640) and 32px (≥1024).
 - **Breakpoints:** Tailwind defaults (sm 640, md 768, lg 1024, xl 1280). Layouts are recomposed rather than shrunk:
   - hero stacks copy above the photo below `lg`, and the poll card drops under the photo on phones;
   - the nav collapses to a full-height panel below `lg`;
@@ -84,18 +88,18 @@ Headings use `text-wrap: balance`.
 
 | Component | Spec |
 | --- | --- |
-| `.btn-primary` | Brand fill, white text, pill, 44px min, hover darkens to `brand-600`, 1px press |
+| `.btn-primary` | Brand fill, white text, 4px radius, semibold, 44px min, hover darkens to `brand-600`, 1px press |
 | `.btn-outline` | White fill with a brand-200 inset ring; ring turns brand on hover |
 | `.btn-light` | White on dark bands |
 | Disabled | `aria-disabled` or `disabled`, 55% opacity, not-allowed cursor, plus a visible reason next to it |
 | `.chip` | Topic link, white pill with a line ring |
-| `.category-badge` | Tinted brand pill, uppercase |
-| `.card` | White, 14px radius, two-layer soft shadow (`--shadow-card`) |
-| `.field` | 44px, 12px radius, inset ring, 2px brand ring on focus |
+| `.category-badge` | Plain uppercase brand-700 label; `.bg-accent` variant is a red tile (Breaking) |
+| `.card` | White, 6px radius, 1px inset line border, no heavy shadow |
+| `.field` | 44px, 4px radius, inset ring, 2px brand ring on focus |
 | Focus | 3px brand outline, 2px offset, on every interactive element (`:focus-visible`) |
-| `ArticleCard` variants | `grid` (16:10 image), `list` (thumbnail row), `feature` (large lead), `compact` (text only) |
+| `ArticleCard` variants | `grid` (16:10 image over headline), `list` (thumb left, excerpt), `feature` (lead: text beside 4:3 image), `compact` (small thumb left), `side` (headline left, thumb right) |
 | Poll card | Radio for single choice or checkbox for multiple; result bars appear after voting when visibility allows; "hindi kumakatawan sa buong populasyon ng Pilipinas" caveat and a methodology link |
-| Section heading | `.section-kicker`: 36×4px red rule above the title, optional "see all" action link |
+| Section heading | `.section-rule`: 3px ink rule above, hairline below, optional "label →" action link. Page headers still use `.section-kicker`. |
 
 **Studio** uses the same tokens and fonts in a denser layout (`components/studio/ui.tsx`): PageHeader, Panel, Table, Badge tones (neutral, info, success, warning, danger), StatusBadge for article states, Notice, Empty, Pagination and Field. There are no gradients or decorative imagery.
 

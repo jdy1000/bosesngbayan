@@ -34,7 +34,7 @@ export default async function PollPage({ params }: Props) {
           {poll.category.name}
         </Link>
       )}
-      <h1 className="mt-4 font-serif text-4xl font-bold leading-tight text-navy">{poll.question}</h1>
+      <h1 className="mt-4 text-4xl font-semibold leading-tight text-ink">{poll.question}</h1>
       {poll.description && <p className="mt-3 text-lg text-ink-soft">{poll.description}</p>}
       <div className="mt-6">
         <PollWidget poll={poll} />
@@ -54,8 +54,8 @@ export default async function PollPage({ params }: Props) {
       <div className="mt-6">
         <ShareButtons url={siteUrl(`/botohan/${poll.slug}`)} title={poll.question} />
       </div>
-      <aside className="mt-10 rounded-2xl bg-surface p-6">
-        <h2 className="font-serif text-xl font-bold text-navy">Metodolohiya</h2>
+      <aside className="mt-10 rounded-md bg-surface p-6">
+        <h2 className="text-xl font-semibold text-ink">Metodolohiya</h2>
         {poll.methodology_note && <p className="mt-2 whitespace-pre-line text-[0.95rem] text-ink-soft">{poll.methodology_note}</p>}
         <p className="mt-2 text-[0.95rem] text-ink-soft">
           Ito ay boluntaryong online poll at hindi kumakatawan sa buong populasyon ng Pilipinas.{" "}

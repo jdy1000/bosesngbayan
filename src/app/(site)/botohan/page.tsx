@@ -14,12 +14,12 @@ export default async function PollsPage() {
   return (
     <div className="container-site py-10 md:py-14">
       <header className="section-kicker mb-10 max-w-3xl">
-        <h1 className="font-serif text-4xl font-bold text-navy md:text-5xl">Mga Botohan</h1>
+        <h1 className="text-4xl font-semibold text-ink md:text-5xl">Mga Botohan</h1>
         <p className="mt-3 text-lg text-ink-soft">Iparinig ang iyong boses sa mga isyung mahalaga sa bayan.</p>
       </header>
 
       <section aria-labelledby="active-heading">
-        <h2 id="active-heading" className="mb-5 font-serif text-2xl font-bold text-ink">Bukas na botohan</h2>
+        <h2 id="active-heading" className="mb-5 text-2xl font-semibold text-ink">Bukas na botohan</h2>
         {active.length ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {active.map((p) => (
@@ -33,8 +33,8 @@ export default async function PollsPage() {
 
       {past.length > 0 && (
         <section aria-labelledby="past-heading" className="mt-14">
-          <h2 id="past-heading" className="mb-5 font-serif text-2xl font-bold text-ink">Mga nakaraang botohan</h2>
-          <ul className="divide-y divide-line rounded-[var(--radius-card)] border border-line bg-white">
+          <h2 id="past-heading" className="mb-5 text-2xl font-semibold text-ink">Mga nakaraang botohan</h2>
+          <ul className="divide-y divide-line rounded-md border border-line bg-white">
             {past.map((p) => (
               <li key={p.id}>
                 <Link href={`/botohan/${p.slug}`} className="flex flex-col gap-1 px-5 py-4 hover:bg-surface sm:flex-row sm:items-center sm:justify-between">
@@ -47,8 +47,8 @@ export default async function PollsPage() {
         </section>
       )}
 
-      <section id="metodolohiya" aria-labelledby="method-heading" className="mt-14 rounded-2xl bg-surface p-6 md:p-8">
-        <h2 id="method-heading" className="font-serif text-2xl font-bold text-navy">Paano binibilang ang boto</h2>
+      <section id="metodolohiya" aria-labelledby="method-heading" className="mt-14 rounded-md bg-surface p-6 md:p-8">
+        <h2 id="method-heading" className="text-2xl font-semibold text-ink">Paano binibilang ang boto</h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-[0.95rem] text-ink-soft">
           <li>
             Ang mga botohan dito ay <strong>boluntaryong online poll</strong>. Ang lumalahok ay ang mga piniling bumoto, kaya hindi ito

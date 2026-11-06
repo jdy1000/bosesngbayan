@@ -29,16 +29,16 @@ export default async function CommunityPage({ searchParams }: Props) {
   return (
     <div className="container-site py-10 md:py-14">
       <header className="section-kicker mb-8 max-w-3xl">
-        <h1 className="font-serif text-4xl font-bold text-navy md:text-5xl">Usap Bayan</h1>
+        <h1 className="text-4xl font-semibold text-ink md:text-5xl">Usap Bayan</h1>
         <p className="mt-3 text-lg text-ink-soft">Pakinggan ang kapwa. Ibahagi ang iyong pananaw. Magtanong sa komunidad.</p>
       </header>
 
       {featured && featured.items.length > 0 && (
         <section aria-label="Tampok na talakayan" className="mb-12 grid gap-6 md:grid-cols-2">
           {featured.items.map((p) => (
-            <article key={p.id} className="relative rounded-[22px] bg-navy p-7 text-white">
+            <article key={p.id} className="relative rounded-md bg-navy p-7 text-white">
               <p className="text-xs font-bold uppercase tracking-wider text-white/60">Tampok · {COMMUNITY_KIND_LABELS[p.kind]}</p>
-              <h2 className="mt-2 font-serif text-2xl font-bold leading-snug">
+              <h2 className="mt-2 text-2xl font-semibold leading-snug">
                 <Link href={`/usap-bayan/${p.id}`} className="after:absolute after:inset-0">
                   {p.title}
                 </Link>
@@ -74,7 +74,7 @@ export default async function CommunityPage({ searchParams }: Props) {
                       {COMMUNITY_KIND_LABELS[p.kind]}
                       {p.category ? ` · ${p.category.name}` : ""}
                     </p>
-                    <h2 className="mt-1.5 font-serif text-xl font-semibold text-ink">
+                    <h2 className="mt-1.5 text-xl font-semibold text-ink">
                       <Link href={`/usap-bayan/${p.id}`} className="after:absolute after:inset-0 hover:text-brand">
                         {p.title}
                       </Link>
@@ -98,8 +98,8 @@ export default async function CommunityPage({ searchParams }: Props) {
           )}
         </section>
 
-        <aside id="magbahagi" aria-labelledby="submit-heading" className="h-fit rounded-2xl border border-line p-6 lg:sticky lg:top-28">
-          <h2 id="submit-heading" className="font-serif text-2xl font-bold text-navy">Ibahagi ang iyong boses</h2>
+        <aside id="magbahagi" aria-labelledby="submit-heading" className="h-fit rounded-md border border-line p-6 lg:sticky lg:top-28">
+          <h2 id="submit-heading" className="text-2xl font-semibold text-ink">Ibahagi ang iyong boses</h2>
           {settings.community.submissions_enabled ? (
             <div className="mt-4">
               <SubmissionForm categories={categories.map((c) => ({ id: c.id, name: c.name }))} guidelines={settings.community.guidelines} />

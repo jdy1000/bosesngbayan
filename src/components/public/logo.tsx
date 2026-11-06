@@ -10,11 +10,14 @@ export function Logo({
   logoUrl,
   size = "md",
   inverted = false,
+  priority = false,
 }: {
   siteName: string;
   logoUrl?: string | null;
   size?: "sm" | "md" | "lg";
   inverted?: boolean;
+  /** Only the header logo is above the fold; the footer copy must not compete for preload bandwidth. */
+  priority?: boolean;
 }) {
   const scale = size === "lg" ? "text-[2.6rem]" : size === "sm" ? "text-[1.45rem]" : "text-[1.9rem] sm:text-[2.1rem]";
   if (logoUrl) {
@@ -24,8 +27,8 @@ export function Logo({
         alt={siteName}
         width={size === "lg" ? 220 : 170}
         height={size === "lg" ? 80 : 60}
-        className="h-auto w-auto max-h-14 object-contain"
-        priority
+        className="h-auto w-auto max-h-11 object-contain"
+        preload={priority}
       />
     );
   }

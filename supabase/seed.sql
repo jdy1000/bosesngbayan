@@ -67,16 +67,21 @@ insert into public.navigation_items (menu_id, label, href, position)
 select m.id, v.label, v.href, v.position
 from public.navigation_menus m
 join (values
-  ('header', 'Bahay', '/', 1),
-  ('header', 'Mga Balita', '/balita', 2),
-  ('header', 'Mga Botohan', '/botohan', 3),
-  ('header', 'Usap Bayan', '/usap-bayan', 4),
-  ('header', 'Mga Paksa', '/paksa', 5),
-  ('header', 'Tungkol', '/tungkol', 6),
+  ('header', 'Balita', '/balita', 1),
+  ('header', 'Pilipinas', '/paksa/pilipinas', 2),
+  ('header', 'Pulitika', '/paksa/pulitika', 3),
+  ('header', 'Ekonomiya', '/paksa/ekonomiya', 4),
+  ('header', 'Kalusugan', '/paksa/kalusugan', 5),
+  ('header', 'Teknolohiya', '/paksa/teknolohiya', 6),
+  ('header', 'Sports', '/paksa/sports', 7),
+  ('header', 'Opinion', '/paksa/opinion', 8),
+  ('header', 'Usap Bayan', '/usap-bayan', 9),
   ('footer_main', 'Tungkol sa Amin', '/tungkol', 1),
-  ('footer_main', 'Makipag-ugnayan', '/makipag-ugnayan', 2),
-  ('footer_main', 'Patakarang Editoryal', '/patakarang-editoryal', 3),
-  ('footer_main', 'Mag-advertise', '/mag-advertise', 4),
+  ('footer_main', 'Mga Paksa', '/paksa', 2),
+  ('footer_main', 'Botohan', '/botohan', 3),
+  ('footer_main', 'Makipag-ugnayan', '/makipag-ugnayan', 4),
+  ('footer_main', 'Patakarang Editoryal', '/patakarang-editoryal', 5),
+  ('footer_main', 'Mag-advertise', '/mag-advertise', 6),
   ('footer_legal', 'Tungkol', '/tungkol', 1),
   ('footer_legal', 'Privacy Policy', '/privacy-policy', 2),
   ('footer_legal', 'Terms of Service', '/terms-of-service', 3)
@@ -88,7 +93,7 @@ insert into public.site_settings (key, value) values
   ('general', jsonb_build_object(
     'site_name', 'Boses ng Bayan',
     'tagline', 'May boses ka. May saysay ang opinyon mo.',
-    'description', 'Balita, botohan, at usapang bayan para sa bawat Pilipino.',
+    'description', 'Balitang mahalaga sa bawat Pilipino — mula sa bansa, sa rehiyon, at sa inyong komunidad.',
     'logo_media_id', null,
     'favicon_media_id', null,
     'brand', jsonb_build_object('primary', '#1d4ed8', 'navy', '#0b1f5c', 'accent', '#d62828'),
@@ -96,7 +101,7 @@ insert into public.site_settings (key, value) values
     'language', 'fil',
     'default_author_id', null,
     'copyright_text', '© {year} Boses ng Bayan. Lahat ng karapatan ay nakalaan.',
-    'header_cta', jsonb_build_object('label', 'Sumali sa Botohan', 'href', '/botohan'))),
+    'header_cta', jsonb_build_object('label', 'Mag-subscribe', 'href', '/#newsletter'))),
   ('social', jsonb_build_object('facebook', '', 'youtube', '', 'tiktok', '', 'x', '', 'instagram', '', 'hashtag', '#BosesNgBayan')),
   ('contact', jsonb_build_object('email', '', 'phone', '', 'address', '')),
   ('seo', jsonb_build_object(
@@ -151,36 +156,20 @@ begin
   insert into public.homepage_configurations (status, label, published_at) values ('published', 'Panimulang bersyon', now()) returning id into v_pub;
   foreach v_cfg in array array[v_draft, v_pub] loop
     insert into public.homepage_sections (configuration_id, block_type, position, title, description, settings) values
-    (v_cfg, 'hero', 1, null, null, jsonb_build_object(
-      'eyebrow', 'Tampok ngayon',
-      'headline', 'May boses ka. May saysay ang opinyon mo.',
-      'highlight', 'boses',
-      'description', 'Makibahagi sa mga usaping mahalaga sa araw-araw na buhay ng bawat Pilipino.',
-      'primary_cta', jsonb_build_object('label', 'Bumoto ngayon', 'href', '/botohan'),
-      'secondary_cta', jsonb_build_object('label', 'Tingnan ang resulta', 'href', '/botohan'),
-      'image_id', null,
-      'poll_id', null,
-      'show_participation_count', true,
-      'participation_label', 'boto na ang naitala sa aming mga botohan')),
-    (v_cfg, 'trending_topics', 2, 'Trending Topics:', null, jsonb_build_object(
-      'view_all', jsonb_build_object('label', 'Tingnan lahat', 'href', '/paksa'))),
-    (v_cfg, 'article_grid', 3, 'Mga Balita', 'Mga pinakabagong balita at mahahalagang kwento mula sa buong bansa.', jsonb_build_object(
-      'source', 'latest', 'category_id', null, 'article_ids', '[]'::jsonb, 'limit', 3,
-      'view_all', jsonb_build_object('label', 'Tingnan lahat ng balita', 'href', '/balita'))),
-    (v_cfg, 'custom_cta', 4, 'Bakit sumali sa Boses ng Bayan?', 'Dahil ang ating tinig ay may kapangyarihan na magdulot ng pagbabago.', jsonb_build_object(
-      'variant', 'feature_tiles',
-      'cta', jsonb_build_object('label', 'Alamin pa', 'href', '/tungkol'),
-      'image_id', null,
-      'items', jsonb_build_array(
-        jsonb_build_object('icon', 'chart', 'label', 'Maging bahagi ng makabuluhang botohan'),
-        jsonb_build_object('icon', 'messages', 'label', 'Makilahok sa usapang bayan'),
-        jsonb_build_object('icon', 'users', 'label', 'Kumonekta sa komunidad'),
-        jsonb_build_object('icon', 'megaphone', 'label', 'Ibahagi ang iyong pananaw')))),
-    (v_cfg, 'custom_cta', 5, E'Tayo ang Bayan.\nTayo ang Boses.', 'Sama-sama nating itaguyod ang isang mas makatarungan, mas progresibong Pilipinas.', jsonb_build_object(
-      'variant', 'banner',
-      'cta', jsonb_build_object('label', 'Sumali sa Komunidad', 'href', '/usap-bayan'),
-      'image_id', null,
-      'items', '[]'::jsonb));
+    (v_cfg, 'trending_topics', 1, 'Trending', null, jsonb_build_object(
+      'view_all', jsonb_build_object('label', 'Lahat ng paksa', 'href', '/paksa'))),
+    (v_cfg, 'breaking_news', 2, null, null, jsonb_build_object('limit', 5)),
+    (v_cfg, 'top_stories', 3, null, null, jsonb_build_object(
+      'lead_source', 'featured', 'lead_article_id', null, 'rail_count', 4, 'below_count', 3)),
+    (v_cfg, 'latest_articles', 4, 'Pinakabagong Balita', null, jsonb_build_object(
+      'source', 'latest', 'category_id', null, 'article_ids', '[]'::jsonb, 'limit', 6, 'with_sidebar', true,
+      'view_all', jsonb_build_object('label', 'Lahat ng balita', 'href', '/balita'))),
+    (v_cfg, 'editors_picks', 5, 'Pili ng Editor', null, jsonb_build_object(
+      'source', 'editors_picks', 'category_id', null, 'article_ids', '[]'::jsonb, 'limit', 6, 'with_sidebar', false, 'view_all', null)),
+    (v_cfg, 'newsletter', 6, 'Balitang mahalaga, diretso sa inbox mo.', 'Isang maikling buod ng mga pangunahing balita, isang beses sa isang araw. Libre at puwedeng ihinto anumang oras.', jsonb_build_object('source', 'homepage')),
+    (v_cfg, 'category_showcase', 7, 'Mga Seksyon', null, jsonb_build_object('category_ids', '[]'::jsonb, 'per_category', 4)),
+    (v_cfg, 'regional_news', 8, 'Balitang Rehiyon', 'Mga kwento mula sa Luzon, Visayas, at Mindanao.', jsonb_build_object('location_ids', '[]'::jsonb, 'per_location', 3)),
+    (v_cfg, 'poll_showcase', 9, 'Botohan ng Araw', null, jsonb_build_object('poll_id', null, 'show_active_list', false, 'limit', 3));
   end loop;
 end;
 $$;

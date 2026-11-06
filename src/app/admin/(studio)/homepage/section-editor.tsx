@@ -7,7 +7,7 @@ import { BLOCK_LABELS, BLOCK_SETTINGS_SCHEMAS, defaultSettings, isBlockType, typ
 import type { BuilderOptions, BuilderSection } from "./types";
 import { deleteSection, moveSection, toggleSection, updateSection } from "./actions";
 import { HeroForm } from "./block-forms/hero-form";
-import { ArticleListForm, BreakingForm, CategoryShowcaseForm, FeaturedStoryForm, MostReadForm, RegionalForm, TrendingForm } from "./block-forms/article-forms";
+import { ArticleListForm, BreakingForm, CategoryShowcaseForm, FeaturedStoryForm, MostReadForm, RegionalForm, TopStoriesForm, TrendingForm } from "./block-forms/article-forms";
 import { CommunityForm, CustomCtaForm, NewsletterForm, PollShowcaseForm } from "./block-forms/engagement-forms";
 import { NewsQuizForm, PhotoOfDayForm, QuoteOfDayForm } from "./block-forms/module-forms";
 
@@ -23,6 +23,8 @@ function SettingsForm({ type, value, onChange, options }: { type: BlockType; val
   switch (type) {
     case "hero":
       return <HeroForm {...p<"hero">()} />;
+    case "top_stories":
+      return <TopStoriesForm {...p<"top_stories">()} />;
     case "trending_topics":
       return <TrendingForm {...p<"trending_topics">()} />;
     case "breaking_news":

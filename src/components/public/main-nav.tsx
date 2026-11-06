@@ -92,8 +92,8 @@ export function MainNav({
 
   return (
     <>
-      <nav aria-label="Pangunahing navigation" className="hidden flex-1 justify-center lg:flex">
-        <ul className="flex items-center gap-1 xl:gap-3">
+      <nav aria-label="Pangunahing navigation" className="hidden min-w-0 flex-1 lg:flex">
+        <ul className="flex items-center">
           {items.map((item) =>
             item.children.length > 0 ? (
               <DesktopGroup key={item.id} item={item} pathname={pathname} />
@@ -108,13 +108,13 @@ export function MainNav({
       <div className="ml-auto flex items-center gap-2 lg:ml-0">
         {children}
         {cta && (
-          <Link href={cta.href} className="btn btn-primary hidden sm:inline-flex">
+          <Link href={cta.href} className="btn hidden min-h-9 bg-accent px-4 text-white hover:bg-accent-700 sm:inline-flex">
             {cta.label}
           </Link>
         )}
         <button
           type="button"
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-brand-50 lg:hidden"
+          className="inline-flex h-11 w-11 items-center justify-center rounded text-white hover:bg-white/10 lg:hidden"
           aria-expanded={open}
           aria-controls={panelId}
           aria-label={open ? "Isara ang menu" : "Buksan ang menu"}
@@ -127,7 +127,7 @@ export function MainNav({
       <div
         id={panelId}
         hidden={!open}
-        className="fixed inset-x-0 bottom-0 top-[76px] z-40 overflow-y-auto bg-white px-4 pb-10 pt-4 lg:hidden"
+        className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-white px-4 pb-10 pt-4 lg:hidden"
       >
         <nav aria-label="Mobile navigation">
           <ul className="flex flex-col">
@@ -151,19 +151,19 @@ export function MainNav({
             ))}
           </ul>
           {cta && (
-            <Link href={cta.href} className="btn btn-primary mt-6 w-full">
+            <Link href={cta.href} className="btn mt-6 w-full bg-accent text-white hover:bg-accent-700">
               {cta.label}
             </Link>
           )}
         </nav>
       </div>
       <style>{`
-        .nav-link { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.85rem;
-          font-size: 0.95rem; font-weight: 600; color: var(--color-ink); border-radius: 8px; transition: color 150ms ease; }
-        .nav-link:hover { color: var(--color-brand); }
-        .nav-link[data-active] { color: var(--color-brand); }
-        .nav-link[data-active]::after { content: ""; position: absolute; left: 0.85rem; right: 0.85rem; bottom: 4px;
-          height: 3px; border-radius: 2px; background: var(--color-brand); }
+        .nav-link { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.7rem;
+          font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+          color: rgb(255 255 255 / 0.82); white-space: nowrap; transition: color 150ms ease; }
+        .nav-link:hover, .nav-link[data-active] { color: #fff; }
+        .nav-link[data-active]::after { content: ""; position: absolute; left: 0.7rem; right: 0.7rem; bottom: 6px;
+          height: 2px; background: var(--color-accent); }
       `}</style>
     </>
   );

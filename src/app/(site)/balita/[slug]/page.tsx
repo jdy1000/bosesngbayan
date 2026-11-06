@@ -66,8 +66,8 @@ export default async function ArticlePage({ params }: Props) {
         afterBody={
           <>
             {settings.newsletter.enabled && (
-              <aside className="mt-12 rounded-2xl bg-brand-50 p-6 md:p-8">
-                <h2 className="font-serif text-2xl font-bold text-navy">{settings.footer.newsletter_title}</h2>
+              <aside className="mt-12 rounded-md bg-brand-50 p-6 md:p-8">
+                <h2 className="text-2xl font-semibold text-ink">{settings.footer.newsletter_title}</h2>
                 {settings.footer.newsletter_description && <p className="mt-1 text-ink-soft">{settings.footer.newsletter_description}</p>}
                 <div className="mt-4">
                   <NewsletterForm consentText={settings.newsletter.consent_text} source="article" />

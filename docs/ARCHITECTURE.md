@@ -133,6 +133,12 @@ Hidden sidebar items are only a convenience.
 
 **ADR-011 — Redirects.** The `redirects` table drives `redirectOrNotFound()` on 404s, with 301/308 treated as permanent. Destinations must be same-site paths or https URLs, and loops are rejected (`lib/studio/redirects.ts`). `hit_count` exists in the schema but is not incremented yet, which would require a service write on every redirect.
 
+**ADR-012 — News-first homepage (2026-11-06).** At the owner's request the public site was redesigned as a news site after the Morning template (visual language) and Istorya (structure); the poll-led hero is no longer the default.
+- New block type `top_stories` (migration `20261106001000_top_stories_block.sql`, schema in `lib/homepage/blocks.ts`): lead from featured, latest or a manual pick, plus rail and below-row counts. Its lead image is the only preloaded image on the homepage.
+- `latest_articles` gained `with_sidebar`, which shows a ranked most-read list only when tracked views exist.
+- Inter is the single font family; `--font-serif` maps to it so legacy classes stay harmless.
+- The `hero` block remains available in the homepage builder.
+
 ## 6. Environment variables
 
 See `.env.example`. Public values (`NEXT_PUBLIC_*`) are validated by `src/lib/env.ts`; secrets by `src/lib/server-env.ts`, which is server-only:

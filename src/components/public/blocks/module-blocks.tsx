@@ -16,7 +16,7 @@ export async function PhotoOfDayBlock({ title, settings }: { title: string | nul
       <div className="container-site">
         <SectionHeading title={title ?? "Larawan ng Araw"} />
         <figure>
-          <div className="relative aspect-[21/9] overflow-hidden rounded-[22px] bg-surface-2">
+          <div className="relative aspect-[21/9] overflow-hidden rounded-md bg-surface-2">
             <Image src={src} alt={media?.alt_text ?? ""} fill sizes="(min-width: 1200px) 1136px, 100vw" className="object-cover" />
           </div>
           <figcaption className="mt-3 flex flex-col gap-1 text-[0.95rem] text-ink-soft sm:flex-row sm:justify-between">
@@ -45,7 +45,7 @@ export function QuoteOfDayBlock({ title, settings }: { title: string | null; set
       <div className="container-site max-w-4xl text-center">
         <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/60">{title ?? "Sipi ng Araw"}</p>
         <blockquote className="mt-5">
-          <p className="font-serif text-3xl font-semibold leading-snug md:text-[2.5rem]">“{settings.quote}”</p>
+          <p className="text-3xl font-semibold leading-snug md:text-[2.5rem]">“{settings.quote}”</p>
           <footer className="mt-6 text-base text-white/80">
             — <cite className="not-italic font-semibold text-white">{settings.attribution}</cite>
             {settings.context && <span>, {settings.context}</span>}

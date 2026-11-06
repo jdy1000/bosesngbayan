@@ -117,3 +117,16 @@ Studio admin modules — Dashboard, Analytics, Team, Navigation, Settings, SEO/R
   preloads below-fold card images; article page CLS 0.105 at the featured <figure>. Remaining approved fixes
   (#3-#6) paused: user requested a full public-site redesign (news-first, refs morning-template.webflow.io,
   istorya.news); re-apply on the new layout.
+
+## 2026-11-06 — News-first redesign (owner request: look like morning-template.webflow.io + istorya.news)
+Done (implemented and verified locally):
+- New `top_stories` block (migration 20261106001000, Zod schema, Studio form, renderer). latest_articles `with_sidebar` (ranked most-read only when tracked views exist).
+- Public restyle: navy masthead with category nav + red Mag-subscribe CTA; Morning-style `.section-rule` heads; ArticleCard variants grid/list/feature/compact/side; category columns, regional chips, poll demoted to "Botohan ng Araw". Inter only (serif removed).
+- Seed: header nav = Balita + categories + Usap Bayan; news-first starter homepage. seed-demo: 13 [Demo] articles with featured/pick/location flags.
+- Failure: tests/db editorial (nav count 13→18) and engagement (homepage test targeted removed `article_grid` section). Cause: intended seed change. Fix: tests now expect 18 nav items and use `latest_articles` ("Pinakabagong Balita"). Re-run: 89/89 pass.
+- Failure: server restart hit EADDRINUSE on 3210; TaskStop left the Next child (old build, "Unknown block type top_stories"). Fix: stopped the PID listening on 3210, restarted. Note for next time: stop the port owner, not only the pnpm wrapper.
+- CLS 0.105 on article page: root cause was ShareButtons adding the native "Ibahagi" button after hydration, wrapping the row on mobile and pushing the figure down. Fix: button always rendered, falls back to copy-link. Article CLS now 0.
+- Header search label overlapped nav at 1440px; label now only at 2xl.
+Checks: typecheck OK, lint clean, vitest 89/89, build OK, `supabase db reset` + bootstrap:owner + seed:demo OK.
+Lighthouse mobile (median of 3): / 87 (LCP 3833), /balita 90 (3527), /balita/demo-palayan 93 (3255, CLS 0), /botohan 100, /usap-bayan 100. Fonts 48 KB, JS 152–156 KB.
+Next: approved perf fixes #3 (fewer query hops), #4 (Suspense streaming), #5 (drop unused exact counts), one commit each with Lighthouse.

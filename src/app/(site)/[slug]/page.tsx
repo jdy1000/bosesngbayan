@@ -26,7 +26,7 @@ export default async function StaticPage({ params }: Props) {
   return (
     <article className="container-site max-w-[760px] py-10 md:py-14">
       <header className="section-kicker mb-8">
-        <h1 className="font-serif text-4xl font-bold leading-tight text-navy md:text-5xl">{page.title}</h1>
+        <h1 className="text-4xl font-semibold leading-tight text-ink md:text-5xl">{page.title}</h1>
         {page.summary && <p className="mt-3 text-lg text-ink-soft">{page.summary}</p>}
         <p className="mt-3 text-sm text-muted">Huling na-update {formatDate(page.updated_at)}</p>
       </header>

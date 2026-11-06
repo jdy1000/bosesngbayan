@@ -7,6 +7,7 @@ import {
   FeaturedStoryBlock,
   MostReadBlock,
   RegionalNewsBlock,
+  TopStoriesBlock,
   TrendingTopicsBlock,
 } from "@/components/public/blocks/article-blocks";
 import { CommunityBlock, CustomCtaBlock, NewsletterBlock, PollShowcaseBlock } from "@/components/public/blocks/engagement-blocks";
@@ -17,6 +18,8 @@ function Block({ block }: { block: HomepageBlock }) {
   switch (block.type) {
     case "hero":
       return <HeroBlock settings={block.settings} />;
+    case "top_stories":
+      return <TopStoriesBlock settings={block.settings} />;
     case "trending_topics":
       return <TrendingTopicsBlock title={title} settings={block.settings} />;
     case "breaking_news":
@@ -24,11 +27,12 @@ function Block({ block }: { block: HomepageBlock }) {
     case "featured_story":
       return <FeaturedStoryBlock title={title} settings={block.settings} />;
     case "latest_articles":
+      return <ArticleListBlock title={title} description={description} settings={block.settings} layout="list" />;
     case "article_grid":
       return <ArticleListBlock title={title} description={description} settings={block.settings} />;
     case "editors_picks": {
       const settings = block.settings.source === "latest" ? { ...block.settings, source: "editors_picks" as const } : block.settings;
-      return <ArticleListBlock title={title ?? "Pili ng Editor"} description={description} settings={settings} tone="surface" />;
+      return <ArticleListBlock title={title ?? "Pili ng Editor"} description={description} settings={settings} layout="side" />;
     }
     case "category_showcase":
       return <CategoryShowcaseBlock title={title} description={description} settings={block.settings} />;

@@ -48,7 +48,7 @@ describe("migrations and seed", () => {
       `select (select count(*)::int from public.categories) c, (select count(*)::int from public.navigation_items) n,
               (select count(*)::int from public.homepage_configurations) h`,
     );
-    expect(counts.rows[0]).toMatchObject({ c: 17, n: 13, h: 2 });
+    expect(counts.rows[0]).toMatchObject({ c: 17, n: 18, h: 2 });
   });
 
   it("creates a profile for each new auth user", async () => {

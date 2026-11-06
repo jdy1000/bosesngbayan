@@ -271,14 +271,14 @@ describe("homepage builder", () => {
   it("editor publishes the draft; anon sees only the published version; writer cannot", async () => {
     await asRole(db, "authenticated", editor, (tx) =>
       tx.query(
-        "update public.homepage_sections set title = 'Bagong Pamagat' where block_type = 'article_grid' and configuration_id = (select id from public.homepage_configurations where status = 'draft')",
+        "update public.homepage_sections set title = 'Bagong Pamagat' where block_type = 'latest_articles' and configuration_id = (select id from public.homepage_configurations where status = 'draft')",
       ),
     );
-    const before = await asRole(db, "anon", null, (tx) => tx.query<{ title: string }>("select s.title from public.homepage_sections s where s.block_type = 'article_grid'"));
-    expect(before.rows.map((r) => r.title)).toEqual(["Mga Balita"]);
+    const before = await asRole(db, "anon", null, (tx) => tx.query<{ title: string }>("select s.title from public.homepage_sections s where s.block_type = 'latest_articles'"));
+    expect(before.rows.map((r) => r.title)).toEqual(["Pinakabagong Balita"]);
     await expect(asRole(db, "authenticated", writer, (tx) => tx.query("select public.publish_homepage('x')"))).rejects.toThrow(/not_authorized/);
     await asRole(db, "authenticated", editor, (tx) => tx.query("select public.publish_homepage('v2')"));
-    const after = await asRole(db, "anon", null, (tx) => tx.query<{ title: string }>("select s.title from public.homepage_sections s where s.block_type = 'article_grid'"));
+    const after = await asRole(db, "anon", null, (tx) => tx.query<{ title: string }>("select s.title from public.homepage_sections s where s.block_type = 'latest_articles'"));
     expect(after.rows.map((r) => r.title)).toEqual(["Bagong Pamagat"]);
   });
 

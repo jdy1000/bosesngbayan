@@ -57,11 +57,11 @@ export function SiteFooter({
   const copyright = general.copyright_text.replace("{year}", String(new Date().getFullYear()));
 
   return (
-    <footer className="bg-navy text-white">
+    <footer className="mt-16 bg-navy-900 text-white">
       <div className="container-site grid gap-12 py-14 md:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1.4fr] lg:py-16">
         <div className="max-w-sm">
           <Link href="/" aria-label={`${general.site_name} — Bahay`} className="inline-block">
-            <Logo siteName={general.site_name} logoUrl={logoUrl} inverted />
+            <Logo siteName={general.site_name} logoUrl={logoUrl} size="sm" inverted />
           </Link>
           {general.description && <p className="mt-5 text-[0.95rem] leading-relaxed text-white/75">{general.description}</p>}
           {socials.length > 0 && (
@@ -72,7 +72,7 @@ export function SiteFooter({
                     href={s.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-10 items-center rounded-full border border-white/20 px-4 text-sm font-semibold text-white/90 transition-colors hover:border-white/50 hover:text-white"
+                    className="inline-flex min-h-10 items-center rounded border border-white/20 px-4 text-sm font-semibold text-white/90 transition-colors hover:border-white/50 hover:text-white"
                   >
                     {s.label}
                   </a>
@@ -90,8 +90,8 @@ export function SiteFooter({
         <FooterLinks title="Mga Paksa" items={categoryLinks} />
 
         {newsletter.enabled && (
-          <div>
-            <h2 className="font-serif text-2xl font-semibold text-white">{footer.newsletter_title}</h2>
+          <div id="newsletter" className="scroll-mt-24">
+            <h2 className="text-xl font-semibold text-white">{footer.newsletter_title}</h2>
             {footer.newsletter_description && <p className="mt-2 text-[0.95rem] text-white/75">{footer.newsletter_description}</p>}
             <div className="mt-5">
               <NewsletterForm consentText={newsletter.consent_text} source="footer" tone="dark" />

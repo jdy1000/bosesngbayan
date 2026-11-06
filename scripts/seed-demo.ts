@@ -128,18 +128,27 @@ function doc(paragraphs: string[]) {
   };
 }
 
-const ARTICLES = [
-  { slug: "demo-ruta-ng-dyip", title: "[Demo] Paano naaapektuhan ng bagong ruta ang mga pasahero ng dyip", category: "transportasyon", image: "jeepney.jpg", featured: true },
-  { slug: "demo-silid-aralan", title: "[Demo] Mga guro at magulang, nagbahagi ng pananaw sa bagong school year", category: "edukasyon", image: "classroom.jpg" },
-  { slug: "demo-klinika-sa-barangay", title: "[Demo] Klinika sa barangay: ano ang kailangan ng komunidad?", category: "kalusugan", image: "healthcare.jpg" },
-  { slug: "demo-palengke", title: "[Demo] Sa palengke, presyo ng bilihin ang laging usapan", category: "ekonomiya", image: "market.jpg" },
+const ARTICLES: { slug: string; title: string; category: string; image: string; featured?: boolean; pick?: boolean; location?: string }[] = [
+  { slug: "demo-ruta-ng-dyip", title: "[Demo] Paano naaapektuhan ng bagong ruta ang mga pasahero ng dyip", category: "transportasyon", image: "jeepney.jpg", featured: true, location: "ncr" },
+  { slug: "demo-silid-aralan", title: "[Demo] Mga guro at magulang, nagbahagi ng pananaw sa bagong school year", category: "edukasyon", image: "classroom.jpg", pick: true },
+  { slug: "demo-klinika-sa-barangay", title: "[Demo] Klinika sa barangay: ano ang kailangan ng komunidad?", category: "kalusugan", image: "healthcare.jpg", location: "western-visayas" },
+  { slug: "demo-palengke", title: "[Demo] Sa palengke, presyo ng bilihin ang laging usapan", category: "ekonomiya", image: "market.jpg", pick: true },
   { slug: "demo-trabaho-sa-lungsod", title: "[Demo] Mga manggagawa sa lungsod, naghahanap ng mas maikling biyahe", category: "trabaho", image: "office-workers.jpg" },
-  { slug: "demo-palayan", title: "[Demo] Tag-ani sa palayan: kuwento ng mga magsasaka", category: "komunidad", image: "rice-field.jpg" },
+  { slug: "demo-palayan", title: "[Demo] Tag-ani sa palayan: kuwento ng mga magsasaka", category: "komunidad", image: "rice-field.jpg", location: "central-luzon" },
+  { slug: "demo-pantalan", title: "[Demo] Sa pantalan ng isang bayang baybayin, maagang nagsisimula ang araw", category: "pilipinas", image: "coastal-town.jpg", location: "eastern-visayas" },
+  { slug: "demo-pagtitipon", title: "[Demo] Mga mamamayan, nagtipon para sa pampublikong konsultasyon", category: "pulitika", image: "crowd-flag.jpg", pick: true },
+  { slug: "demo-kabataan", title: "[Demo] Kabataang boluntaryo, tumutulong sa programa ng barangay", category: "komunidad", image: "hero-community.jpg", location: "davao-region" },
+  { slug: "demo-makati", title: "[Demo] Mga negosyo sa sentro ng lungsod, naghahanda sa bagong taon ng piskal", category: "business", image: "manila-skyline.jpg", location: "ncr" },
+  { slug: "demo-ani-at-presyo", title: "[Demo] Ani at presyo: paano umaabot ang bigas mula bukid hanggang mesa", category: "ekonomiya", image: "rice-field.jpg", pick: true },
+  { slug: "demo-online-na-klase", title: "[Demo] Ang papel ng teknolohiya sa silid-aralan ngayon", category: "teknolohiya", image: "classroom.jpg" },
+  { slug: "demo-health-center", title: "[Demo] Health center sa probinsya, pinalawak ang oras ng serbisyo", category: "kalusugan", image: "healthcare.jpg", location: "northern-mindanao" },
 ];
 
 async function seedArticles(editor: Db, writerId: string, media: Record<string, string>) {
   const { data: cats, error } = await editor.from("categories").select("id, slug");
   if (error) throw error;
+  const { data: locs, error: locError } = await editor.from("locations").select("id, slug");
+  if (locError) throw locError;
   const ids: string[] = [];
   for (const a of ARTICLES) {
     const { data: existing } = await editor.from("articles").select("id").eq("slug", a.slug).maybeSingle();
@@ -166,6 +175,7 @@ async function seedArticles(editor: Db, writerId: string, media: Record<string, 
         author_id: writerId,
         category_id: cats.find((c) => c.slug === a.category)?.id ?? null,
         featured_image_id: media[a.image] ?? null,
+        location_id: a.location ? (locs.find((l) => l.slug === a.location)?.id ?? null) : null,
         source_attribution: "Demo content",
       })
       .select("id")
@@ -175,7 +185,10 @@ async function seedArticles(editor: Db, writerId: string, media: Record<string, 
       const { error: tError } = await editor.rpc("transition_article", { p_article_id: data.id, p_to: to, p_note: "Demo seed" });
       if (tError) throw tError;
     }
-    if (a.featured) await editor.from("articles").update({ is_featured: true }).eq("id", data.id);
+    if (a.featured || a.pick) {
+      const { error: flagError } = await editor.from("articles").update({ is_featured: Boolean(a.featured), is_editors_pick: Boolean(a.pick) }).eq("id", data.id);
+      if (flagError) throw flagError;
+    }
     ids.push(data.id);
   }
   return ids;
@@ -241,6 +254,7 @@ async function wireHomepage(editor: Db, media: Record<string, string>, pollId: s
   for (const s of sections ?? []) {
     const settings = s.settings as Record<string, unknown>;
     if (s.block_type === "hero") settings.image_id = media["hero-community.jpg"] ?? null;
+    else if (s.block_type === "poll_showcase") settings.poll_id = pollId;
     else if (s.block_type === "custom_cta" && settings.variant === "banner") settings.image_id = media["crowd-flag.jpg"] ?? null;
     else continue;
     if (s.block_type === "hero") settings.poll_id = pollId;

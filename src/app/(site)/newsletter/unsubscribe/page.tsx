@@ -13,7 +13,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
   const valid = typeof token === "string" && /^[0-9a-f-]{36}$/i.test(token);
   return (
     <div className="container-site max-w-lg py-16">
-      <h1 className="font-serif text-3xl font-bold text-navy">Mag-unsubscribe sa newsletter</h1>
+      <h1 className="text-3xl font-semibold text-ink">Mag-unsubscribe sa newsletter</h1>
       {valid ? (
         <UnsubscribeForm token={token} />
       ) : (

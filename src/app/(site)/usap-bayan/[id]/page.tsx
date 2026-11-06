@@ -39,7 +39,7 @@ export default async function CommunityPostPage({ params }: Props) {
         {COMMUNITY_KIND_LABELS[post.kind]}
         {post.category ? ` · ${post.category.name}` : ""}
       </p>
-      <h1 className="mt-2 font-serif text-4xl font-bold leading-tight text-navy">{post.title}</h1>
+      <h1 className="mt-2 text-4xl font-semibold leading-tight text-ink">{post.title}</h1>
       <p className="mt-3 text-sm text-muted">
         Ibinahagi ni <strong className="font-semibold text-ink-soft">{post.author_name}</strong>
         {post.author_location ? ` mula sa ${post.author_location}` : ""}

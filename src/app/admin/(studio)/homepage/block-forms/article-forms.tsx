@@ -2,7 +2,7 @@
 
 import { ARTICLE_SOURCES } from "@/lib/homepage/blocks";
 import type { BlockFormProps } from "../types";
-import { ArticlePicker, LinkField, MultiOptionField, NumberField, OptionSelect, SelectField } from "./fields";
+import { ArticlePicker, CheckField, LinkField, MultiOptionField, NumberField, OptionSelect, SelectField } from "./fields";
 
 const SOURCE_LABELS: Record<(typeof ARTICLE_SOURCES)[number], string> = {
   latest: "Pinakabago",
@@ -34,6 +34,43 @@ export function ArticleListForm({ value, onChange, options }: BlockFormProps<"la
         <ArticlePicker label="Mga artikulo" value={value.article_ids} onChange={(v) => set("article_ids", v)} max={24} options={options} />
       )}
       <LinkField label="Tingnan lahat na link" value={value.view_all} onChange={(v) => set("view_all", v)} />
+      <CheckField
+        label="Ipakita ang Pinakabinasa sa gilid (Pinakabagong Balita lamang; nakatago kapag wala pang datos)"
+        checked={value.with_sidebar}
+        onChange={(v) => set("with_sidebar", v)}
+      />
+    </div>
+  );
+}
+
+export function TopStoriesForm({ value, onChange, options }: BlockFormProps<"top_stories">) {
+  const set = <K extends keyof typeof value>(k: K, v: (typeof value)[K]) => onChange({ ...value, [k]: v });
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <SelectField
+          label="Pangunahing balita"
+          value={value.lead_source}
+          onChange={(v) => set("lead_source", v || "featured")}
+          options={[
+            { value: "featured", label: "Pinakabagong featured" },
+            { value: "latest", label: "Pinakabago" },
+            { value: "manual", label: "Manwal na pagpili" },
+          ]}
+        />
+        <NumberField label="Balita sa gilid" value={value.rail_count} onChange={(v) => set("rail_count", v)} min={0} max={6} />
+        <NumberField label="Balita sa ibaba" value={value.below_count} onChange={(v) => set("below_count", v)} min={0} max={6} />
+      </div>
+      {value.lead_source === "manual" && (
+        <ArticlePicker
+          label="Artikulo"
+          value={value.lead_article_id ? [value.lead_article_id] : []}
+          onChange={(v) => set("lead_article_id", v.at(-1) ?? null)}
+          max={1}
+          options={options}
+        />
+      )}
+      <p className="text-xs text-muted">Ang iba pang balita ay ang pinakabagong nailathala, hindi kasama ang pangunahing balita.</p>
     </div>
   );
 }

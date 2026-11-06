@@ -8,6 +8,7 @@ import { z } from "zod";
 
 export const BLOCK_TYPES = [
   "hero",
+  "top_stories",
   "trending_topics",
   "breaking_news",
   "featured_story",
@@ -28,7 +29,8 @@ export const BLOCK_TYPES = [
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
-  hero: "Hero",
+  hero: "Hero (botohan)",
+  top_stories: "Top stories",
   trending_topics: "Trending topics",
   breaking_news: "Breaking news",
   featured_story: "Featured story",
@@ -85,6 +87,15 @@ const articleListSettings = z.object({
   article_ids: z.array(uuid).max(24).default([]),
   limit: limit(24, 3),
   view_all: optionalLink,
+  /** latest_articles only: numbered most-read sidebar (hidden when there is no page-view data). */
+  with_sidebar: z.boolean().default(false),
+});
+
+const topStoriesSettings = z.object({
+  lead_source: z.enum(["featured", "latest", "manual"]).default("featured"),
+  lead_article_id: optionalUuid,
+  rail_count: z.number().int().min(0).max(6).default(4),
+  below_count: z.number().int().min(0).max(6).default(3),
 });
 
 const featuredStorySettings = z.object({
@@ -173,6 +184,7 @@ const quizSettings = z.object({
 
 export const BLOCK_SETTINGS_SCHEMAS = {
   hero: heroSettings,
+  top_stories: topStoriesSettings,
   trending_topics: trendingSettings,
   breaking_news: breakingSettings,
   featured_story: featuredStorySettings,

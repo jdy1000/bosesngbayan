@@ -16,7 +16,7 @@ export default async function TopicsPage() {
   return (
     <div className="container-site py-10 md:py-14">
       <header className="section-kicker mb-10 max-w-3xl">
-        <h1 className="font-serif text-4xl font-bold text-navy md:text-5xl">Mga Paksa</h1>
+        <h1 className="text-4xl font-semibold text-ink md:text-5xl">Mga Paksa</h1>
         <p className="mt-3 text-lg text-ink-soft">Piliin ang paksang mahalaga sa iyo.</p>
       </header>
       {categories.length === 0 ? (
@@ -32,13 +32,13 @@ export default async function TopicsPage() {
                     {src ? (
                       <Image src={src} alt="" fill sizes="64px" className="object-cover" />
                     ) : (
-                      <span className="flex h-full items-center justify-center font-serif text-2xl font-bold text-brand-700" aria-hidden="true">
+                      <span className="flex h-full items-center justify-center text-2xl font-semibold text-brand-700" aria-hidden="true">
                         {c.name.charAt(0)}
                       </span>
                     )}
                   </div>
                   <div className="min-w-0">
-                    <h2 className="font-serif text-xl font-semibold text-ink group-hover:text-brand">{c.name}</h2>
+                    <h2 className="text-xl font-semibold text-ink group-hover:text-brand">{c.name}</h2>
                     {c.description && <p className="line-clamp-2 text-sm text-ink-soft">{c.description}</p>}
                   </div>
                 </Link>
@@ -49,7 +49,7 @@ export default async function TopicsPage() {
       )}
       {regions.length > 0 && (
         <section className="mt-14">
-          <h2 className="mb-5 font-serif text-2xl font-bold text-navy">Ayon sa Rehiyon</h2>
+          <h2 className="mb-5 text-2xl font-semibold text-ink">Ayon sa Rehiyon</h2>
           <ul className="flex flex-wrap gap-2">
             {regions.map((r) => (
               <li key={r.id}>

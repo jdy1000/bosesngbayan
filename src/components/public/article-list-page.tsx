@@ -34,7 +34,7 @@ export function ArticleListPage({
     <div className="container-site py-10 md:py-14">
       <header className="section-kicker mb-8 max-w-3xl">
         {kicker && <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-accent">{kicker}</p>}
-        <h1 className="font-serif text-4xl font-bold leading-tight text-navy md:text-5xl">{title}</h1>
+        <h1 className="text-4xl font-semibold leading-tight text-ink md:text-5xl">{title}</h1>
         {description && <p className="mt-3 text-lg text-ink-soft">{description}</p>}
       </header>
       {filters}

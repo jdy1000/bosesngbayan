@@ -26,7 +26,7 @@ export function NewsQuiz({ questions }: { questions: Question[] }) {
           <fieldset key={qi} className="card p-6">
             <legend className="sr-only">Tanong {qi + 1}</legend>
             <p className="text-xs font-bold uppercase tracking-wider text-brand">Tanong {qi + 1}</p>
-            <p className="mt-1 font-serif text-xl font-semibold text-ink">{q.question}</p>
+            <p className="mt-1 text-xl font-semibold text-ink">{q.question}</p>
             <div className="mt-4 grid gap-2">
               {q.options.map((opt, oi) => {
                 const isCorrect = oi === q.correct_index;

@@ -66,7 +66,7 @@ export function ArticleView({
             </Link>
           )}
         </div>
-        <h1 className="mt-4 font-serif text-[2.2rem] font-bold leading-[1.1] tracking-[-0.01em] text-navy md:text-[3rem]">{article.title}</h1>
+        <h1 className="mt-4 text-[2rem] font-semibold leading-[1.12] tracking-[-0.02em] text-ink md:text-[2.75rem]">{article.title}</h1>
         {article.subtitle && <p className="mt-4 text-xl leading-relaxed text-ink-soft">{article.subtitle}</p>}
 
         <div className="mt-6 flex flex-col gap-4 border-y border-line py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -102,7 +102,7 @@ export function ArticleView({
 
       {image && (
         <figure className="container-site mt-8 max-w-[1040px]">
-          <div className="relative aspect-[16/9] overflow-hidden rounded-[18px] bg-surface-2">
+          <div className="relative aspect-[16/9] overflow-hidden rounded bg-surface-2">
             <Image src={image} alt={article.image?.alt_text ?? ""} fill priority sizes="(min-width: 1040px) 1040px, 100vw" className="object-cover" />
           </div>
           {(article.image?.caption || article.image?.credit) && (
@@ -116,7 +116,7 @@ export function ArticleView({
 
       <div className="container-site max-w-[760px] py-10">
         {article.correction_note && (
-          <aside className="mb-8 rounded-xl border-l-4 border-accent bg-red-50/60 px-5 py-4 text-[0.95rem] text-ink">
+          <aside className="mb-8 rounded border-l-4 border-accent bg-red-50/60 px-5 py-4 text-[0.95rem] text-ink">
             <p className="font-bold">Pagwawasto</p>
             <p className="mt-1">{article.correction_note}</p>
           </aside>
@@ -139,7 +139,7 @@ export function ArticleView({
           </ul>
         )}
         {article.author?.bio && (
-          <div className="mt-10 rounded-xl bg-surface p-5">
+          <div className="mt-10 rounded border-t-[3px] border-ink bg-surface p-5">
             <p className="text-sm font-bold text-ink">Tungkol kay {article.author.display_name}</p>
             <p className="mt-1 text-[0.95rem] text-ink-soft">{article.author.bio}</p>
           </div>

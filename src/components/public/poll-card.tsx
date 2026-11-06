@@ -103,7 +103,7 @@ export function PollCard({
         </span>
         {closesLabel && <span className="text-xs text-muted">{closesLabel}</span>}
       </div>
-      <h3 id={`${id}-q`} className={`font-serif font-bold leading-snug text-ink ${hero ? "text-xl" : "text-2xl md:text-[1.75rem]"}`}>
+      <h3 id={`${id}-q`} className={`font-semibold leading-snug text-ink ${hero ? "text-xl" : "text-2xl md:text-[1.75rem]"}`}>
         {poll.question}
       </h3>
       {multiple && canVote && <p className="mt-1 text-sm text-muted">Pumili ng hanggang {poll.max_choices}.</p>}

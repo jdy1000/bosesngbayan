@@ -38,7 +38,7 @@ export async function HeroBlock({ settings }: { settings: BlockSettings<"hero"> 
               {settings.eyebrow}
             </p>
           )}
-          <h1 className="font-serif text-[2.6rem] font-bold leading-[1.04] tracking-[-0.015em] text-navy sm:text-[3.4rem] lg:text-[4rem]">
+          <h1 className="text-[2.6rem] font-semibold leading-[1.04] tracking-[-0.015em] text-ink sm:text-[3.4rem] lg:text-[4rem]">
             <Headline text={settings.headline} highlight={settings.highlight} />
           </h1>
           {settings.description && <p className="mt-5 max-w-lg text-lg leading-relaxed text-ink-soft md:text-xl">{settings.description}</p>}
@@ -58,14 +58,14 @@ export async function HeroBlock({ settings }: { settings: BlockSettings<"hero"> 
           )}
           {settings.show_participation_count && ballots > 0 && (
             <p className="mt-8 text-[0.95rem] text-ink-soft">
-              <strong className="font-serif text-2xl font-bold text-navy tabular-nums">{formatNumber(ballots)}</strong>{" "}
+              <strong className="text-2xl font-semibold text-ink tabular-nums">{formatNumber(ballots)}</strong>{" "}
               {settings.participation_label || "boto na ang naitala"}
             </p>
           )}
         </div>
 
         <div className="relative">
-          <div className="relative aspect-[4/3] overflow-hidden rounded-[22px] bg-gradient-to-br from-brand to-navy shadow-[var(--shadow-float)] sm:aspect-[16/11] lg:aspect-[5/4.4]">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-gradient-to-br from-brand to-navy shadow-[var(--shadow-float)] sm:aspect-[16/11] lg:aspect-[5/4.4]">
             {src ? (
               <Image
                 src={src}
@@ -77,7 +77,7 @@ export async function HeroBlock({ settings }: { settings: BlockSettings<"hero"> 
               />
             ) : (
               <div className="absolute inset-0 flex items-start p-8" aria-hidden="true">
-                <span className="font-serif text-5xl font-bold leading-none text-white/15">Boses ng Bayan</span>
+                <span className="text-5xl font-semibold leading-none text-white/15">Boses ng Bayan</span>
               </div>
             )}
             {image?.credit && (

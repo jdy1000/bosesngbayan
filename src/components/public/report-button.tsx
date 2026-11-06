@@ -36,7 +36,7 @@ export function ReportButton({ postId, commentId }: { postId?: string; commentId
       >
         <Flag className="h-3.5 w-3.5" aria-hidden="true" /> I-report
       </button>
-      <dialog ref={dialog} className="m-auto w-[min(440px,calc(100vw-2rem))] rounded-2xl p-6 backdrop:bg-black/50" aria-label="I-report ang nilalaman">
+      <dialog ref={dialog} className="m-auto w-[min(440px,calc(100vw-2rem))] rounded-md p-6 backdrop:bg-black/50" aria-label="I-report ang nilalaman">
         {state?.tone === "ok" ? (
           <div className="space-y-4">
             <p role="status" className="text-[0.95rem] text-ink">{state.text}</p>
@@ -46,7 +46,7 @@ export function ReportButton({ postId, commentId }: { postId?: string; commentId
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <h2 className="font-serif text-xl font-bold text-ink">I-report ang nilalaman</h2>
+            <h2 className="text-xl font-semibold text-ink">I-report ang nilalaman</h2>
             <fieldset className="space-y-2">
               <legend className="mb-1 text-sm font-semibold text-ink">Dahilan</legend>
               {REPORT_REASONS.map((r) => (

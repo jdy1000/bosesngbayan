@@ -114,7 +114,7 @@ export function CommentSection({
 
   return (
     <section aria-labelledby="comments-heading" className="mt-12 border-t border-line pt-8">
-      <h2 id="comments-heading" className="font-serif text-2xl font-bold text-ink">
+      <h2 id="comments-heading" className="text-2xl font-semibold text-ink">
         Talakayan {comments.length > 0 && <span className="text-muted">({comments.length})</span>}
       </h2>
       {roots.length > 0 ? (
