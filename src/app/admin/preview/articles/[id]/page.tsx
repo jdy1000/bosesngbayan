@@ -28,11 +28,11 @@ export default async function ArticlePreviewPage({ params }: { params: Promise<{
         related={related}
         shareUrl={`${site}/balita/${preview.detail.slug}`}
         banner={
-          <div role="note" className="sticky top-0 z-30 flex flex-wrap items-center gap-3 bg-amber-400 px-4 py-2 text-sm font-bold text-navy">
-            PREVIEW — hindi pa nakalathala
+          <div role="note" className="sticky top-0 z-30 flex flex-wrap items-center gap-3 bg-amber-400 px-4 py-2 text-sm font-bold text-black">
+            PREVIEW — not published yet
             <span className="font-semibold">Status: {ARTICLE_STATUS[preview.status]?.label ?? preview.status}</span>
             <Link href={`/admin/articles/${id}`} className="ml-auto underline">
-              Bumalik sa editor
+              Back to editor
             </Link>
           </div>
         }

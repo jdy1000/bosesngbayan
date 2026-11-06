@@ -6,8 +6,10 @@ import { getPublicArticleBySlug, getRelatedArticles } from "@/lib/cms/articles";
 import { listApprovedComments } from "@/lib/cms/community";
 import { redirectOrNotFound } from "@/lib/cms/redirects";
 import { getSiteSettings } from "@/lib/cms/site";
+import { localizeSettings } from "@/lib/settings/schema";
 import { siteUrl } from "@/lib/env";
 import { timeAgo } from "@/lib/format";
+import { getLocale } from "@/lib/i18n/server";
 import { mediaUrl } from "@/lib/media";
 import { buildMetadata } from "@/lib/seo";
 
@@ -35,7 +37,9 @@ export default async function ArticlePage({ params }: Props) {
   const article = await getPublicArticleBySlug(slug);
   if (!article) return redirectOrNotFound(`/balita/${slug}`);
 
-  const [related, settings] = await Promise.all([getRelatedArticles(article), getSiteSettings()]);
+  const [related, rawSettings, locale] = await Promise.all([getRelatedArticles(article), getSiteSettings(), getLocale()]);
+  // Text the reader sees (newsletter title, consent) follows the reader's language; the consent shown must equal the consent stored.
+  const settings = localizeSettings(rawSettings, locale);
   const commentsOpen = article.allow_comments && settings.publication.comments_enabled;
   const comments = commentsOpen || article.allow_comments ? await listApprovedComments({ articleId: article.id }) : [];
   const url = siteUrl(`/balita/${article.slug}`);
@@ -78,7 +82,7 @@ export default async function ArticlePage({ params }: Props) {
               <CommentSection
                 target={{ articleId: article.id }}
                 isOpen={commentsOpen}
-                comments={comments.map((c) => ({ ...c, created_label: timeAgo(c.created_at) }))}
+                comments={comments.map((c) => ({ ...c, created_label: timeAgo(c.created_at, undefined, locale) }))}
               />
             )}
           </>

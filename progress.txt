@@ -182,3 +182,34 @@ Not browser-checked: the reset "new password" page (needs a recovery session); i
 - Top stories: the right rail's divider/list sat ~24px above the story row's divider because each column stacked on its own. Fix: lg grid with two shared rows (CSS subgrid); lead + rail top card share row 1, story row + rail list share row 2, both rules start on the same line.
 - Balitang Rehiyon: story lists started at different heights because the region chips wrap to 2-4 lines per column. Fix: each column spans three shared subgrid rows (head, chips, stories) from md up; empty chip slot keeps the row; chips pinned with content-start.
 Checks: tsc, lint clean, build OK, e2e 10/10. Measured: story row vs rail list top 585/585 (1440, 1280), 685/685 (1024); region lists 4203 x3 (1440/1280), 4348 x3 (1024), paired columns level at 820. Screenshots reviewed.
+
+[2026-11-06] Owner requests: English Studio, FIL/EN public site, light/dark mode, logo favicon (ADR-015)
+- i18n: typed message catalogues (src/lib/i18n), getI18n()/useI18n(), bnb_lang cookie with the Site Settings default (fil). Localized: public shell, archives, search, article, poll, Usap Bayan, homepage blocks, newsletter and public API messages. Dates use fil-PH/en-PH. Studio, Studio actions and shared action/DB error messages are in English; Studio always renders lang="en".
+- English CMS labels (optional, fall back to Filipino): navigation label_en, homepage section title_en/description_en (migration 20261106001100; publish/restore functions copy them), block link label_en, Site Settings *_en fields. Studio forms added for all of them. The seed gained idempotent English values; applied to the local DB.
+- Dark mode: colour roles moved to CSS variables with a :root[data-theme="dark"] block (true black page). bg-white surfaces became bg-paper (public + Studio). Dark overrides for brand/navy/accent-700 text and the Tailwind status tints. Studio charts use theme variables. Theme toggle in the site header, the mobile menu and the Studio top bar.
+- Favicon: icons drawn from the logo mark (speech bubble + red "ng" tile): public/favicon.ico (16/32/48), public/brand/icon.svg, apple-icon.png, icon-512.png. The Studio Settings favicon overrides them. That picker was a dead control before: it saved a value nothing used.
+- Failure: Studio article thumbnails did not load against the local stack. Root cause: the production CSP img-src allowed only https:, while local Supabase storage is http. Fix: img-src also lists the configured Supabase origin (src/proxy.ts). Real (https) deployments were not affected.
+- Failure: red status badges and notices were unreadable in dark mode (text-accent-700 mixes toward black). Fix: a dark override to a light red. hover:bg-accent-700 keeps its dark red under white text.
+Checks:
+- tsc clean, lint clean, build OK.
+- vitest 96/96. New test: English titles/link labels with fallback.
+- e2e 12/12, desktop + mobile. New test: FIL->EN and light->dark both persist after reload.
+- Browser (Playwright, production build):
+  - EN switches lang, menus and CTA. Dark sets data-theme and a black page.
+  - /favicon.ico returns 200 image/x-icon; icon links present.
+  - Settings English fields save and show publicly (value restored afterwards).
+  - Studio dashboard/articles/settings reviewed in dark and light. No console errors.
+- Seed dry-run in a rolled-back transaction OK.
+- Lighthouse: / 85, /balita 91, article 95, /botohan 100, /usap-bayan 99.
+Not verified:
+- The reset-password page and the Studio media/moderation pages in dark mode (no screenshots taken; they use the same tokens and components).
+- A CMS-uploaded favicon override (no favicon media set locally).
+Code review follow-up (independent reviewer, same day):
+- HIGH fixed: the article page showed the Filipino newsletter consent to English readers while the API stored the English consent. The page now uses localizeSettings. The form also sends the language it was rendered in, and the API records the consent for that language, so a cookie changed in another tab cannot split them. Verified in the browser: EN and FIL subscriptions each stored the wording shown (test rows deleted).
+- Contrast fixes in dark mode: text-accent (form errors, red labels) lightened. Brand-blue text, category labels, article links and the focus ring now use a 50% white mix, so a dark custom brand colour that passes on white still passes on black.
+- The homepage draft preview applies the English labels in English mode.
+- The Studio login "Back to Boses ng Bayan" link does a full load, so <html lang> switches.
+- The proxy matches /admin by exact segment (/admin or /admin/...), so a public slug like /administrasyon is not treated as Studio.
+- readJson loads messages only when rejecting a request: same-origin/type/size checks run before any settings read.
+- Left as a known limit: in English mode <html lang="en"> also covers Filipino editorial content (articles, posts). Fixing that needs a per-content language field.
+Checks after fixes: tsc, lint clean, vitest 96/96, build OK, e2e 12/12.

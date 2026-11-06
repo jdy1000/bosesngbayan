@@ -31,18 +31,18 @@ export default async function TrendingPage() {
   return (
     <>
       <PageHeader
-        title="Kategorya at Tag"
-        description="Ang trending bar sa ilalim ng header. Editoryal na pinipili ang mga ito — hindi ito awtomatikong batay sa trapiko."
+        title="Categories & tags"
+        description="The trending bar below the header. Topics are chosen editorially — not automatically from traffic."
       />
       <TaxonomyTabs current="/admin/taxonomy/trending" />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div>
           {error ? (
-            <Notice tone="error">Hindi makuha ang mga trending topic.</Notice>
+            <Notice tone="error">Couldn’t load trending topics.</Notice>
           ) : !topics?.length ? (
-            <Empty title="Walang trending topic">Magdagdag gamit ang panel sa kanan.</Empty>
+            <Empty title="No trending topics">Add one with the panel on the right.</Empty>
           ) : (
-            <Table head={["Ayos", "Label", "Patutunguhan", "Status", "Aksyon"]}>
+            <Table head={["Order", "Label", "Destination", "Status", "Actions"]}>
               {topics.map((t, i) => (
                 <tr key={t.id}>
                   <td className="w-24">
@@ -50,38 +50,38 @@ export default async function TrendingPage() {
                       <input type="hidden" name="id" value={t.id} />
                       <SubmitButton name="op" value="up" variant="ghost" pendingLabel="…" className={i === 0 ? "invisible" : ""}>
                         <span aria-hidden="true">↑</span>
-                        <span className="sr-only">Itaas ang {t.label}</span>
+                        <span className="sr-only">Move {t.label} up</span>
                       </SubmitButton>
                       <SubmitButton name="op" value="down" variant="ghost" pendingLabel="…" className={i === topics.length - 1 ? "invisible" : ""}>
                         <span aria-hidden="true">↓</span>
-                        <span className="sr-only">Ibaba ang {t.label}</span>
+                        <span className="sr-only">Move {t.label} down</span>
                       </SubmitButton>
                     </ActionForm>
                   </td>
                   <td className="font-semibold text-ink">{t.label}</td>
                   <td className="text-ink-soft">
-                    {t.category ? `Kategorya: ${t.category.name}` : t.tag ? `Tag: ${t.tag.name}` : <code className="text-xs">{t.href}</code>}
+                    {t.category ? `Category: ${t.category.name}` : t.tag ? `Tag: ${t.tag.name}` : <code className="text-xs">{t.href}</code>}
                   </td>
-                  <td>{t.is_active ? <Badge tone="green">Ipinapakita</Badge> : <Badge>Nakatago</Badge>}</td>
+                  <td>{t.is_active ? <Badge tone="green">Visible</Badge> : <Badge>Hidden</Badge>}</td>
                   <td>
                     <div className="flex flex-wrap items-start gap-2">
                       <ActionForm action={trendingOp}>
                         <input type="hidden" name="id" value={t.id} />
-                        <SubmitButton name="op" value="toggle" variant="outline" pendingLabel="Sandali…">
-                          {t.is_active ? "Itago" : "Ipakita"}
+                        <SubmitButton name="op" value="toggle" variant="outline" pendingLabel="One moment…">
+                          {t.is_active ? "Hide" : "Show"}
                         </SubmitButton>
                       </ActionForm>
                       <details>
-                        <summary className="flex min-h-10 cursor-pointer items-center text-sm font-semibold text-brand">I-edit</summary>
+                        <summary className="flex min-h-10 cursor-pointer items-center text-sm font-semibold text-brand">Edit</summary>
                         <ActionForm action={saveTrending} className="mt-3 w-72 space-y-3">
                           <input type="hidden" name="id" value={t.id} />
                           <TrendingFields value={t} categories={categories ?? []} tags={tags ?? []} idPrefix={t.id} />
-                          <SubmitButton variant="outline">I-save</SubmitButton>
+                          <SubmitButton variant="outline">Save</SubmitButton>
                         </ActionForm>
-                        <ActionForm action={trendingOp} className="mt-3" confirm={`Alisin ang “${t.label}”?`}>
+                        <ActionForm action={trendingOp} className="mt-3" confirm={`Remove “${t.label}”?`}>
                           <input type="hidden" name="id" value={t.id} />
-                          <SubmitButton name="op" value="delete" variant="ghost" pendingLabel="Inaalis…">
-                            Alisin
+                          <SubmitButton name="op" value="delete" variant="ghost" pendingLabel="Removing…">
+                            Remove
                           </SubmitButton>
                         </ActionForm>
                       </details>
@@ -92,10 +92,10 @@ export default async function TrendingPage() {
             </Table>
           )}
         </div>
-        <Panel title="Bagong trending topic">
+        <Panel title="New trending topic">
           <ActionForm action={saveTrending} resetOnSuccess className="space-y-3">
             <TrendingFields categories={categories ?? []} tags={tags ?? []} idPrefix="new" />
-            <SubmitButton>Idagdag</SubmitButton>
+            <SubmitButton>Add</SubmitButton>
           </ActionForm>
         </Panel>
       </div>
@@ -107,18 +107,18 @@ function TrendingFields({ value, categories, tags, idPrefix }: { value?: Topic; 
   const target = value?.tag_id ? "tag" : value?.href ? "href" : "category";
   return (
     <>
-      <Field label="Label" htmlFor={`${idPrefix}-label`} hint="Hanggang 60 character.">
+      <Field label="Label" htmlFor={`${idPrefix}-label`} hint="Up to 60 characters.">
         <input id={`${idPrefix}-label`} name="label" required maxLength={60} defaultValue={value?.label} className="field" />
       </Field>
       <fieldset>
-        <legend className="mb-1.5 text-sm font-semibold text-ink">Patutunguhan (pumili ng isa)</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-ink">Destination (choose one)</legend>
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm">
             <input type="radio" name="target" value="category" defaultChecked={target === "category"} className="size-4" />
-            Kategorya
+            Category
           </label>
-          <select name="category_id" aria-label="Kategorya" defaultValue={value?.category_id ?? ""} className="field">
-            <option value="">— Pumili —</option>
+          <select name="category_id" aria-label="Category" defaultValue={value?.category_id ?? ""} className="field">
+            <option value="">— Choose —</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -130,7 +130,7 @@ function TrendingFields({ value, categories, tags, idPrefix }: { value?: Topic; 
             Tag
           </label>
           <select name="tag_id" aria-label="Tag" defaultValue={value?.tag_id ?? ""} className="field">
-            <option value="">— Pumili —</option>
+            <option value="">— Choose —</option>
             {tags.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -139,14 +139,14 @@ function TrendingFields({ value, categories, tags, idPrefix }: { value?: Topic; 
           </select>
           <label className="flex items-center gap-2 text-sm">
             <input type="radio" name="target" value="href" defaultChecked={target === "href"} className="size-4" />
-            Internal na link
+            Internal link
           </label>
-          <input name="href" aria-label="Internal na link" maxLength={500} placeholder="/paksa/kalusugan" defaultValue={value?.href ?? ""} className="field" />
+          <input name="href" aria-label="Internal link" maxLength={500} placeholder="/paksa/kalusugan" defaultValue={value?.href ?? ""} className="field" />
         </div>
       </fieldset>
       <label className="inline-flex min-h-11 items-center gap-2 text-sm">
         <input type="checkbox" name="is_active" defaultChecked={value?.is_active ?? true} className="size-4" />
-        Ipakita sa site
+        Show on site
       </label>
     </>
   );

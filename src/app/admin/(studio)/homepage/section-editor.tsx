@@ -65,7 +65,7 @@ function IconAction({ action, id, extra, label, disabled, children }: { action: 
       {Object.entries(extra ?? {}).map(([k, v]) => (
         <input key={k} type="hidden" name={k} value={v} />
       ))}
-      <button type="submit" disabled={disabled} aria-label={label} title={label} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-white hover:border-brand disabled:opacity-30">
+      <button type="submit" disabled={disabled} aria-label={label} title={label} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-line bg-paper hover:border-brand disabled:opacity-30">
         {children}
       </button>
     </ActionForm>
@@ -78,35 +78,35 @@ export function SectionEditor({ section, options, index, total }: { section: Bui
   const label = known ? BLOCK_LABELS[section.type as BlockType] : section.type;
 
   return (
-    <li id={`section-${section.id}`} className={`rounded-xl border bg-white ${section.isEnabled ? "border-line" : "border-dashed border-line opacity-90"}`}>
+    <li id={`section-${section.id}`} className={`rounded-xl border bg-paper ${section.isEnabled ? "border-line" : "border-dashed border-line opacity-90"}`}>
       <div className="flex flex-wrap items-center gap-3 px-4 py-3">
         <span className="w-7 text-sm font-bold tabular-nums text-muted">{index + 1}</span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-ink">{section.title || label}</p>
           <p className="text-xs text-muted">
             {label}
-            {!section.isEnabled && <span className="ml-2 font-semibold text-amber-700">Naka-disable</span>}
-            {section.issues.length > 0 && <span className="ml-2 font-semibold text-accent-700">May error sa settings</span>}
+            {!section.isEnabled && <span className="ml-2 font-semibold text-amber-700">Disabled</span>}
+            {section.issues.length > 0 && <span className="ml-2 font-semibold text-accent-700">Settings have errors</span>}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
-          <IconAction action={moveSection} id={section.id} extra={{ dir: "up" }} label="Itaas" disabled={index === 0}>
+          <IconAction action={moveSection} id={section.id} extra={{ dir: "up" }} label="Move up" disabled={index === 0}>
             <ArrowUp className="h-4 w-4" />
           </IconAction>
-          <IconAction action={moveSection} id={section.id} extra={{ dir: "down" }} label="Ibaba" disabled={index === total - 1}>
+          <IconAction action={moveSection} id={section.id} extra={{ dir: "down" }} label="Move down" disabled={index === total - 1}>
             <ArrowDown className="h-4 w-4" />
           </IconAction>
           <ActionForm action={toggleSection}>
             <input type="hidden" name="id" value={section.id} />
             <input type="hidden" name="enable" value={section.isEnabled ? "0" : "1"} />
             <SubmitButton variant="ghost" pendingLabel="…" className="min-h-9 px-3">
-              {section.isEnabled ? "I-disable" : "I-enable"}
+              {section.isEnabled ? "Disable" : "Enable"}
             </SubmitButton>
           </ActionForm>
-          <ActionForm action={deleteSection} confirm={`Tanggalin ang "${section.title || label}" sa draft?`}>
+          <ActionForm action={deleteSection} confirm={`Remove "${section.title || label}" from the draft?`}>
             <input type="hidden" name="id" value={section.id} />
             <SubmitButton variant="ghost" pendingLabel="…" className="min-h-9 px-3 text-accent-700">
-              Tanggalin
+              Remove
             </SubmitButton>
           </ActionForm>
         </div>
@@ -119,30 +119,43 @@ export function SectionEditor({ section, options, index, total }: { section: Bui
         </ul>
       )}
       <details className="border-t border-line">
-        <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold text-brand">I-edit ang section</summary>
+        <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold text-brand">Edit section</summary>
         <ActionForm action={updateSection} className="space-y-4 px-4 pb-4">
           <input type="hidden" name="id" value={section.id} />
           <input type="hidden" name="settings" value={JSON.stringify(settings)} />
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <label htmlFor={`t-${section.id}`} className="mb-1.5 block text-sm font-semibold text-ink">
-                Pamagat ng section
+                Section title
               </label>
               <input id={`t-${section.id}`} name="title" defaultValue={section.title ?? ""} maxLength={200} className="field" />
             </div>
             <div>
               <label htmlFor={`d-${section.id}`} className="mb-1.5 block text-sm font-semibold text-ink">
-                Paglalarawan
+                Description
               </label>
               <input id={`d-${section.id}`} name="description" defaultValue={section.description ?? ""} maxLength={600} className="field" />
             </div>
+            <div>
+              <label htmlFor={`te-${section.id}`} className="mb-1.5 block text-sm font-semibold text-ink">
+                Section title in English
+              </label>
+              <input id={`te-${section.id}`} name="title_en" defaultValue={section.titleEn ?? ""} maxLength={200} className="field" />
+            </div>
+            <div>
+              <label htmlFor={`de-${section.id}`} className="mb-1.5 block text-sm font-semibold text-ink">
+                Description in English
+              </label>
+              <input id={`de-${section.id}`} name="description_en" defaultValue={section.descriptionEn ?? ""} maxLength={600} className="field" />
+            </div>
+            <p className="text-xs text-muted md:col-span-2">The English fields are shown when a reader switches the site to English. Leave them empty to use the Filipino text.</p>
           </div>
           {known ? (
             <SettingsForm type={section.type as BlockType} value={settings} onChange={setSettings} options={options} />
           ) : (
-            <p className="text-sm text-accent-700">Hindi kilalang block type; tanggalin ang section na ito.</p>
+            <p className="text-sm text-accent-700">Unknown block type; remove this section.</p>
           )}
-          {known && <SubmitButton>I-save sa draft</SubmitButton>}
+          {known && <SubmitButton>Save to draft</SubmitButton>}
         </ActionForm>
       </details>
     </li>

@@ -11,7 +11,7 @@ function Chip({ children, onRemove, label }: { children: React.ReactNode; onRemo
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 py-0.5 pl-2.5 pr-1 text-xs font-semibold text-brand-700">
       {children}
-      <button type="button" onClick={onRemove} aria-label={label} className="rounded-full p-0.5 hover:bg-white">
+      <button type="button" onClick={onRemove} aria-label={label} className="rounded-full p-0.5 hover:bg-paper">
         <X className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </span>
@@ -46,9 +46,9 @@ export function TagPicker({ tags, initial, canCreate, disabled, onChange }: { ta
     <div>
       <input type="hidden" name="tag_ids" value={JSON.stringify(selected)} />
       <div className="mb-2 flex flex-wrap gap-1.5">
-        {selected.length === 0 && <span className="text-xs text-muted">Walang tag.</span>}
+        {selected.length === 0 && <span className="text-xs text-muted">No tags.</span>}
         {selected.map((id) => (
-          <Chip key={id} label={`Alisin ang tag ${byId.get(id)?.name ?? ""}`} onRemove={() => !disabled && update(selected.filter((s) => s !== id))}>
+          <Chip key={id} label={`Remove tag ${byId.get(id)?.name ?? ""}`} onRemove={() => !disabled && update(selected.filter((s) => s !== id))}>
             #{byId.get(id)?.name ?? "?"}
           </Chip>
         ))}
@@ -58,14 +58,14 @@ export function TagPicker({ tags, initial, canCreate, disabled, onChange }: { ta
           <input
             type="search"
             className="field"
-            placeholder="Hanapin ang tag…"
-            aria-label="Hanapin ang tag"
+            placeholder="Search tags…"
+            aria-label="Search tags"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           />
           {(matches.length > 0 || (term && !exact)) && (
-            <ul className="mt-1 rounded-lg border border-line bg-white py-1 text-sm">
+            <ul className="mt-1 rounded-lg border border-line bg-paper py-1 text-sm">
               {matches.map((t) => (
                 <li key={t.id}>
                   <button type="button" className="w-full px-3 py-1.5 text-left hover:bg-surface" onClick={() => (update([...selected, t.id]), setQ(""))}>
@@ -76,12 +76,12 @@ export function TagPicker({ tags, initial, canCreate, disabled, onChange }: { ta
               {term && !exact && canCreate && (
                 <li>
                   <button type="button" className="w-full px-3 py-1.5 text-left font-semibold text-brand hover:bg-surface" onClick={create}>
-                    + Gumawa ng tag na “{q.trim()}”
+                    + Create tag “{q.trim()}”
                   </button>
                 </li>
               )}
               {term && !exact && !canCreate && matches.length === 0 && (
-                <li className="px-3 py-1.5 text-xs text-muted">Walang tugma. Ang may pahintulot sa taxonomy lamang ang makakagawa ng bagong tag.</li>
+                <li className="px-3 py-1.5 text-xs text-muted">No matches. Only users with taxonomy permission can create new tags.</li>
               )}
             </ul>
           )}
@@ -115,20 +115,20 @@ export function ContributorsPicker({
   return (
     <div className="space-y-2">
       <input type="hidden" name="contributors" value={JSON.stringify(rows)} />
-      {rows.length === 0 && <p className="text-xs text-muted">Walang kontribyutor.</p>}
+      {rows.length === 0 && <p className="text-xs text-muted">No contributors.</p>}
       {rows.map((r, i) => (
         <div key={r.profile_id} className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{people.find((p) => p.id === r.profile_id)?.display_name ?? "Hindi aktibong user"}</span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{people.find((p) => p.id === r.profile_id)?.display_name ?? "Inactive user"}</span>
           <input
             className="field w-36"
-            aria-label="Papel ng kontribyutor"
+            aria-label="Contributor role"
             value={r.role_label}
             maxLength={60}
             disabled={disabled}
             onChange={(e) => update(rows.map((x, j) => (j === i ? { ...x, role_label: e.target.value } : x)))}
           />
           {!disabled && (
-            <button type="button" className="rounded-md p-1.5 text-muted hover:bg-surface-2" aria-label="Alisin ang kontribyutor" onClick={() => update(rows.filter((_, j) => j !== i))}>
+            <button type="button" className="rounded-md p-1.5 text-muted hover:bg-surface-2" aria-label="Remove contributor" onClick={() => update(rows.filter((_, j) => j !== i))}>
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
@@ -137,11 +137,11 @@ export function ContributorsPicker({
       {!disabled && available.length > 0 && (
         <select
           className="field"
-          aria-label="Magdagdag ng kontribyutor"
+          aria-label="Add contributor"
           value=""
           onChange={(e) => e.target.value && update([...rows, { profile_id: e.target.value, role_label: "Kontribyutor" }])}
         >
-          <option value="">+ Magdagdag ng kontribyutor…</option>
+          <option value="">+ Add contributor…</option>
           {available.map((p) => (
             <option key={p.id} value={p.id}>
               {p.display_name}
@@ -186,13 +186,13 @@ export function RelatedPicker({ articleId, initial, disabled, onChange }: { arti
     <div>
       <input type="hidden" name="related_ids" value={JSON.stringify(selected.map((s) => s.id))} />
       <ol className="mb-2 space-y-1.5">
-        {selected.length === 0 && <li className="text-xs text-muted">Walang napili; awtomatikong kukuha ang site sa parehong kategorya.</li>}
+        {selected.length === 0 && <li className="text-xs text-muted">None selected; the site picks stories from the same category automatically.</li>}
         {selected.map((r) => (
           <li key={r.id} className="flex items-center gap-2 text-sm">
             <span className="min-w-0 flex-1 truncate">{r.title}</span>
             <StatusBadge status={r.status} />
             {!disabled && (
-              <button type="button" className="rounded-md p-1 text-muted hover:bg-surface-2" aria-label={`Alisin ang ${r.title}`} onClick={() => update(selected.filter((s) => s.id !== r.id))}>
+              <button type="button" className="rounded-md p-1 text-muted hover:bg-surface-2" aria-label={`Remove ${r.title}`} onClick={() => update(selected.filter((s) => s.id !== r.id))}>
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             )}
@@ -204,15 +204,15 @@ export function RelatedPicker({ articleId, initial, disabled, onChange }: { arti
           <input
             type="search"
             className="field"
-            placeholder="Hanapin ang artikulo…"
-            aria-label="Hanapin ang kaugnay na artikulo"
+            placeholder="Search articles…"
+            aria-label="Search related articles"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           />
-          {failed && <p className="mt-1 text-xs text-accent-700">Hindi makapaghanap. Subukang muli.</p>}
+          {failed && <p className="mt-1 text-xs text-accent-700">Search failed. Try again.</p>}
           {shown.length > 0 && (
-            <ul className="mt-1 rounded-lg border border-line bg-white py-1 text-sm">
+            <ul className="mt-1 rounded-lg border border-line bg-paper py-1 text-sm">
               {shown.map((r) => (
                 <li key={r.id}>
                   <button type="button" className="flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface" onClick={() => (update([...selected, r]), setQ(""))}>
@@ -223,7 +223,7 @@ export function RelatedPicker({ articleId, initial, disabled, onChange }: { arti
               ))}
             </ul>
           )}
-          <p className="mt-1 text-xs text-muted">Ang mga nakalathalang artikulo lamang ang lalabas sa publiko.</p>
+          <p className="mt-1 text-xs text-muted">Only published articles appear on the public site.</p>
         </>
       )}
     </div>

@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/studio/ui";
 import { getPageForEdit } from "@/lib/studio/pages";
 import { PageEditor } from "../_components/page-editor";
 
-export const metadata: Metadata = { title: "I-edit ang pahina" };
+export const metadata: Metadata = { title: "Edit page" };
 
 export default async function EditPagePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,7 +15,7 @@ export default async function EditPagePage({ params }: { params: Promise<{ id: s
   if (!data) notFound();
   return (
     <>
-      <PageHeader title={data.page.title} breadcrumb={[{ label: "Mga Pahina", href: "/admin/pages" }]} />
+      <PageHeader title={data.page.title} breadcrumb={[{ label: "Pages", href: "/admin/pages" }]} />
       {/* Remount after a status change / restore so the form reflects the server's latest version. */}
       <PageEditor key={data.page.updated_at} data={data} />
     </>

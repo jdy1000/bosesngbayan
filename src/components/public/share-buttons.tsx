@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { Link2, Share2 } from "lucide-react";
+import { useI18n } from "@/components/public/i18n-provider";
 
 /** Share via plain intent URLs (no third-party scripts or trackers), native share sheet, or copy link. */
 export function ShareButtons({ url, title }: { url: string; title: string }) {
+  const m = useI18n().t.article.share;
   const [copied, setCopied] = useState(false);
   const u = encodeURIComponent(url);
   const t = encodeURIComponent(title);
@@ -36,9 +38,9 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
 
   const btn = "inline-flex h-9 items-center gap-1.5 rounded px-3 text-xs font-semibold text-ink-soft shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors hover:text-brand hover:shadow-[inset_0_0_0_1px_var(--color-brand-200)]";
   return (
-    <div className="flex flex-wrap items-center gap-2" aria-label="Ibahagi">
+    <div className="flex flex-wrap items-center gap-2" aria-label={m.label}>
       <button type="button" onClick={nativeShare} className={btn}>
-        <Share2 className="h-3.5 w-3.5" aria-hidden="true" /> Ibahagi
+        <Share2 className="h-3.5 w-3.5" aria-hidden="true" /> {m.share}
       </button>
       {links.map((l) => (
         <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer" className={btn}>
@@ -46,7 +48,7 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
         </a>
       ))}
       <button type="button" onClick={copy} className={btn} aria-live="polite">
-        <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> {copied ? "Nakopya!" : "Kopyahin"}
+        <Link2 className="h-3.5 w-3.5" aria-hidden="true" /> {copied ? m.copied : m.copy}
       </button>
     </div>
   );

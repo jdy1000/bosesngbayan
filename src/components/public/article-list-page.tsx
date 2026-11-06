@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { ArticleCard, EmptyState } from "@/components/public/article-card";
 import type { ArticleCard as Article, Paginated } from "@/lib/cms/articles";
+import { fmt } from "@/lib/i18n/config";
+import { getI18n } from "@/lib/i18n/server";
 
 /** Shared archive layout: lead story + grid + numbered pagination. Used by news, topic, tag, region pages. */
-export function ArticleListPage({
+export async function ArticleListPage({
   kicker,
   title,
   description,
@@ -11,7 +13,7 @@ export function ArticleListPage({
   basePath,
   query = {},
   filters,
-  emptyTitle = "Wala pang nailalathalang balita dito.",
+  emptyTitle,
 }: {
   kicker?: string;
   title: string;
@@ -22,6 +24,7 @@ export function ArticleListPage({
   filters?: React.ReactNode;
   emptyTitle?: string;
 }) {
+  const { t } = await getI18n();
   const [lead, ...rest] = result.items;
   const showLead = result.page === 1 && lead;
   const href = (page: number) => {
@@ -39,7 +42,7 @@ export function ArticleListPage({
       </header>
       {filters}
       {result.items.length === 0 ? (
-        <EmptyState title={emptyTitle}>Bumalik muli mamaya para sa mga bagong kwento.</EmptyState>
+        <EmptyState title={emptyTitle ?? t.common.list.emptyTitle}>{t.common.list.emptyBody}</EmptyState>
       ) : (
         <>
           {showLead && (
@@ -55,18 +58,18 @@ export function ArticleListPage({
         </>
       )}
       {result.totalPages > 1 && (
-        <nav aria-label="Mga pahina" className="mt-12 flex flex-wrap items-center justify-center gap-2">
+        <nav aria-label={t.common.list.pagesNav} className="mt-12 flex flex-wrap items-center justify-center gap-2">
           {result.page > 1 && (
             <Link href={href(result.page - 1)} className="btn btn-outline">
-              ← Nauna
+              {t.common.list.prev}
             </Link>
           )}
           <span className="px-3 text-sm text-muted">
-            Pahina {result.page} ng {result.totalPages}
+            {fmt(t.common.list.pageOf, { page: result.page, total: result.totalPages })}
           </span>
           {result.page < result.totalPages && (
             <Link href={href(result.page + 1)} className="btn btn-outline">
-              Susunod →
+              {t.common.list.next}
             </Link>
           )}
         </nav>

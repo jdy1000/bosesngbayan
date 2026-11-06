@@ -22,38 +22,38 @@ export default async function HomepageBuilderPage() {
     <>
       <PageHeader
         title="Homepage Builder"
-        description="Inaayos dito ang draft ng homepage. Walang makikita ang publiko hangga't hindi pinipindot ang I-publish."
+        description="Edit the homepage draft here. Nothing changes on the public site until you press Publish."
         actions={
           draftId ? (
             <Link href="/admin/preview/homepage" target="_blank" className="btn btn-outline min-h-10 px-4 text-sm">
-              Preview ng draft ↗
+              Preview draft ↗
             </Link>
           ) : null
         }
       />
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <Summary label="Draft" value={`${sections.length} section`} note={`${enabledCount} naka-enable`} />
+        <Summary label="Draft" value={`${sections.length} ${sections.length === 1 ? "section" : "sections"}`} note={`${enabledCount} enabled`} />
         <Summary
-          label="Naka-publish"
-          value={published ? `${published.sectionCount} section` : "Wala pa"}
-          note={published ? `${formatDateTime(published.publishedAt)}${published.publisher ? ` · ni ${published.publisher}` : ""}` : "Hindi pa na-publish"}
+          label="Published"
+          value={published ? `${published.sectionCount} ${published.sectionCount === 1 ? "section" : "sections"}` : "None yet"}
+          note={published ? `${formatDateTime(published.publishedAt)}${published.publisher ? ` · by ${published.publisher}` : ""}` : "Not published yet"}
         />
-        <Summary label="Mga bersyon" value={`${history.length}`} note="Pinakahuling 15 na published/archived" />
+        <Summary label="Versions" value={`${history.length}`} note="Latest 15 published/archived" />
       </div>
 
       {!draftId ? (
-        <Empty title="Walang working draft">
+        <Empty title="No working draft">
           <ActionForm action={createDraft} className="mt-3">
-            <SubmitButton pendingLabel="Ginagawa…">{published ? "Kopyahin ang naka-publish bilang draft" : "Gumawa ng blangkong draft"}</SubmitButton>
+            <SubmitButton pendingLabel="Creating…">{published ? "Copy the published version as a draft" : "Create a blank draft"}</SubmitButton>
           </ActionForm>
         </Empty>
       ) : (
         <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
           <div className="min-w-0 space-y-4">
-            {brokenEnabled > 0 && <Notice tone="error">{brokenEnabled} naka-enable na section ang may hindi wastong settings. Ayusin o i-disable bago mag-publish.</Notice>}
+            {brokenEnabled > 0 && <Notice tone="error">{brokenEnabled} enabled {brokenEnabled === 1 ? "section has" : "sections have"} invalid settings. Fix or disable {brokenEnabled === 1 ? "it" : "them"} before publishing.</Notice>}
             {sections.length === 0 ? (
-              <Empty title="Walang section ang draft">Magdagdag ng block gamit ang form sa gilid.</Empty>
+              <Empty title="The draft has no sections">Add a block with the form on the side.</Empty>
             ) : (
               <ol className="space-y-3">
                 {sections.map((s, i) => (
@@ -64,25 +64,25 @@ export default async function HomepageBuilderPage() {
           </div>
 
           <aside className="space-y-4">
-            <Panel title="I-publish" description="Kinokopya ang draft bilang bagong naka-publish na bersyon; ina-archive ang dati.">
-              <ActionForm action={publishHomepage} className="space-y-3" confirm="I-publish ang draft sa pampublikong homepage?">
+            <Panel title="Publish" description="Copies the draft as a new published version and archives the previous one.">
+              <ActionForm action={publishHomepage} className="space-y-3" confirm="Publish the draft to the public homepage?">
                 <div>
                   <label htmlFor="pub-label" className="mb-1.5 block text-sm font-semibold text-ink">
-                    Label ng bersyon
+                    Version label
                   </label>
-                  <input id="pub-label" name="label" maxLength={200} placeholder="hal. Update para sa halalan" className="field" />
+                  <input id="pub-label" name="label" maxLength={200} placeholder="e.g. Election update" className="field" />
                 </div>
-                <SubmitButton pendingLabel="Pina-publish…">I-publish ang homepage</SubmitButton>
+                <SubmitButton pendingLabel="Publishing…">Publish homepage</SubmitButton>
               </ActionForm>
             </Panel>
-            <Panel title="Magdagdag ng block">
+            <Panel title="Add a block">
               <ActionForm action={addSection} className="space-y-3">
                 <label htmlFor="add-type" className="sr-only">
-                  Uri ng block
+                  Block type
                 </label>
                 <select id="add-type" name="block_type" required className="field" defaultValue="">
                   <option value="" disabled>
-                    Pumili ng uri…
+                    Choose a type…
                   </option>
                   {BLOCK_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -90,8 +90,8 @@ export default async function HomepageBuilderPage() {
                     </option>
                   ))}
                 </select>
-                <SubmitButton variant="outline" pendingLabel="Idinadagdag…">
-                  Idagdag sa dulo
+                <SubmitButton variant="outline" pendingLabel="Adding…">
+                  Add to the end
                 </SubmitButton>
               </ActionForm>
             </Panel>
@@ -100,25 +100,25 @@ export default async function HomepageBuilderPage() {
       )}
 
       <section className="mt-10">
-        <h2 className="mb-3 text-lg font-bold text-ink">Kasaysayan ng bersyon</h2>
+        <h2 className="mb-3 text-lg font-bold text-ink">Version history</h2>
         {history.length === 0 ? (
-          <Empty title="Wala pang na-publish na bersyon" />
+          <Empty title="No published versions yet" />
         ) : (
-          <Table head={["Bersyon", "Status", "Na-publish", "Sections", ""]}>
+          <Table head={["Version", "Status", "Published", "Sections", ""]}>
             {history.map((h) => (
               <tr key={h.id}>
-                <td className="font-semibold text-ink">{h.label ?? "Walang label"}</td>
-                <td>{h.status === "published" ? <Badge tone="green">Naka-publish</Badge> : <Badge>Archived</Badge>}</td>
+                <td className="font-semibold text-ink">{h.label ?? "No label"}</td>
+                <td>{h.status === "published" ? <Badge tone="green">Published</Badge> : <Badge>Archived</Badge>}</td>
                 <td className="whitespace-nowrap">
                   {formatDateTime(h.publishedAt ?? h.createdAt)}
-                  {h.publisher && <span className="block text-xs text-muted">ni {h.publisher}</span>}
+                  {h.publisher && <span className="block text-xs text-muted">by {h.publisher}</span>}
                 </td>
                 <td className="tabular-nums">{h.sectionCount}</td>
                 <td className="text-right">
-                  <ActionForm action={restoreConfiguration} confirm="Papalitan ng bersyong ito ang kasalukuyang draft. Ituloy?">
+                  <ActionForm action={restoreConfiguration} confirm="This version will replace the current draft. Continue?">
                     <input type="hidden" name="id" value={h.id} />
-                    <SubmitButton variant="ghost" pendingLabel="Ibinabalik…" className="min-h-9 px-3">
-                      Ibalik sa draft
+                    <SubmitButton variant="ghost" pendingLabel="Restoring…" className="min-h-9 px-3">
+                      Restore to draft
                     </SubmitButton>
                   </ActionForm>
                 </td>
@@ -133,7 +133,7 @@ export default async function HomepageBuilderPage() {
 
 function Summary({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="rounded-2xl bg-white shadow-card ring-1 ring-line px-5 py-4">
+    <div className="rounded-2xl bg-paper shadow-card ring-1 ring-line px-5 py-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums text-ink">{value}</p>
       <p className="mt-0.5 text-sm text-muted">{note}</p>

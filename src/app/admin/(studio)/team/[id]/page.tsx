@@ -9,7 +9,7 @@ import { ActionForm, SubmitButton } from "@/components/studio/action-form";
 import { Badge, Empty, Field, PageHeader, Panel, StatusBadge } from "@/components/studio/ui";
 import { updateMemberProfile } from "../actions";
 
-export const metadata: Metadata = { title: "Profile ng staff" };
+export const metadata: Metadata = { title: "Staff profile" };
 
 export default async function MemberPage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await requireStaffPage();
@@ -49,25 +49,25 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
     <>
       <PageHeader
         title={profile.display_name}
-        breadcrumb={ctx.permissions.has("users.view") ? [{ label: "Team at Roles", href: "/admin/team" }] : undefined}
+        breadcrumb={ctx.permissions.has("users.view") ? [{ label: "Team and Roles", href: "/admin/team" }] : undefined}
         description={
           <span className="flex flex-wrap items-center gap-2">
             {roleRes.data && <Badge tone="blue">{ROLE_LABELS[roleRes.data.role as AppRole]}</Badge>}
-            {profile.is_active ? <Badge tone="green">Aktibo</Badge> : <Badge tone="red">Deactivated {profile.deactivated_at && formatDateTime(profile.deactivated_at)}</Badge>}
-            <span className="text-sm text-muted">Account mula {formatDateTime(profile.created_at)}</span>
+            {profile.is_active ? <Badge tone="green">Active</Badge> : <Badge tone="red">Deactivated {profile.deactivated_at && formatDateTime(profile.deactivated_at)}</Badge>}
+            <span className="text-sm text-muted">Account since {formatDateTime(profile.created_at)}</span>
           </span>
         }
       />
       <div className="grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <Panel title="Profile" description="Lumalabas ang pangalan, titulo at bio sa byline ng mga nailathalang artikulo.">
+        <Panel title="Profile" description="The name, title and bio appear in the byline of published articles.">
           {canEdit ? (
             <ActionForm action={updateMemberProfile}>
               <input type="hidden" name="id" value={profile.id} />
               <div className="space-y-4">
-                <Field label="Pangalan" htmlFor="p-name">
+                <Field label="Name" htmlFor="p-name">
                   <input id="p-name" name="display_name" required maxLength={120} defaultValue={profile.display_name} className="field" />
                 </Field>
-                <Field label="Titulo" htmlFor="p-title" hint="Hal. Senior Reporter">
+                <Field label="Title" htmlFor="p-title" hint="E.g. Senior Reporter">
                   <input id="p-title" name="title" maxLength={120} defaultValue={profile.title ?? ""} className="field" />
                 </Field>
                 <Field label="Bio" htmlFor="p-bio">
@@ -75,13 +75,13 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
                 </Field>
               </div>
               <div className="mt-4">
-                <SubmitButton>I-save ang profile</SubmitButton>
+                <SubmitButton>Save profile</SubmitButton>
               </div>
             </ActionForm>
           ) : (
             <dl className="space-y-3 text-sm">
               <div>
-                <dt className="font-semibold text-ink">Titulo</dt>
+                <dt className="font-semibold text-ink">Title</dt>
                 <dd className="text-ink-soft">{profile.title || "—"}</dd>
               </div>
               <div>
@@ -92,9 +92,9 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
           )}
         </Panel>
 
-        <Panel title="Editorial activity" description="Huling 20 pagbabago ng status na ginawa ng staff na ito.">
+        <Panel title="Editorial activity" description="The last 20 status changes made by this staff member.">
           {activity.length === 0 ? (
-            <Empty title="Wala pang editorial activity." />
+            <Empty title="No editorial activity yet." />
           ) : (
             <ul className="divide-y divide-line text-sm">
               {activity.map((a) => (
@@ -117,9 +117,9 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
         </Panel>
 
         {canAudit && (
-          <Panel title="Audit trail" description="Huling 20 sensitibong aksyon ng staff na ito." className="xl:col-span-2">
+          <Panel title="Audit trail" description="The last 20 sensitive actions by this staff member." className="xl:col-span-2">
             {(auditRes.data ?? []).length === 0 ? (
-              <Empty title="Walang tala sa audit log." />
+              <Empty title="No audit log entries." />
             ) : (
               <ul className="divide-y divide-line text-sm">
                 {(auditRes.data ?? []).map((a) => (
@@ -132,7 +132,7 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
               </ul>
             )}
             <Link href={`/admin/audit?actor=${profile.id}`} className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
-              Buong audit log ng staff na ito →
+              Full audit log for this staff member →
             </Link>
           </Panel>
         )}

@@ -8,7 +8,7 @@ import { MediaPicker } from "@/components/studio/media-picker";
 import { Badge, Empty, Field, PageHeader, Pagination, Panel, Table, withParams } from "@/components/studio/ui";
 import { createRedirect, deleteRedirect, saveSeoSettings, toggleRedirect, updateRedirect } from "./actions";
 
-export const metadata: Metadata = { title: "SEO at Redirects" };
+export const metadata: Metadata = { title: "SEO and Redirects" };
 const PAGE_SIZE = 50;
 
 interface RedirectRow {
@@ -44,20 +44,20 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <PageHeader title="SEO at Redirects" description="Global na SEO defaults, redirects, at mga machine-readable na feed ng site." />
+      <PageHeader title="SEO and Redirects" description="Global SEO defaults, redirects, and the site's machine-readable feeds." />
 
       <div className="mb-6 grid gap-6 xl:grid-cols-[1fr_320px]">
-        <Panel title="Global SEO" description="Ginagamit kapag walang sariling SEO ang artikulo, pahina o kategorya.">
+        <Panel title="Global SEO" description="Used when an article, page or category has no SEO of its own.">
           <ActionForm action={saveSeoSettings}>
             <div className="grid gap-5 md:grid-cols-2">
-              <Field label="Title template" htmlFor="seo-tt" hint="Dapat may %s, hal. “%s | Boses ng Bayan”.">
+              <Field label="Title template" htmlFor="seo-tt" hint="Must contain %s, e.g. “%s | Boses ng Bayan”.">
                 <input id="seo-tt" name="title_template" defaultValue={seo.title_template} maxLength={120} className="field" />
               </Field>
               <Field label="Default title" htmlFor="seo-dt">
                 <input id="seo-dt" name="default_title" defaultValue={seo.default_title} maxLength={120} className="field" />
               </Field>
               <div className="md:col-span-2">
-                <Field label="Default description" htmlFor="seo-dd" hint="Hanggang 320 character.">
+                <Field label="Default description" htmlFor="seo-dd" hint="Up to 320 characters.">
                   <textarea id="seo-dd" name="default_description" defaultValue={seo.default_description} maxLength={320} rows={3} className="field" />
                 </Field>
               </div>
@@ -69,23 +69,23 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
                 <label className="flex items-start gap-2.5 text-sm">
                   <input type="checkbox" name="allow_indexing" defaultChecked={seo.allow_indexing} className="mt-0.5 h-4 w-4" />
                   <span>
-                    <span className="font-semibold text-ink">Payagan ang search engine indexing</span>
-                    <span className="block text-xs text-muted">Kapag naka-off, hinaharangan ng robots.txt ang lahat ng crawler. Gamitin lamang sa staging.</span>
+                    <span className="font-semibold text-ink">Allow search engine indexing</span>
+                    <span className="block text-xs text-muted">When off, robots.txt blocks all crawlers. Use only on staging.</span>
                   </span>
                 </label>
               </div>
             </div>
             <div className="mt-6 border-t border-line pt-4">
-              <SubmitButton>I-save ang SEO</SubmitButton>
+              <SubmitButton>Save SEO</SubmitButton>
             </div>
           </ActionForm>
         </Panel>
-        <Panel title="Mga feed at index">
+        <Panel title="Feeds and index">
           <ul className="space-y-3 text-sm">
             {[
-              ["/sitemap.xml", "XML sitemap ng mga nakalathalang nilalaman."],
-              ["/robots.txt", "Mga patakaran para sa crawler; sumusunod sa indexing setting."],
-              ["/rss.xml", "RSS feed ng mga pinakabagong artikulo."],
+              ["/sitemap.xml", "XML sitemap of published content."],
+              ["/robots.txt", "Crawler rules; follows the indexing setting."],
+              ["/rss.xml", "RSS feed of the latest articles."],
             ].map(([href, text]) => (
               <li key={href}>
                 <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand hover:underline">
@@ -100,32 +100,32 @@ export default async function SeoPage({ searchParams }: { searchParams: Promise<
 
       <Panel
         title="Redirects"
-        description="Gumagana ang redirect sa mga pampublikong path na wala nang nilalaman (hal. lumang slug ng artikulo o kategorya). Hindi nito napapalitan ang path na may aktibong nilalaman. Naka-audit ang bawat pagbabago."
+        description="Redirects work on public paths that no longer have content (e.g. an old article or category slug). They can't override a path that has live content. Every change is audited."
       >
         <details className="mb-5 rounded-lg border border-dashed border-line p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-brand">+ Bagong redirect</summary>
+          <summary className="cursor-pointer text-sm font-semibold text-brand">+ New redirect</summary>
           <ActionForm action={createRedirect} resetOnSuccess className="mt-4">
             <RedirectFields idPrefix="new" />
             <div className="mt-4">
-              <SubmitButton>Idagdag</SubmitButton>
+              <SubmitButton>Add</SubmitButton>
             </div>
           </ActionForm>
         </details>
 
         <form method="get" className="mb-4 flex gap-2">
           <label htmlFor="redirect-q" className="sr-only">
-            Hanapin ang redirect
+            Search redirects
           </label>
-          <input id="redirect-q" name="q" type="search" defaultValue={q} placeholder="Hanapin ang source o destination…" className="field max-w-md" />
+          <input id="redirect-q" name="q" type="search" defaultValue={q} placeholder="Search source or destination…" className="field max-w-md" />
           <button type="submit" className="btn btn-outline min-h-11 px-4 text-sm">
-            Hanapin
+            Search
           </button>
         </form>
 
         {rows.length === 0 ? (
-          <Empty title={q ? "Walang tumugmang redirect." : "Wala pang redirect."} />
+          <Empty title={q ? "No matching redirects." : "No redirects yet."} />
         ) : (
-          <Table head={["Source", "Destination", "Uri", "Status", "Binago", ""]}>
+          <Table head={["Source", "Destination", "Type", "Status", "Modified", ""]}>
             {rows.map((r) => (
               <RedirectRowView key={r.id} r={r} />
             ))}
@@ -143,18 +143,18 @@ function RedirectRowView({ r }: { r: RedirectRow }) {
       <td className="font-mono text-xs">{r.source_path}</td>
       <td className="max-w-xs truncate font-mono text-xs">{r.destination}</td>
       <td className="tabular-nums">{r.status_code}</td>
-      <td>{r.is_active ? <Badge tone="green">Aktibo</Badge> : <Badge>Naka-disable</Badge>}</td>
+      <td>{r.is_active ? <Badge tone="green">Active</Badge> : <Badge>Disabled</Badge>}</td>
       <td className="whitespace-nowrap text-xs text-muted">{formatDateTime(r.updated_at)}</td>
       <td>
         <div className="flex items-center justify-end gap-1">
           <details className="relative">
-            <summary className="cursor-pointer rounded-lg px-2 py-1 text-xs font-semibold text-brand hover:bg-surface-2">I-edit</summary>
-            <div className="absolute right-0 z-10 mt-1 w-[min(560px,80vw)] rounded-xl border border-line bg-white p-4 shadow-lg">
+            <summary className="cursor-pointer rounded-lg px-2 py-1 text-xs font-semibold text-brand hover:bg-surface-2">Edit</summary>
+            <div className="absolute right-0 z-10 mt-1 w-[min(560px,80vw)] rounded-xl border border-line bg-paper p-4 shadow-lg">
               <ActionForm action={updateRedirect}>
                 <input type="hidden" name="id" value={r.id} />
                 <RedirectFields idPrefix={r.id} r={r} />
                 <div className="mt-4">
-                  <SubmitButton>I-save</SubmitButton>
+                  <SubmitButton>Save</SubmitButton>
                 </div>
               </ActionForm>
             </div>
@@ -162,13 +162,13 @@ function RedirectRowView({ r }: { r: RedirectRow }) {
           <ActionForm action={toggleRedirect}>
             <input type="hidden" name="id" value={r.id} />
             <SubmitButton variant="ghost" pendingLabel="…" className="!min-h-8 !px-2 text-xs">
-              {r.is_active ? "I-disable" : "I-enable"}
+              {r.is_active ? "Disable" : "Enable"}
             </SubmitButton>
           </ActionForm>
-          <ActionForm action={deleteRedirect} confirm={`Tanggalin ang redirect ${r.source_path}?`}>
+          <ActionForm action={deleteRedirect} confirm={`Remove the redirect ${r.source_path}?`}>
             <input type="hidden" name="id" value={r.id} />
             <SubmitButton variant="ghost" pendingLabel="…" className="!min-h-8 !px-2 text-xs text-accent-700">
-              Tanggalin
+              Remove
             </SubmitButton>
           </ActionForm>
         </div>
@@ -180,13 +180,13 @@ function RedirectRowView({ r }: { r: RedirectRow }) {
 function RedirectFields({ idPrefix, r }: { idPrefix: string; r?: RedirectRow }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Field label="Source path" htmlFor={`${idPrefix}-src`} hint="Hal. /balita/lumang-slug. Bawal ang /admin, /api, query at #.">
-        <input id={`${idPrefix}-src`} name="source_path" required maxLength={300} defaultValue={r?.source_path} placeholder="/lumang-path" className="field font-mono text-sm" />
+      <Field label="Source path" htmlFor={`${idPrefix}-src`} hint="E.g. /balita/old-slug. /admin, /api, query strings and # are not allowed.">
+        <input id={`${idPrefix}-src`} name="source_path" required maxLength={300} defaultValue={r?.source_path} placeholder="/old-path" className="field font-mono text-sm" />
       </Field>
-      <Field label="Destination" htmlFor={`${idPrefix}-dst`} hint="Path na nagsisimula sa / o https:// URL.">
-        <input id={`${idPrefix}-dst`} name="destination" required maxLength={500} defaultValue={r?.destination} placeholder="/bagong-path" className="field font-mono text-sm" />
+      <Field label="Destination" htmlFor={`${idPrefix}-dst`} hint="A path starting with / or an https:// URL.">
+        <input id={`${idPrefix}-dst`} name="destination" required maxLength={500} defaultValue={r?.destination} placeholder="/new-path" className="field font-mono text-sm" />
       </Field>
-      <Field label="Uri" htmlFor={`${idPrefix}-code`} hint="301/308 = permanente (inililipat ang SEO); 302/307 = pansamantala.">
+      <Field label="Type" htmlFor={`${idPrefix}-code`} hint="301/308 = permanent (passes on SEO); 302/307 = temporary.">
         <select id={`${idPrefix}-code`} name="status_code" defaultValue={String(r?.status_code ?? 301)} className="field">
           {REDIRECT_STATUS_CODES.map((c) => (
             <option key={c} value={c}>
@@ -196,7 +196,7 @@ function RedirectFields({ idPrefix, r }: { idPrefix: string; r?: RedirectRow }) 
         </select>
       </Field>
       <label className="flex items-end gap-2 pb-3 text-sm">
-        <input type="checkbox" name="is_active" defaultChecked={r?.is_active ?? true} className="h-4 w-4" /> Aktibo
+        <input type="checkbox" name="is_active" defaultChecked={r?.is_active ?? true} className="h-4 w-4" /> Active
       </label>
     </div>
   );

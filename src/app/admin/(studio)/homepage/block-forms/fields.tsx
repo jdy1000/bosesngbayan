@@ -120,14 +120,14 @@ export function OptionSelect({ label, value, onChange, options, noneLabel }: { l
   );
 }
 
-type Link = { label: string; href: string } | null;
+type Link = { label: string; label_en: string; href: string } | null;
 
 export function LinkField({ label, value, onChange }: { label: string; value: Link; onChange: (v: Link) => void }) {
   const id = useId();
   return (
     <fieldset className="rounded-lg border border-line p-3">
       <legend className="px-1 text-sm font-semibold text-ink">{label}</legend>
-      <CheckField label="May link" checked={value !== null} onChange={(on) => onChange(on ? { label: "", href: "/" } : null)} />
+      <CheckField label="Has a link" checked={value !== null} onChange={(on) => onChange(on ? { label: "", label_en: "", href: "/" } : null)} />
       {value && (
         <div className="mt-2 grid gap-3 sm:grid-cols-2">
           <div>
@@ -137,14 +137,20 @@ export function LinkField({ label, value, onChange }: { label: string; value: Li
             <input id={`${id}-l`} value={value.label} maxLength={60} onChange={(e) => onChange({ ...value, label: e.target.value })} className="field" />
           </div>
           <div>
+            <label htmlFor={`${id}-le`} className={labelCls}>
+              Label in English <span className="font-normal text-muted">(optional)</span>
+            </label>
+            <input id={`${id}-le`} value={value.label_en ?? ""} maxLength={60} onChange={(e) => onChange({ ...value, label_en: e.target.value })} className="field" />
+          </div>
+          <div>
             <label htmlFor={`${id}-h`} className={labelCls}>
-              Destinasyon
+              Destination
             </label>
             <input
               id={`${id}-h`}
               value={value.href}
               maxLength={500}
-              placeholder="/botohan o https://…"
+              placeholder="/botohan or https://…"
               onChange={(e) => onChange({ ...value, href: e.target.value })}
               className="field"
             />
@@ -160,10 +166,10 @@ export function MultiOptionField({ label, value, onChange, options, max }: { lab
   return (
     <fieldset>
       <legend className={labelCls}>
-        {label} <span className="font-normal text-muted">({value.length}/{max}, ayon sa pagkakasunod ng pagpili)</span>
+        {label} <span className="font-normal text-muted">({value.length}/{max}, in the order selected)</span>
       </legend>
       {options.length === 0 ? (
-        <p className="text-sm text-muted">Walang mapagpipilian.</p>
+        <p className="text-sm text-muted">Nothing to choose from.</p>
       ) : (
         <div className="max-h-52 overflow-y-auto rounded-lg border border-line p-2">
           {options.map((o) => {
@@ -183,7 +189,7 @@ export function MultiOptionField({ label, value, onChange, options, max }: { lab
           })}
         </div>
       )}
-      {value.some((v) => !known.has(v)) && <p className="mt-1 text-xs text-amber-700">May napiling hindi na makita (maaaring nabura o hindi aktibo).</p>}
+      {value.some((v) => !known.has(v)) && <p className="mt-1 text-xs text-amber-700">Some selected items can no longer be found (they may be deleted or inactive).</p>}
     </fieldset>
   );
 }
@@ -237,16 +243,16 @@ export function ArticlePicker({ label, value, onChange, max, options }: { label:
           {value.map((aid, i) => (
             <li key={aid} className="flex items-center gap-2 px-3 py-1.5">
               <span className="min-w-0 flex-1 truncate">
-                {known[aid]?.title ?? "Hindi makita ang artikulo"}
-                {known[aid] && !known[aid].published && <span className="ml-1 text-xs font-semibold text-amber-700">(hindi nakalathala — hindi ipapakita)</span>}
+                {known[aid]?.title ?? "Article not found"}
+                {known[aid] && !known[aid].published && <span className="ml-1 text-xs font-semibold text-amber-700">(not published — will not be shown)</span>}
               </span>
-              <button type="button" disabled={i === 0} onClick={() => move(i, -1)} className="rounded p-1 hover:bg-surface-2 disabled:opacity-30" aria-label="Itaas">
+              <button type="button" disabled={i === 0} onClick={() => move(i, -1)} className="rounded p-1 hover:bg-surface-2 disabled:opacity-30" aria-label="Move up">
                 <ArrowUp className="h-4 w-4" />
               </button>
-              <button type="button" disabled={i === value.length - 1} onClick={() => move(i, 1)} className="rounded p-1 hover:bg-surface-2 disabled:opacity-30" aria-label="Ibaba">
+              <button type="button" disabled={i === value.length - 1} onClick={() => move(i, 1)} className="rounded p-1 hover:bg-surface-2 disabled:opacity-30" aria-label="Move down">
                 <ArrowDown className="h-4 w-4" />
               </button>
-              <button type="button" onClick={() => onChange(value.filter((v) => v !== aid))} className="rounded p-1 text-accent-700 hover:bg-surface-2" aria-label="Alisin">
+              <button type="button" onClick={() => onChange(value.filter((v) => v !== aid))} className="rounded p-1 text-accent-700 hover:bg-surface-2" aria-label="Remove">
                 <X className="h-4 w-4" />
               </button>
             </li>
@@ -254,12 +260,12 @@ export function ArticlePicker({ label, value, onChange, max, options }: { label:
         </ol>
       )}
       <label htmlFor={id} className="sr-only">
-        Hanapin ang artikulo
+        Search articles
       </label>
-      <input id={id} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Hanapin ang nakalathalang artikulo…" className="field" />
+      <input id={id} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search published articles…" className="field" />
       <ul className="mt-1 max-h-48 overflow-y-auto rounded-lg border border-line text-sm" aria-live="polite">
-        {status === "error" && <li className="px-3 py-2 text-accent-700">Hindi makuha ang mga artikulo.</li>}
-        {status !== "error" && results.length === 0 && <li className="px-3 py-2 text-muted">{status === "loading" ? "Naghahanap…" : "Walang nahanap."}</li>}
+        {status === "error" && <li className="px-3 py-2 text-accent-700">Couldn’t load articles.</li>}
+        {status !== "error" && results.length === 0 && <li className="px-3 py-2 text-muted">{status === "loading" ? "Searching…" : "Nothing found."}</li>}
         {results.map((a) => {
           const picked = value.includes(a.id);
           return (

@@ -4,7 +4,7 @@ import { AuthShell } from "@/components/studio/auth-shell";
 import { LoginForm } from "@/app/admin/login/login-form";
 import { getStaffContext } from "@/lib/auth/session";
 
-export const metadata: Metadata = { title: "Mag-login — Boses ng Bayan Studio", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Sign in — Boses ng Bayan Studio", robots: { index: false, follow: false } };
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (await getStaffContext()) redirect("/admin");

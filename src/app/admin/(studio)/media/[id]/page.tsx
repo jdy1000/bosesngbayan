@@ -33,18 +33,18 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
         breadcrumb={[{ label: "Media Library", href: "/admin/media" }]}
         description={
           <>
-            {MEDIA_KIND_LABELS[m.kind]} · in-upload ni {m.uploader?.display_name ?? "hindi kilala"} noong {formatDateTime(m.created_at)}
+            {MEDIA_KIND_LABELS[m.kind]} · uploaded by {m.uploader?.display_name ?? "unknown"} on {formatDateTime(m.created_at)}
           </>
         }
       />
       {m.kind === "image" && !m.alt_text && (
         <div className="mb-4">
-          <Notice tone="warn">Walang alt text ang larawang ito. Ilarawan ito para sa mga mambabasang gumagamit ng screen reader.</Notice>
+          <Notice tone="warn">This image has no alt text. Describe it for readers who use a screen reader.</Notice>
         </div>
       )}
       {!canEdit && (
         <div className="mb-4">
-          <Notice>Hindi ikaw ang nag-upload nito, kaya pagtingin lamang ang pinapayagan.</Notice>
+          <Notice>You didn’t upload this, so you can only view it.</Notice>
         </div>
       )}
 
@@ -57,15 +57,15 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
                 <img src={url} alt={m.alt_text ?? ""} className="max-h-[480px] w-auto object-contain" />
               ) : url ? (
                 <a href={url} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand hover:underline">
-                  Buksan ang {m.kind === "video" ? "video" : "file"} ↗
+                  Open {m.kind === "video" ? "video" : "file"} ↗
                 </a>
               ) : null}
             </div>
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
               <Meta label="File">{m.file_name}</Meta>
-              <Meta label="Uri">{m.mime_type ?? (m.external_url ? "External" : "—")}</Meta>
-              <Meta label="Laki">{m.external_url ? "—" : formatBytes(m.size_bytes)}</Meta>
-              <Meta label="Sukat">{m.width && m.height ? `${m.width}×${m.height}` : "—"}</Meta>
+              <Meta label="Type">{m.mime_type ?? (m.external_url ? "External" : "—")}</Meta>
+              <Meta label="Size">{m.external_url ? "—" : formatBytes(m.size_bytes)}</Meta>
+              <Meta label="Dimensions">{m.width && m.height ? `${m.width}×${m.height}` : "—"}</Meta>
             </dl>
             {url && (
               <p className="mt-3 break-all text-xs text-muted">
@@ -75,18 +75,18 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
           </Panel>
 
           {canEdit && (
-            <Panel title="Detalye" description="Pamagat, alt text, caption, credit at folder.">
+            <Panel title="Details" description="Title, alt text, caption, credit and folder.">
               <ActionForm action={updateMediaMeta} className="space-y-4">
                 <input type="hidden" name="id" value={m.id} />
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Pamagat" htmlFor="m-title">
+                  <Field label="Title" htmlFor="m-title">
                     <input id="m-title" name="title" defaultValue={m.title ?? ""} maxLength={200} className="field" />
                   </Field>
-                  <Field label="Pangalan ng file (label)" htmlFor="m-file" hint="Hindi nito binabago ang URL ng file.">
+                  <Field label="File name (label)" htmlFor="m-file" hint="This doesn't change the file's URL.">
                     <input id="m-file" name="file_name" defaultValue={m.file_name} required maxLength={200} className="field" />
                   </Field>
                 </div>
-                <Field label="Alt text" htmlFor="m-alt" hint="Maikling paglalarawan ng larawan (hanggang 300 karakter).">
+                <Field label="Alt text" htmlFor="m-alt" hint="Short description of the image (up to 300 characters).">
                   <input id="m-alt" name="alt_text" defaultValue={m.alt_text ?? ""} maxLength={300} className="field" />
                 </Field>
                 <Field label="Caption" htmlFor="m-caption">
@@ -100,21 +100,21 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
                     <input id="m-folder" name="folder" defaultValue={m.folder} maxLength={60} className="field" />
                   </Field>
                 </div>
-                <SubmitButton>I-save</SubmitButton>
+                <SubmitButton>Save</SubmitButton>
               </ActionForm>
             </Panel>
           )}
         </div>
 
         <div className="space-y-6">
-          <Panel title="Saan ginagamit" description="Kasama ang mga draft at ang naka-publish at draft na homepage.">
+          <Panel title="Where it's used" description="Includes drafts and both the published and draft homepage.">
             {usages.length === 0 ? (
-              <p className="text-sm text-muted">Hindi ginagamit kahit saan.</p>
+              <p className="text-sm text-muted">Not used anywhere.</p>
             ) : (
               <ul className="space-y-2 text-sm">
                 {usages.map((u, i) => {
                   const href = usageHref(u);
-                  const label = u.label ?? "Nilalamang hindi mo nakikita";
+                  const label = u.label ?? "Content you can't see";
                   return (
                     <li key={`${u.usage_kind}-${u.ref_id ?? u.label}-${i}`} className="flex flex-wrap items-center gap-2">
                       <Badge tone="blue">{USAGE_LABELS[u.usage_kind] ?? u.usage_kind}</Badge>
@@ -134,7 +134,7 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
           </Panel>
 
           {canEdit && m.storage_path && (
-            <Panel title="Palitan ang file" description="Mananatili ang media record at mga paggamit; bagong URL ang malilikha.">
+            <Panel title="Replace file" description="The media record and its usages stay; a new URL is created.">
               <ReplaceFileForm id={m.id} />
             </Panel>
           )}
@@ -145,20 +145,20 @@ export default async function MediaDetailPage({ params }: { params: Promise<{ id
                 <Field label="URL" htmlFor="m-url">
                   <input id="m-url" name="url" type="url" defaultValue={m.external_url} required className="field" />
                 </Field>
-                <SubmitButton>I-update ang URL</SubmitButton>
+                <SubmitButton>Update URL</SubmitButton>
               </ActionForm>
             </Panel>
           )}
 
           {canEdit && (
-            <Panel title="Burahin">
+            <Panel title="Delete">
               {usages.length > 0 ? (
-                <p className="text-sm text-muted">Hindi mabubura habang ginagamit pa ({usages.length}). Alisin muna ito sa mga nakalistang lugar.</p>
+                <p className="text-sm text-muted">Can’t be deleted while still in use ({usages.length}). Remove it from the listed places first.</p>
               ) : (
-                <ActionForm action={deleteMedia} confirm="Permanenteng buburahin ang media na ito. Ituloy?">
+                <ActionForm action={deleteMedia} confirm="This permanently deletes the media. Continue?">
                   <input type="hidden" name="id" value={m.id} />
-                  <SubmitButton variant="danger" pendingLabel="Binubura…">
-                    Burahin ang media
+                  <SubmitButton variant="danger" pendingLabel="Deleting…">
+                    Delete media
                   </SubmitButton>
                 </ActionForm>
               )}

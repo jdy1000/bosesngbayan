@@ -45,3 +45,24 @@ test("public API never returns drafts", async ({ request }) => {
   const body = (await res.json()) as { data: { items: { status?: string }[] } };
   for (const a of body.data.items) expect(a.status ?? "published").toMatch(/published|scheduled/);
 });
+
+test("a reader can switch to English and to dark mode, and both persist", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("lang", "fil");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  // On small screens the switches sit inside the menu panel.
+  const openMenu = async (label: string) => {
+    const menu = page.getByRole("button", { name: label });
+    if (await menu.isVisible()) await menu.click();
+  };
+  await openMenu("Buksan ang menu");
+  await page.locator('button[name="locale"][value="en"]:visible').click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await openMenu("Open menu");
+  await page.locator('button[name="theme"]:visible').click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect(page.getByRole("link", { name: "Skip to content" })).toBeAttached();
+});

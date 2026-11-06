@@ -29,7 +29,7 @@ export function MediaUploader({ folders }: { folders: string[] }) {
         setRows(current);
       };
       if (file.size > MAX_UPLOAD_BYTES) {
-        update({ state: "error", message: `Lampas sa ${MAX_UPLOAD_MB} MB.` });
+        update({ state: "error", message: `Over ${MAX_UPLOAD_MB} MB.` });
         continue;
       }
       update({ state: "uploading" });
@@ -40,9 +40,9 @@ export function MediaUploader({ folders }: { folders: string[] }) {
       try {
         result = await uploadMediaFile(fd);
       } catch {
-        result = { ok: false, error: "Hindi naipadala ang file (network o laki ng request)." };
+        result = { ok: false, error: "The file could not be sent (network or request size)." };
       }
-      update(result.ok ? { state: "done", message: "Na-upload" } : { state: "error", message: result.error });
+      update(result.ok ? { state: "done", message: "Uploaded" } : { state: "error", message: result.error });
     }
     setBusy(false);
     form.reset();
@@ -54,10 +54,10 @@ export function MediaUploader({ folders }: { folders: string[] }) {
       <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
         <div>
           <label htmlFor="media-files" className="mb-1.5 block text-sm font-semibold text-ink">
-            Mga file
+            Files
           </label>
           <input id="media-files" name="files" type="file" multiple accept={ACCEPT} required className="field py-2" disabled={busy} />
-          <p className="mt-1 text-xs text-muted">JPEG, PNG, WebP, GIF, AVIF o PDF · hanggang {MAX_UPLOAD_MB} MB bawat file.</p>
+          <p className="mt-1 text-xs text-muted">JPEG, PNG, WebP, GIF, AVIF or PDF · up to {MAX_UPLOAD_MB} MB per file.</p>
         </div>
         <div>
           <label htmlFor="media-folder" className="mb-1.5 block text-sm font-semibold text-ink">
@@ -72,7 +72,7 @@ export function MediaUploader({ folders }: { folders: string[] }) {
         </div>
       </div>
       <button type="submit" disabled={busy} className="btn btn-primary min-h-10 px-4 text-sm">
-        {busy ? "Nag-a-upload…" : "I-upload"}
+        {busy ? "Uploading…" : "Upload"}
       </button>
       {rows.length > 0 && (
         <ul className="divide-y divide-line rounded-lg border border-line text-sm" aria-live="polite">
@@ -82,7 +82,7 @@ export function MediaUploader({ folders }: { folders: string[] }) {
               <span
                 className={`shrink-0 text-xs font-semibold ${r.state === "error" ? "text-accent-700" : r.state === "done" ? "text-emerald-700" : "text-muted"}`}
               >
-                {r.state === "waiting" ? "Naghihintay" : r.state === "uploading" ? "Nag-a-upload…" : r.message}
+                {r.state === "waiting" ? "Waiting" : r.state === "uploading" ? "Uploading…" : r.message}
               </span>
             </li>
           ))}
@@ -102,21 +102,21 @@ export function ReplaceFileForm({ id }: { id: string }) {
     const form = e.currentTarget;
     const file = (form.elements.namedItem("file") as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (file.size > MAX_UPLOAD_BYTES) return setStatus({ ok: false, text: `Lampas sa ${MAX_UPLOAD_MB} MB ang file.` });
-    if (!window.confirm("Papalitan ang file saanman ito ginagamit. Ituloy?")) return;
+    if (file.size > MAX_UPLOAD_BYTES) return setStatus({ ok: false, text: `The file is over ${MAX_UPLOAD_MB} MB.` });
+    if (!window.confirm("This replaces the file everywhere it is used. Continue?")) return;
     setBusy(true);
     const fd = new FormData();
     fd.set("id", id);
     fd.set("file", file);
     try {
       const r = await replaceMediaFile(fd);
-      setStatus(r.ok ? { ok: true, text: "Napalitan ang file." } : { ok: false, text: r.error });
+      setStatus(r.ok ? { ok: true, text: "File replaced." } : { ok: false, text: r.error });
       if (r.ok) {
         form.reset();
         router.refresh();
       }
     } catch {
-      setStatus({ ok: false, text: "Hindi naipadala ang file. Subukang muli." });
+      setStatus({ ok: false, text: "The file could not be sent. Try again." });
     }
     setBusy(false);
   }
@@ -124,11 +124,11 @@ export function ReplaceFileForm({ id }: { id: string }) {
   return (
     <form onSubmit={onSubmit} className="space-y-2">
       <label htmlFor="replace-file" className="block text-sm font-semibold text-ink">
-        Bagong file
+        New file
       </label>
       <input id="replace-file" name="file" type="file" accept={ACCEPT} required className="field py-2" disabled={busy} />
       <button type="submit" disabled={busy} className="btn btn-outline min-h-10 px-4 text-sm">
-        {busy ? "Pinapalitan…" : "Palitan ang file"}
+        {busy ? "Replacing…" : "Replace file"}
       </button>
       {status && (
         <p role={status.ok ? "status" : "alert"} className={`text-sm font-medium ${status.ok ? "text-emerald-700" : "text-accent-700"}`}>

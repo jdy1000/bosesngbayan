@@ -11,11 +11,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const ctx = await requirePermission("polls.view_results");
     const { id } = await params;
-    if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Hindi wastong poll." }, { status: 400 });
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid poll." }, { status: 400 });
 
     const { data: poll, error: pollError } = await ctx.supabase.from("polls").select("slug").eq("id", id).maybeSingle();
     if (pollError) throw pollError;
-    if (!poll) return NextResponse.json({ error: "Hindi nahanap ang poll." }, { status: 404 });
+    if (!poll) return NextResponse.json({ error: "Poll not found." }, { status: 404 });
 
     const rows: string[][] = [];
     for (let from = 0; ; from += BATCH) {
@@ -42,6 +42,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   } catch (e) {
     if (e instanceof AuthorizationError) return NextResponse.json({ error: e.message }, { status: 403 });
     logServerError("poll_export_failed", e);
-    return NextResponse.json({ error: "Hindi ma-export ang resulta." }, { status: 500 });
+    return NextResponse.json({ error: "Could not export the results." }, { status: 500 });
   }
 }

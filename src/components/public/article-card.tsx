@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ArticleCard as Article } from "@/lib/cms/articles";
+import { fmt } from "@/lib/i18n/config";
+import { getI18n } from "@/lib/i18n/server";
 import { formatDate, timeAgo } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 
@@ -46,7 +48,8 @@ function Thumb({
   );
 }
 
-function Meta({
+// Server component (reads the reader's locale); ArticleCard is only rendered from server components.
+async function Meta({
   article,
   showAuthor = true,
   showCategory = false,
@@ -57,6 +60,7 @@ function Meta({
   showCategory?: boolean;
   showReading?: boolean;
 }) {
+  const { locale, t } = await getI18n();
   const parts: { key: string; node: React.ReactNode; wide?: boolean }[] = [];
   if (showCategory && article.category) parts.push({ key: "c", node: <span className="font-medium text-brand-700">{article.category.name}</span> });
   if (showAuthor && article.author) parts.push({ key: "a", node: <span className="font-medium text-ink-soft">{article.author.display_name}</span> });
@@ -64,13 +68,13 @@ function Meta({
     parts.push({
       key: "t",
       node: (
-        <time dateTime={article.published_at} title={formatDate(article.published_at)}>
-          {timeAgo(article.published_at)}
+        <time dateTime={article.published_at} title={formatDate(article.published_at, locale)}>
+          {timeAgo(article.published_at, undefined, locale)}
         </time>
       ),
     });
   // Reading time is secondary: hidden on phones so narrow rows stay on one or two lines.
-  if (showReading && article.reading_minutes > 0) parts.push({ key: "r", node: <span>{article.reading_minutes} min basa</span>, wide: true });
+  if (showReading && article.reading_minutes > 0) parts.push({ key: "r", node: <span>{fmt(t.common.card.readingMinutes, { n: article.reading_minutes })}</span>, wide: true });
   return (
     // Each item carries its own "·" in a left gutter that the wrapper clips, so a wrapped line starts flush left.
     <div className="overflow-hidden">

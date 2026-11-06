@@ -11,16 +11,16 @@ export const redirectInputSchema = z
     source_path: z
       .string()
       .trim()
-      .max(300, "Hanggang 300 character lamang.")
-      .regex(/^\/[^/\s?#][^\s?#]*$/, "Ang source ay path na nagsisimula sa / (walang query, # o espasyo).")
-      .refine((v) => !RESERVED.test(v), { message: "Hindi maaaring i-redirect ang /admin, /api o /_next." }),
-    destination: safeHref.refine((v) => !/\s/.test(v), { message: "Walang espasyo sa destination." }),
+      .max(300, "Up to 300 characters.")
+      .regex(/^\/[^/\s?#][^\s?#]*$/, "The source must be a path starting with / (no query, # or spaces).")
+      .refine((v) => !RESERVED.test(v), { message: "/admin, /api and /_next cannot be redirected." }),
+    destination: safeHref.refine((v) => !/\s/.test(v), { message: "The destination cannot contain spaces." }),
     status_code: z.coerce
       .number()
-      .refine((c) => (REDIRECT_STATUS_CODES as readonly number[]).includes(c), { message: "301, 302, 307 o 308 lamang." }),
+      .refine((c) => (REDIRECT_STATUS_CODES as readonly number[]).includes(c), { message: "301, 302, 307 or 308 only." }),
     is_active: z.boolean(),
   })
-  .refine((v) => v.source_path !== v.destination, { message: "Hindi maaaring i-redirect ang path sa sarili nito.", path: ["destination"] });
+  .refine((v) => v.source_path !== v.destination, { message: "A path cannot redirect to itself.", path: ["destination"] });
 
 /** Normalise a destination to a same-site path when it points at our own origin; null for external URLs. */
 export function sameSitePath(destination: string, siteOrigin: string): string | null {

@@ -7,11 +7,11 @@ export const RANGE_PRESETS = ["today", "7d", "30d", "90d", "custom"] as const;
 export type RangePreset = (typeof RANGE_PRESETS)[number];
 
 export const RANGE_LABELS: Record<RangePreset, string> = {
-  today: "Ngayong araw",
-  "7d": "Huling 7 araw",
-  "30d": "Huling 30 araw",
-  "90d": "Huling 90 araw",
-  custom: "Custom na saklaw",
+  today: "Today",
+  "7d": "Last 7 days",
+  "30d": "Last 30 days",
+  "90d": "Last 90 days",
+  custom: "Custom range",
 };
 
 /** analytics_summary() rejects ranges longer than 400 days. */
@@ -54,7 +54,7 @@ function isRealDate(day: string): boolean {
 function build(preset: RangePreset, fromDate: string, toDate: string, error?: string): DateRange {
   const days: string[] = [];
   for (let d = fromDate; d <= toDate; d = addDays(d, 1)) days.push(d);
-  const label = preset === "custom" ? `${fromDate} hanggang ${toDate}` : RANGE_LABELS[preset];
+  const label = preset === "custom" ? `${fromDate} to ${toDate}` : RANGE_LABELS[preset];
   return {
     preset,
     label,
@@ -84,10 +84,10 @@ export function parseRange(
 
   const from = one(params.from);
   const to = one(params.to);
-  if (!isRealDate(from) || !isRealDate(to)) return fallback("Pumili ng wastong petsa ng simula at katapusan.");
-  if (from > to) return fallback("Ang petsa ng simula ay dapat bago o kapareho ng katapusan.");
-  if (to > today) return fallback("Hindi maaaring lumampas sa araw na ito ang katapusan.");
-  if ((dayStartMs(to) - dayStartMs(from)) / DAY_MS + 1 > MAX_RANGE_DAYS) return fallback(`Hanggang ${MAX_RANGE_DAYS} araw lamang ang saklaw.`);
+  if (!isRealDate(from) || !isRealDate(to)) return fallback("Choose a valid start and end date.");
+  if (from > to) return fallback("The start date must be on or before the end date.");
+  if (to > today) return fallback("The end date cannot be later than today.");
+  if ((dayStartMs(to) - dayStartMs(from)) / DAY_MS + 1 > MAX_RANGE_DAYS) return fallback(`The range can be at most ${MAX_RANGE_DAYS} days.`);
   return build("custom", from, to);
 }
 

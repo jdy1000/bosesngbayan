@@ -17,7 +17,8 @@ function contentSecurityPolicy(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     // Inline style attributes/tags (brand variables, next/font, TipTap) — no script execution risk.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:" + (dev ? " http:" : ""),
+    // The configured Supabase origin is listed explicitly so Studio thumbnails also load from a local http stack.
+    `img-src 'self' data: blob: https: ${supabase}${dev ? " http:" : ""}`.trimEnd(),
     "font-src 'self' data:",
     `connect-src 'self' ${supabase}${dev ? " ws:" : ""}`.trim(),
     "frame-src https://www.youtube-nocookie.com https://www.youtube.com",
@@ -40,7 +41,11 @@ export async function proxy(request: NextRequest) {
   };
 
   const path = request.nextUrl.pathname;
-  if (!path.startsWith("/admin")) return withCsp(NextResponse.next({ request }));
+  // Exact segment match, so a public slug such as /administrasyon is never treated as Studio.
+  const studio = path === "/admin" || path.startsWith("/admin/");
+  // Lets the root layout pick <html lang>: Studio is English-only, the public site follows the reader's language.
+  request.headers.set("x-bnb-area", studio ? "studio" : "site");
+  if (!studio) return withCsp(NextResponse.next({ request }));
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

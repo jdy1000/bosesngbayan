@@ -19,11 +19,11 @@ export default async function PagePreviewPage({ params }: { params: Promise<{ id
 
   return (
     <main>
-      <div role="note" className="sticky top-0 z-30 flex flex-wrap items-center gap-3 bg-amber-400 px-4 py-2 text-sm font-bold text-navy">
-        PREVIEW — hindi pa nakalathala
+      <div role="note" className="sticky top-0 z-30 flex flex-wrap items-center gap-3 bg-amber-400 px-4 py-2 text-sm font-bold text-black">
+        PREVIEW — not published yet
         <span className="font-semibold">Status: {PAGE_STATUS_LABELS[page.status].label}</span>
         <Link href={`/admin/pages/${id}`} className="ml-auto underline">
-          Bumalik sa editor
+          Back to editor
         </Link>
       </div>
       <article className="container-site max-w-[760px] py-10 md:py-14">

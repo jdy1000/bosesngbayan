@@ -38,7 +38,7 @@ export function PageHeader({
 
 export function Panel({ title, description, actions, children, className = "" }: { title?: string; description?: React.ReactNode; actions?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl bg-white shadow-card ring-1 ring-line ${className}`}>
+    <section className={`rounded-2xl bg-paper shadow-card ring-1 ring-line ${className}`}>
       {(title || actions) && (
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
           <div>
@@ -69,12 +69,12 @@ export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; childr
 
 export const ARTICLE_STATUS: Record<string, { label: string; tone: BadgeTone }> = {
   draft: { label: "Draft", tone: "neutral" },
-  pending_review: { label: "Para sa review", tone: "amber" },
-  approved: { label: "Aprubado", tone: "blue" },
-  rejected: { label: "Ni-reject", tone: "red" },
-  scheduled: { label: "Naka-iskedyul", tone: "blue" },
-  published: { label: "Nakalathala", tone: "green" },
-  archived: { label: "Naka-archive", tone: "neutral" },
+  pending_review: { label: "In review", tone: "amber" },
+  approved: { label: "Approved", tone: "blue" },
+  rejected: { label: "Rejected", tone: "red" },
+  scheduled: { label: "Scheduled", tone: "blue" },
+  published: { label: "Published", tone: "green" },
+  archived: { label: "Archived", tone: "neutral" },
 };
 
 export function StatusBadge({ status, map = ARTICLE_STATUS }: { status: string; map?: Record<string, { label: string; tone: BadgeTone }> }) {
@@ -84,7 +84,7 @@ export function StatusBadge({ status, map = ARTICLE_STATUS }: { status: string; 
 
 export function Empty({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-line bg-white px-6 py-12 text-center">
+    <div className="rounded-2xl border border-dashed border-line bg-paper px-6 py-12 text-center">
       <p className="font-semibold text-ink">{title}</p>
       {children && <div className="mx-auto mt-1 max-w-md text-sm text-muted">{children}</div>}
     </div>
@@ -104,7 +104,7 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warn" | "
 /** Plain table shell: pass <tr> rows. Scrolls horizontally on small screens instead of breaking layout. */
 export function Table({ head, children }: { head: React.ReactNode[]; children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white shadow-card ring-1 ring-line">
+    <div className="overflow-x-auto rounded-2xl bg-paper shadow-card ring-1 ring-line">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead className="border-b border-line bg-surface text-xs font-semibold uppercase tracking-wide text-muted">
           <tr>
@@ -126,17 +126,17 @@ export function Pagination({ page, totalPages, hrefFor }: { page: number; totalP
   return (
     <nav aria-label="Pagination" className="mt-4 flex items-center justify-between text-sm">
       <span className="text-muted">
-        Pahina {page} ng {totalPages}
+        Page {page} of {totalPages}
       </span>
       <div className="flex gap-2">
         {page > 1 && (
-          <Link href={hrefFor(page - 1)} className="rounded-full bg-white px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
-            ← Nauna
+          <Link href={hrefFor(page - 1)} className="rounded-full bg-paper px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
+            ← Previous
           </Link>
         )}
         {page < totalPages && (
-          <Link href={hrefFor(page + 1)} className="rounded-full bg-white px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
-            Susunod →
+          <Link href={hrefFor(page + 1)} className="rounded-full bg-paper px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
+            Next →
           </Link>
         )}
       </div>

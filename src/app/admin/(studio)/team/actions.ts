@@ -12,7 +12,7 @@ import { optionalText, requiredText } from "@/lib/studio/form";
 import type { FormActionResult } from "@/components/studio/action-form";
 import { must } from "@/lib/studio/db";
 
-const roleSchema = z.enum(ROLES, { message: "Pumili ng wastong role." });
+const roleSchema = z.enum(ROLES, { message: "Choose a valid role." });
 const userId = z.uuid();
 const BAN_FOREVER = "876000h"; // ~100 years; Supabase Auth has no permanent-ban flag
 
@@ -31,23 +31,23 @@ export async function inviteMember(_prev: FormActionResult, fd: FormData): Promi
     const ctx = await requirePermission("users.manage");
     const input = z
       .object({
-        email: z.string().trim().toLowerCase().pipe(z.email("Ilagay ang wastong email.")),
-        display_name: requiredText(1, 120, "Pangalan"),
+        email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email.")),
+        display_name: requiredText(1, 120, "Name"),
         role: roleSchema,
       })
       .parse(Object.fromEntries(fd));
     if (input.role === "owner" && ctx.role !== "owner") return toActionError({ message: "owner_role_protected" });
 
     const admin = authAdmin();
-    if (!admin) return { ok: false, error: "Hindi naka-configure ang SUPABASE_SERVICE_ROLE_KEY sa server, kaya hindi makapag-imbita." };
+    if (!admin) return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server, so invitations cannot be sent." };
     const { data, error } = await admin.inviteUserByEmail(input.email, {
       redirectTo: siteUrl("/admin/auth/callback?next=/admin/auth/update-password"),
       data: { display_name: input.display_name },
     });
     if (error || !data.user) {
-      if (error?.code === "email_exists" || error?.status === 422) return { ok: false, error: "May account na ang email na ito." };
+      if (error?.code === "email_exists" || error?.status === 422) return { ok: false, error: "This email already has an account." };
       logServerError("invite_failed", error);
-      return { ok: false, error: "Hindi naipadala ang imbitasyon. Suriin ang SMTP configuration ng Supabase Auth." };
+      return { ok: false, error: "The invitation could not be sent. Check the Supabase Auth SMTP configuration." };
     }
 
     // Role assignment runs as the inviter so every database guard applies.
@@ -59,12 +59,12 @@ export async function inviteMember(_prev: FormActionResult, fd: FormData): Promi
       return {
         ok: false,
         error: rollbackError
-          ? `Hindi naitakda ang role (${reason}) at hindi rin natanggal ang na-imbitang account. Tanggalin ito sa Supabase Auth dashboard.`
-          : `Hindi naitakda ang role: ${reason} Binawi ang imbitasyon.`,
+          ? `The role could not be set (${reason}) and the invited account could not be removed. Delete it in the Supabase Auth dashboard.`
+          : `The role could not be set: ${reason} The invitation was revoked.`,
       };
     }
     revalidatePath("/admin/team");
-    return { ok: true, message: `Naipadala ang imbitasyon kay ${input.email}.` };
+    return { ok: true, message: `Invitation sent to ${input.email}.` };
   } catch (e) {
     return toActionError(e);
   }
@@ -76,7 +76,7 @@ export async function changeRole(_prev: FormActionResult, fd: FormData): Promise
     const input = z.object({ id: userId, role: roleSchema }).parse(Object.fromEntries(fd));
     unwrap(await ctx.supabase.rpc("set_user_role", { p_user_id: input.id, p_role: input.role }));
     revalidatePath("/admin/team");
-    return { ok: true, message: "Nabago ang role. Epektibo sa susunod na request ng user." };
+    return { ok: true, message: "Role changed. It takes effect on the user's next request." };
   } catch (e) {
     return toActionError(e);
   }
@@ -97,15 +97,15 @@ export async function setMemberActive(_prev: FormActionResult, fd: FormData): Pr
       return {
         ok: false,
         error: input.active
-          ? "Na-reactivate sa Studio, pero hindi natanggal ang ban sa Supabase Auth kaya hindi pa makakapag-login ang user. Subukang muli."
-          : "Na-deactivate sa Studio (wala na siyang access), pero hindi na-ban sa Supabase Auth. Subukang muli para pigilan ang pag-login.",
+          ? "Reactivated in Studio, but the Supabase Auth ban could not be lifted, so the user still cannot sign in. Try again."
+          : "Deactivated in Studio (no more access), but the Supabase Auth ban failed. Try again to block sign-in.",
       };
     }
     return {
       ok: true,
       message: input.active
-        ? "Na-reactivate. Makakapag-login na muli ang user."
-        : "Na-deactivate at na-ban sa pag-login. Ang kasalukuyang session ay mawawalan ng bisa kapag nag-expire ang access token nito; wala na itong pahintulot sa Studio.",
+        ? "Reactivated. The user can sign in again."
+        : "Deactivated and banned from signing in. The current session ends when its access token expires; it no longer has any Studio permissions.",
     };
   } catch (e) {
     return toActionError(e);
@@ -115,9 +115,9 @@ export async function setMemberActive(_prev: FormActionResult, fd: FormData): Pr
 export async function updateMemberProfile(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
   try {
     const ctx = await getStaffContext();
-    if (!ctx) throw new AuthorizationError("Kailangan mong mag-login.");
+    if (!ctx) throw new AuthorizationError("You need to sign in.");
     const input = z
-      .object({ id: userId, display_name: requiredText(1, 120, "Pangalan"), title: optionalText(120), bio: optionalText(2000) })
+      .object({ id: userId, display_name: requiredText(1, 120, "Name"), title: optionalText(120), bio: optionalText(2000) })
       .parse(Object.fromEntries(fd));
     if (input.id !== ctx.userId && !ctx.permissions.has("users.manage")) throw new AuthorizationError();
     const { id, ...fields } = input;
@@ -126,7 +126,7 @@ export async function updateMemberProfile(_prev: FormActionResult, fd: FormData)
     unwrap(await ctx.supabase.rpc("write_audit", { p_action: "update_profile", p_entity_type: "profiles", p_entity_id: id, p_details: { fields: Object.keys(fields) } }));
     revalidatePath("/admin/team");
     revalidatePath(`/admin/team/${id}`);
-    return { ok: true, message: "Na-save ang profile." };
+    return { ok: true, message: "Profile saved." };
   } catch (e) {
     return toActionError(e);
   }
@@ -147,7 +147,7 @@ export async function saveRolePermissions(_prev: FormActionResult, fd: FormData)
       changed++;
     }
     revalidatePath("/admin/team");
-    return { ok: true, message: changed === 0 ? "Walang binago." : `Na-update ang ${changed} pahintulot ng ${role}.` };
+    return { ok: true, message: changed === 0 ? "Nothing changed." : `Updated ${changed} permission(s) for ${role}.` };
   } catch (e) {
     return toActionError(e);
   }

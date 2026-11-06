@@ -51,28 +51,28 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
   const votesByOption = new Map((results?.options ?? []).map((o) => [o.option_id, o.votes]));
 
   const lifecycle: { op: string; label: string; show: boolean; variant?: "primary" | "outline" | "danger"; confirm?: string }[] = [
-    { op: "publish", label: "I-publish", show: poll.status === "draft", variant: "primary" },
-    { op: "unpublish", label: "Ibalik sa draft", show: poll.status === "published" && !locked, variant: "outline" },
-    { op: "close", label: "Isara ang botohan", show: poll.status === "published", variant: "outline", confirm: "Isara ang botohan? Hindi na makakaboto ang publiko." },
-    { op: "feature", label: "Gawing featured", show: !poll.is_featured && (poll.status === "published" || poll.status === "closed"), variant: "outline" },
-    { op: "unfeature", label: "Alisin sa featured", show: poll.is_featured, variant: "outline" },
-    { op: "archive", label: "I-archive", show: poll.status !== "archived", variant: "outline", confirm: "I-archive ang poll? Mawawala ito sa pampublikong site." },
-    { op: "delete", label: "Burahin", show: poll.status === "draft" && !locked, variant: "danger", confirm: "Permanenteng burahin ang draft na poll na ito?" },
+    { op: "publish", label: "Publish", show: poll.status === "draft", variant: "primary" },
+    { op: "unpublish", label: "Return to draft", show: poll.status === "published" && !locked, variant: "outline" },
+    { op: "close", label: "Close poll", show: poll.status === "published", variant: "outline", confirm: "Close this poll? The public will no longer be able to vote." },
+    { op: "feature", label: "Make featured", show: !poll.is_featured && (poll.status === "published" || poll.status === "closed"), variant: "outline" },
+    { op: "unfeature", label: "Remove from featured", show: poll.is_featured, variant: "outline" },
+    { op: "archive", label: "Archive", show: poll.status !== "archived", variant: "outline", confirm: "Archive this poll? It will be removed from the public site." },
+    { op: "delete", label: "Delete", show: poll.status === "draft" && !locked, variant: "danger", confirm: "Permanently delete this draft poll?" },
   ];
 
   return (
     <>
       <PageHeader
         title={poll.question}
-        breadcrumb={[{ label: "Mga Botohan", href: "/admin/polls" }]}
+        breadcrumb={[{ label: "Polls", href: "/admin/polls" }]}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StatusBadge status={poll.status} map={POLL_STATUS} />
             {poll.is_featured && <Badge tone="navy">Featured</Badge>}
-            {locked && <Badge tone="amber">May mga boto — naka-lock</Badge>}
+            {locked && <Badge tone="amber">Has votes — locked</Badge>}
             {(poll.status === "published" || poll.status === "closed") && (
               <Link href={`/botohan/${poll.slug}`} target="_blank" className="text-sm font-semibold text-brand hover:underline">
-                Tingnan sa site ↗
+                View on site ↗
               </Link>
             )}
           </span>
@@ -82,15 +82,15 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-6">
           {canManage ? (
-            <Panel title="Detalye ng poll">
+            <Panel title="Poll details">
               <ActionForm action={updatePoll} className="space-y-6">
                 <input type="hidden" name="id" value={poll.id} />
                 <PollFields values={poll} categories={categories ?? []} locked={locked} />
-                <SubmitButton>I-save ang mga pagbabago</SubmitButton>
+                <SubmitButton>Save changes</SubmitButton>
               </ActionForm>
             </Panel>
           ) : (
-            <Notice>Read-only ang view na ito: maaari mong tingnan at i-export ang resulta, pero hindi baguhin ang poll.</Notice>
+            <Notice>This view is read-only: you can view and export the results, but not change the poll.</Notice>
           )}
           <OptionsPanel pollId={poll.id} options={options} locked={locked} canManage={canManage} />
           {ctx.permissions.has("audit.view") && <PollHistory ctx={ctx} pollId={poll.id} />}
@@ -100,9 +100,9 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
           {canManage && (
             <Panel title="Lifecycle">
               <dl className="mb-4 space-y-1 text-sm text-ink-soft">
-                <div>Ginawa: {formatDateTime(poll.created_at)}</div>
-                {poll.published_at && <div>Na-publish: {formatDateTime(poll.published_at)}</div>}
-                {poll.closed_at && <div>Isinara: {formatDateTime(poll.closed_at)}</div>}
+                <div>Created: {formatDateTime(poll.created_at)}</div>
+                {poll.published_at && <div>Published: {formatDateTime(poll.published_at)}</div>}
+                {poll.closed_at && <div>Closed: {formatDateTime(poll.closed_at)}</div>}
               </dl>
               <div className="flex flex-wrap gap-2">
                 {lifecycle
@@ -110,37 +110,37 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
                   .map((l) => (
                     <ActionForm key={l.op} action={pollLifecycle} confirm={l.confirm}>
                       <input type="hidden" name="id" value={poll.id} />
-                      <SubmitButton name="op" value={l.op} variant={l.variant} pendingLabel="Sandali…">
+                      <SubmitButton name="op" value={l.op} variant={l.variant} pendingLabel="Working…">
                         {l.label}
                       </SubmitButton>
                     </ActionForm>
                   ))}
               </div>
               {poll.status === "published" && locked && (
-                <p className="mt-3 text-xs text-muted">May mga boto na kaya hindi na ito maibabalik sa draft. Isara o i-archive na lamang.</p>
+                <p className="mt-3 text-xs text-muted">This poll has votes, so it can no longer return to draft. Close or archive it instead.</p>
               )}
             </Panel>
           )}
 
           <Panel
-            title="Resulta"
+            title="Results"
             actions={
               canResults && (
                 <a href={`/admin/polls/${poll.id}/export`} className="text-sm font-semibold text-brand hover:underline">
-                  I-export CSV
+                  Export CSV
                 </a>
               )
             }
           >
             {!canResults ? (
-              <p className="text-sm text-muted">Kailangan ng pahintulot na “polls.view_results” para makita ang resulta.</p>
+              <p className="text-sm text-muted">You need the “polls.view_results” permission to see the results.</p>
             ) : !results?.visible ? (
-              <p className="text-sm text-accent-700">Hindi makuha ang resulta.</p>
+              <p className="text-sm text-accent-700">Could not load the results.</p>
             ) : (
               <>
                 <p className="mb-3 text-sm text-ink-soft">
-                  Kabuuang balota: <strong className="tabular-nums text-ink">{formatNumber(total)}</strong>
-                  {poll.kind === "multiple" && " (maaaring higit sa isang sagot bawat balota)"}
+                  Total ballots: <strong className="tabular-nums text-ink">{formatNumber(total)}</strong>
+                  {poll.kind === "multiple" && " (a ballot may include more than one choice)"}
                 </p>
                 <ul className="space-y-3">
                   {options.map((o) => {
@@ -162,7 +162,7 @@ export default async function PollDetailPage({ params }: { params: Promise<{ id:
                   })}
                 </ul>
                 <p className="mt-4 text-xs text-muted">
-                  Ang porsiyento ay bahagi ng kabuuang balota. Boluntaryong online poll ito at hindi kumakatawan sa buong populasyon ng Pilipinas.
+                  Percentages are shares of total ballots. This is a voluntary online poll and does not represent the whole Philippine population.
                 </p>
               </>
             )}

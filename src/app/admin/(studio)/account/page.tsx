@@ -8,7 +8,7 @@ import { PasswordInput } from "@/components/studio/password-input";
 import { Field, Notice, PageHeader, Panel } from "@/components/studio/ui";
 import { changeEmail, changePassword } from "./actions";
 
-export const metadata: Metadata = { title: "Aking Account" };
+export const metadata: Metadata = { title: "My account" };
 
 export default async function AccountPage() {
   const ctx = await requireStaffPage();
@@ -17,43 +17,43 @@ export default async function AccountPage() {
 
   return (
     <>
-      <PageHeader title="Aking Account" description="Ang iyong login email at password. Ikaw lang ang makakapagbago nito." />
+      <PageHeader title="My account" description="Your sign-in email and password. Only you can change them." />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-6">
-          <Panel title="Email" description="Ginagamit sa pag-login at sa mga abiso mula sa Studio.">
+          <Panel title="Email" description="Used to sign in and for notifications from Studio.">
             {pendingEmail && (
               <div className="mb-4">
                 <Notice tone="warn">
-                  Naghihintay ng kumpirmasyon: <strong>{pendingEmail}</strong>. Buksan ang link na ipinadala sa luma at bagong email.
+                  Awaiting confirmation: <strong>{pendingEmail}</strong>. Open the link sent to your old and new email.
                 </Notice>
               </div>
             )}
             <ActionForm action={changeEmail} resetOnSuccess className="max-w-md space-y-4">
-              <Field label="Kasalukuyang email">
+              <Field label="Current email">
                 <p className="text-[0.95rem] text-ink">{ctx.email}</p>
               </Field>
-              <Field label="Bagong email" htmlFor="account-email">
+              <Field label="New email" htmlFor="account-email">
                 <input id="account-email" name="email" type="email" required autoComplete="email" className="field" />
               </Field>
-              <SubmitButton pendingLabel="Ipinapadala…">Palitan ang email</SubmitButton>
+              <SubmitButton pendingLabel="Sending…">Change email</SubmitButton>
             </ActionForm>
           </Panel>
 
-          <Panel title="Password" description="Kailangan ang kasalukuyang password bago magpalit.">
+          <Panel title="Password" description="Your current password is required to change it.">
             <ActionForm action={changePassword} resetOnSuccess className="max-w-md space-y-4">
               {/* Lets password managers attach the new password to the right account. */}
               <input type="text" name="username" autoComplete="username" value={ctx.email ?? ""} readOnly hidden />
-              <Field label="Kasalukuyang password" htmlFor="account-current">
+              <Field label="Current password" htmlFor="account-current">
                 <PasswordInput id="account-current" name="current" required autoComplete="current-password" />
               </Field>
-              <Field label="Bagong password" htmlFor="account-password" hint={PASSWORD_RULES}>
+              <Field label="New password" htmlFor="account-password" hint={PASSWORD_RULES}>
                 <PasswordInput id="account-password" name="password" required minLength={12} autoComplete="new-password" />
               </Field>
-              <Field label="Ulitin ang bagong password" htmlFor="account-confirm">
+              <Field label="Repeat new password" htmlFor="account-confirm">
                 <PasswordInput id="account-confirm" name="confirm" required minLength={12} autoComplete="new-password" />
               </Field>
-              <SubmitButton pendingLabel="Sine-save…">I-save ang password</SubmitButton>
+              <SubmitButton pendingLabel="Saving…">Save password</SubmitButton>
             </ActionForm>
           </Panel>
         </div>
@@ -62,7 +62,7 @@ export default async function AccountPage() {
           <Panel title="Profile">
             <dl className="space-y-3 text-sm">
               <div>
-                <dt className="text-muted">Pangalan</dt>
+                <dt className="text-muted">Name</dt>
                 <dd className="font-semibold text-ink">{ctx.displayName}</dd>
               </div>
               <div>
@@ -71,16 +71,16 @@ export default async function AccountPage() {
               </div>
               {data.user?.last_sign_in_at && (
                 <div>
-                  <dt className="text-muted">Huling login</dt>
+                  <dt className="text-muted">Last sign-in</dt>
                   <dd className="text-ink">{formatDateTime(data.user.last_sign_in_at)}</dd>
                 </div>
               )}
             </dl>
-            <p className="mt-4 text-sm text-muted">Ang pangalan at role ay binabago ng administrator sa Team at Roles.</p>
+            <p className="mt-4 text-sm text-muted">Your name and role are changed by an administrator in Team & roles.</p>
           </Panel>
-          <Panel title="Nakalimutan ang password?">
+          <Panel title="Forgot your password?">
             <p className="text-sm text-ink-soft">
-              Mag-logout at piliin ang <strong>Nakalimutan?</strong> sa login page. Padadalhan ka ng link para gumawa ng bagong password.
+              Sign out and choose <strong>Forgot password?</strong> on the sign-in page. We will send you a link to create a new password.
             </p>
           </Panel>
         </aside>

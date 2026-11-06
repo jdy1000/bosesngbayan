@@ -4,6 +4,7 @@ import { createPublicClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import { parseSection, type HomepageBlock } from "@/lib/homepage/blocks";
 import { logServerError } from "@/lib/log";
+import type { Locale } from "@/lib/i18n/config";
 
 export interface HomepageData {
   configurationId: string;
@@ -20,6 +21,7 @@ export interface HomepageData {
 export async function getHomepage(
   status: "draft" | "published" = "published",
   client: SupabaseClient<Database> = createPublicClient(),
+  locale: Locale = "fil",
 ): Promise<HomepageData | null> {
   const { data: config, error } = await client
     .from("homepage_configurations")
@@ -31,7 +33,7 @@ export async function getHomepage(
 
   const { data: sections, error: secError } = await client
     .from("homepage_sections")
-    .select("id, block_type, title, description, settings, position, is_enabled")
+    .select("id, block_type, title, description, title_en, description_en, settings, position, is_enabled")
     .eq("configuration_id", config.id)
     .eq("is_enabled", true)
     .order("position");
@@ -40,7 +42,7 @@ export async function getHomepage(
   const blocks: HomepageBlock[] = [];
   const invalidSections: HomepageData["invalidSections"] = [];
   for (const s of sections ?? []) {
-    const { block, issues } = parseSection(s);
+    const { block, issues } = parseSection(s, locale);
     if (block) blocks.push(block);
     else {
       invalidSections.push({ id: s.id, issues });

@@ -26,9 +26,9 @@ export async function getStudioNotices(ctx: StaffContext): Promise<StudioNotice[
   ]);
 
   return [
-    { label: "artikulong naghihintay ng review", href: "/admin/articles?status=pending_review", count: review },
-    { label: "Usap Bayan post na naghihintay", href: "/admin/moderation?tab=posts", count: posts },
-    { label: "komentong naghihintay", href: "/admin/moderation?tab=comments", count: comments },
-    { label: "bukas na report", href: "/admin/moderation?tab=reports", count: reports },
+    { label: "article(s) awaiting review", href: "/admin/articles?status=pending_review", count: review },
+    { label: "Usap Bayan post(s) pending", href: "/admin/moderation?tab=posts", count: posts },
+    { label: "comment(s) pending", href: "/admin/moderation?tab=comments", count: comments },
+    { label: "open report(s)", href: "/admin/moderation?tab=reports", count: reports },
   ].filter((n) => n.count > 0);
 }

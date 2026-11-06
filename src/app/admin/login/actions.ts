@@ -15,8 +15,8 @@ export interface LoginState {
 }
 
 const loginSchema = z.object({
-  email: z.string().trim().toLowerCase().pipe(z.email("Ilagay ang wastong email.")),
-  password: z.string().min(1, "Ilagay ang password.").max(200),
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email.")),
+  password: z.string().min(1, "Enter your password.").max(200),
 });
 
 export async function signIn(_prev: LoginState, formData: FormData): Promise<LoginState> {
@@ -24,23 +24,23 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   if (!(await checkRateLimit("login", networkHash(await headers())))) {
-    return { error: "Masyadong maraming pagsubok. Maghintay ng ilang minuto." };
+    return { error: "Too many attempts. Wait a few minutes." };
   }
 
   const supabase = await createSessionClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   // One generic message: never reveal whether the email exists.
-  if (error) return { error: "Mali ang email o password." };
+  if (error) return { error: "Incorrect email or password." };
   redirect("/admin");
 }
 
-const resetSchema = z.object({ email: z.string().trim().toLowerCase().pipe(z.email("Ilagay ang wastong email.")) });
+const resetSchema = z.object({ email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email.")) });
 
 export async function requestPasswordReset(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const parsed = resetSchema.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   if (!(await checkRateLimit("login", networkHash(await headers())))) {
-    return { error: "Masyadong maraming pagsubok. Maghintay ng ilang minuto." };
+    return { error: "Too many attempts. Wait a few minutes." };
   }
   const supabase = await createSessionClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
@@ -48,7 +48,7 @@ export async function requestPasswordReset(_prev: LoginState, formData: FormData
   });
   if (error) logServerError("password_reset_request_failed", error);
   // Same answer regardless of outcome, so account existence cannot be probed.
-  return { message: "Kung may account ang email na ito, makatatanggap ka ng link para mag-reset ng password." };
+  return { message: "If this email has an account, you will receive a link to reset your password." };
 }
 
 export async function signOut(): Promise<void> {

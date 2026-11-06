@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/server";
 import { parseSettings, type SiteSettings } from "@/lib/settings/schema";
 import type { MediaSummary } from "@/lib/cms/articles";
+import type { Locale } from "@/lib/i18n/config";
 
 export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   const { data, error } = await createPublicClient().from("site_settings").select("key, value");
@@ -18,11 +19,12 @@ export interface NavItem {
   children: NavItem[];
 }
 
-export const getMenu = cache(async (key: string): Promise<NavItem[]> => {
+/** Header/footer menu. English labels are optional per item; empty falls back to the Filipino label. */
+export const getMenu = cache(async (key: string, locale: Locale = "fil"): Promise<NavItem[]> => {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("navigation_items")
-    .select("id, parent_id, label, href, position, open_in_new_tab, navigation_menus!inner(key)")
+    .select("id, parent_id, label, label_en, href, position, open_in_new_tab, navigation_menus!inner(key)")
     .eq("navigation_menus.key", key)
     .eq("is_visible", true)
     .order("position");
@@ -30,7 +32,7 @@ export const getMenu = cache(async (key: string): Promise<NavItem[]> => {
   const rows = data ?? [];
   const toItem = (r: (typeof rows)[number]): NavItem => ({
     id: r.id,
-    label: r.label,
+    label: locale === "en" && r.label_en ? r.label_en : r.label,
     href: r.href,
     openInNewTab: r.open_in_new_tab,
     children: rows.filter((c) => c.parent_id === r.id).map(toItem),

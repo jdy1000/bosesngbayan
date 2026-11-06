@@ -3,6 +3,7 @@ import { Logo } from "@/components/public/logo";
 import { NewsletterForm } from "@/components/public/newsletter-form";
 import type { CategorySummary, NavItem } from "@/lib/cms/site";
 import type { SiteSettings } from "@/lib/settings/schema";
+import { getI18n } from "@/lib/i18n/server";
 
 const SOCIAL_LABELS = {
   facebook: "Facebook",
@@ -34,7 +35,7 @@ function FooterLinks({ title, items }: { title: string; items: { key: string; la
   );
 }
 
-export function SiteFooter({
+export async function SiteFooter({
   settings,
   logoUrl,
   mainLinks,
@@ -48,6 +49,7 @@ export function SiteFooter({
   categories: CategorySummary[];
 }) {
   const { general, social, footer, newsletter } = settings;
+  const { t } = await getI18n();
   const socials = (Object.keys(SOCIAL_LABELS) as (keyof typeof SOCIAL_LABELS)[])
     .filter((k) => social[k])
     .map((k) => ({ key: k, label: SOCIAL_LABELS[k], href: social[k], external: true }));
@@ -60,12 +62,12 @@ export function SiteFooter({
     <footer className="mt-16 bg-navy-900 text-white">
       <div className="container-site grid gap-12 py-14 md:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1.4fr] lg:py-16">
         <div className="max-w-sm">
-          <Link href="/" aria-label={`${general.site_name} — Bahay`} className="inline-block">
+          <Link href="/" aria-label={`${general.site_name} — ${t.common.homeSuffix}`} className="inline-block">
             <Logo siteName={general.site_name} logoUrl={logoUrl} size="sm" inverted />
           </Link>
           {general.description && <p className="mt-5 text-[0.95rem] leading-relaxed text-white/75">{general.description}</p>}
           {socials.length > 0 && (
-            <ul className="mt-6 flex flex-wrap gap-2" aria-label="Social media">
+            <ul className="mt-6 flex flex-wrap gap-2" aria-label={t.common.socialMedia}>
               {socials.map((s) => (
                 <li key={s.key}>
                   <a
@@ -87,7 +89,7 @@ export function SiteFooter({
           title="Boses ng Bayan"
           items={mainLinks.map((i) => ({ key: i.id, label: i.label, href: i.href, external: i.openInNewTab }))}
         />
-        <FooterLinks title="Mga Paksa" items={categoryLinks} />
+        <FooterLinks title={t.common.footerTopics} items={categoryLinks} />
 
         {newsletter.enabled && (
           <div id="newsletter" className="scroll-mt-24 lg:scroll-mt-32">

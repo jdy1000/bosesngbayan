@@ -63,7 +63,7 @@ export function useAutosave({
         return false;
       } catch {
         setStatus("error");
-        setMessage("Hindi maabot ang server. Susubukan muli.");
+        setMessage("Can't reach the server. Will retry.");
         return false;
       } finally {
         inFlight.current = false;
@@ -95,11 +95,11 @@ export function useAutosave({
 
 export function SaveIndicator({ status, message, savedAt }: { status: SaveStatus; message: string | null; savedAt: Date | null }) {
   const label = {
-    saved: savedAt ? `Naka-save · ${savedAt.toLocaleTimeString("fil-PH", { hour: "numeric", minute: "2-digit" })}` : "Naka-save",
-    dirty: "May hindi na-save",
-    saving: "Sine-save…",
-    error: "May hindi na-save",
-    conflict: "May conflict",
+    saved: savedAt ? `Saved · ${savedAt.toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}` : "Saved",
+    dirty: "Unsaved changes",
+    saving: "Saving…",
+    error: "Not saved",
+    conflict: "Conflict",
   }[status];
   const tone = status === "saved" ? "text-emerald-700" : status === "saving" ? "text-muted" : status === "dirty" ? "text-amber-800" : "text-accent-700";
   return (

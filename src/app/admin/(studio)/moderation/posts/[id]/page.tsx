@@ -8,7 +8,7 @@ import { Badge, PageHeader, Panel, StatusBadge } from "@/components/studio/ui";
 import { MODERATION_STATUS } from "../../labels";
 import { ActivityHistory, ModerationPanel, ReportsPanel } from "../../parts";
 
-export const metadata = { title: "Post ng komunidad" };
+export const metadata = { title: "Community post" };
 
 export default async function ModerationPostPage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await requireStaffPage("moderation.manage");
@@ -40,15 +40,15 @@ export default async function ModerationPostPage({ params }: { params: Promise<{
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StatusBadge status={post.status} map={MODERATION_STATUS} />
-            <Badge tone="blue">{COMMUNITY_KIND_LABELS[post.kind]}</Badge>
+            <Badge tone="blue">{COMMUNITY_KIND_LABELS.en[post.kind]}</Badge>
             {post.is_featured && <Badge tone="navy">Featured</Badge>}
-            {post.staff_author_id && <Badge>Gawa ng staff</Badge>}
+            {post.staff_author_id && <Badge>Staff post</Badge>}
           </span>
         }
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <Panel title="Buong nilalaman">
+          <Panel title="Full content">
             <p className="whitespace-pre-line break-words text-[0.95rem] leading-relaxed text-ink">{post.body}</p>
           </Panel>
           <ReportsPanel reports={reports ?? []} />
@@ -56,20 +56,20 @@ export default async function ModerationPostPage({ params }: { params: Promise<{
         </div>
         <aside className="space-y-6">
           <ModerationPanel targetType="community_post" targetId={post.id} status={post.status} isFeatured={post.is_featured} currentNote={post.moderator_note} />
-          <Panel title="Detalye">
+          <Panel title="Details">
             <dl className="space-y-2 text-sm">
-              <Row label="May-akda" value={post.author_name} />
-              <Row label="Email (staff lamang)" value={post.author_email ?? "Hindi ibinigay"} />
-              <Row label="Lokasyon" value={post.author_location ?? "—"} />
-              <Row label="Kategorya" value={post.category?.name ?? "—"} />
-              <Row label="Isinumite" value={formatDateTime(post.created_at)} />
-              {post.published_at && <Row label="Nailathala" value={formatDateTime(post.published_at)} />}
-              {post.moderated_at && <Row label="Huling moderation" value={formatDateTime(post.moderated_at)} />}
-              <Row label="Komento" value={post.allow_comments ? `Bukas (${commentCount ?? 0})` : "Sarado"} />
+              <Row label="Author" value={post.author_name} />
+              <Row label="Email (staff only)" value={post.author_email ?? "Not provided"} />
+              <Row label="Location" value={post.author_location ?? "—"} />
+              <Row label="Category" value={post.category?.name ?? "—"} />
+              <Row label="Submitted" value={formatDateTime(post.created_at)} />
+              {post.published_at && <Row label="Published" value={formatDateTime(post.published_at)} />}
+              {post.moderated_at && <Row label="Last moderated" value={formatDateTime(post.moderated_at)} />}
+              <Row label="Comments" value={post.allow_comments ? `Open (${commentCount ?? 0})` : "Closed"} />
             </dl>
             {(commentCount ?? 0) > 0 && (
               <Link href={`/admin/moderation?tab=comments&status=all&post=${post.id}`} className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
-                Tingnan ang mga komento →
+                View comments →
               </Link>
             )}
           </Panel>

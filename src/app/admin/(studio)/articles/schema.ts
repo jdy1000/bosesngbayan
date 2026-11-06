@@ -6,14 +6,14 @@ export const optText = (max: number, label: string) =>
   z
     .string()
     .trim()
-    .max(max, `${label}: hanggang ${max} karakter lamang.`)
+    .max(max, `${label}: ${max} characters maximum.`)
     .transform((v) => (v === "" ? null : v));
 
 export const optUuid = z
   .string()
   .trim()
   .transform((v) => v || null)
-  .pipe(z.uuid("Hindi wastong pagpili.").nullable());
+  .pipe(z.uuid("Invalid selection.").nullable());
 
 export const canonicalUrl = z
   .string()
@@ -26,15 +26,15 @@ export const canonicalUrl = z
     } catch {
       return false;
     }
-  }, "Ang canonical URL ay dapat buong https:// na link.");
+  }, "The canonical URL must be a full https:// link.");
 
 export const slugField = (max: number) =>
   z
     .string()
     .trim()
-    .min(1, "Ilagay ang slug.")
-    .max(max, `Ang slug ay hanggang ${max} karakter lamang.`)
-    .refine(isValidSlug, "Ang slug ay maliliit na titik, numero at gitling lamang (hal. bagong-balita).");
+    .min(1, "Enter a slug.")
+    .max(max, `Slug: ${max} characters maximum.`)
+    .refine(isValidSlug, "Slugs may only use lowercase letters, numbers and hyphens (e.g. new-story).");
 
 const jsonArray = <T extends z.ZodType>(item: T, max: number) =>
   z
@@ -44,18 +44,18 @@ const jsonArray = <T extends z.ZodType>(item: T, max: number) =>
       try {
         return JSON.parse(v) as unknown;
       } catch {
-        ctx.addIssue({ code: "custom", message: "Hindi wastong data." });
+        ctx.addIssue({ code: "custom", message: "Invalid data." });
         return z.NEVER;
       }
     })
-    .pipe(z.array(item).max(max, `Hanggang ${max} lamang.`));
+    .pipe(z.array(item).max(max, `${max} maximum.`));
 
 export const articleFormSchema = z.object({
-  title: z.string().trim().min(1, "Ilagay ang pamagat.").max(300, "Pamagat: hanggang 300 karakter lamang."),
+  title: z.string().trim().min(1, "Enter a title.").max(300, "Title: 300 characters maximum."),
   subtitle: optText(400, "Subtitle"),
   slug: slugField(160),
   excerpt: optText(600, "Excerpt"),
-  body: z.string().max(2_000_000, "Masyadong mahaba ang nilalaman."),
+  body: z.string().max(2_000_000, "Content is too long."),
   category_id: optUuid,
   location_id: optUuid,
   author_id: optUuid.optional(),
@@ -64,17 +64,17 @@ export const articleFormSchema = z.object({
   seo_title: optText(120, "SEO title"),
   seo_description: optText(320, "SEO description"),
   canonical_url: canonicalUrl,
-  source_attribution: optText(1000, "Pinagkunan"),
-  correction_note: optText(1000, "Pagwawasto"),
+  source_attribution: optText(1000, "Source"),
+  correction_note: optText(1000, "Correction"),
   tag_ids: jsonArray(z.uuid(), 30).transform((a) => [...new Set(a)]),
   related_ids: jsonArray(z.uuid(), 12).transform((a) => [...new Set(a)]),
   contributors: jsonArray(
     z.object({
       profile_id: z.uuid(),
-      role_label: z.string().trim().min(1, "Ilagay ang papel ng kontribyutor.").max(60, "Papel: hanggang 60 karakter."),
+      role_label: z.string().trim().min(1, "Enter the contributor's role.").max(60, "Role: 60 characters maximum."),
     }),
     20,
-  ).refine((a) => new Set(a.map((c) => c.profile_id)).size === a.length, "May dobleng kontribyutor."),
+  ).refine((a) => new Set(a.map((c) => c.profile_id)).size === a.length, "Duplicate contributor."),
 });
 
 export type SaveResult = { ok: true; updatedAt: string } | { ok: false; error: string; conflict?: boolean; field?: string };

@@ -53,7 +53,7 @@ export function ActionForm({
           role={state.ok ? "status" : "alert"}
           className={`mt-3 text-sm font-medium ${state.ok ? "text-emerald-700" : "text-accent-700"}`}
         >
-          {state.ok ? state.message ?? "Na-save." : state.error}
+          {state.ok ? state.message ?? "Saved." : state.error}
         </p>
       )}
     </form>
@@ -62,7 +62,7 @@ export function ActionForm({
 
 export function SubmitButton({
   children,
-  pendingLabel = "Sine-save…",
+  pendingLabel = "Saving…",
   variant = "primary",
   name,
   value,

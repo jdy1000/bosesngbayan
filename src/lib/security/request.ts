@@ -1,6 +1,8 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getMessages } from "@/lib/i18n/server";
+import type { Messages } from "@/lib/i18n/messages";
 
 /**
  * CSRF defence for public JSON POST endpoints: require an Origin (or Referer) header that matches
@@ -43,21 +45,23 @@ export async function readJson<T extends z.ZodType>(
   request: Request,
   schema: T,
 ): Promise<{ data: z.infer<T>; response?: never } | { data?: never; response: NextResponse }> {
-  if (!isSameOrigin(request)) return { response: jsonError("Hindi pinapayagan ang request.", 403) };
-  if (!(request.headers.get("content-type") ?? "").includes("application/json")) {
-    return { response: jsonError("JSON lamang ang tinatanggap.", 415) };
-  }
+  // Messages are loaded only when a request is rejected: the cheap checks run before any settings read.
+  const fail = async (key: keyof Messages["common"]["request"], status: number) =>
+    ({ response: jsonError((await getMessages()).common.request[key], status) }) as const;
+  if (!isSameOrigin(request)) return fail("forbidden", 403);
+  if (!(request.headers.get("content-type") ?? "").includes("application/json")) return fail("jsonOnly", 415);
   const text = await request.text();
-  if (text.length > MAX_BODY_BYTES) return { response: jsonError("Masyadong malaki ang request.", 413) };
+  if (text.length > MAX_BODY_BYTES) return fail("tooLarge", 413);
   let body: unknown;
   try {
     body = JSON.parse(text);
   } catch {
-    return { response: jsonError("Hindi wastong JSON.", 400) };
+    return fail("badJson", 400);
   }
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return { response: jsonError(parsed.error.issues[0]?.message ?? "Hindi wastong input.", 422) };
+    const message = parsed.error.issues[0]?.message;
+    return message ? { response: jsonError(message, 422) } : fail("invalid", 422);
   }
   return { data: parsed.data };
 }

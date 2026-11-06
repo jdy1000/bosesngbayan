@@ -5,16 +5,18 @@ import { SectionHeading } from "@/components/public/article-card";
 import type { BlockSettings } from "@/lib/homepage/blocks";
 import { getMediaById } from "@/lib/cms/site";
 import { mediaUrl } from "@/lib/media";
+import { fmt } from "@/lib/i18n/config";
+import { getI18n } from "@/lib/i18n/server";
 
 export async function PhotoOfDayBlock({ title, settings }: { title: string | null; settings: BlockSettings<"photo_of_day"> }) {
-  const media = await getMediaById(settings.media_id);
+  const [media, { t }] = await Promise.all([getMediaById(settings.media_id), getI18n()]);
   const src = mediaUrl(media);
   if (!src) return null;
   const caption = settings.caption || media?.caption;
   return (
     <section className="py-14 md:py-18">
       <div className="container-site">
-        <SectionHeading title={title ?? "Larawan ng Araw"} />
+        <SectionHeading title={title ?? t.blocks.photoOfDay} />
         <figure>
           <div className="relative aspect-[21/9] overflow-hidden rounded-md bg-surface-2">
             <Image src={src} alt={media?.alt_text ?? ""} fill sizes="(min-width: 1200px) 1136px, 100vw" className="object-cover" />
@@ -31,7 +33,7 @@ export async function PhotoOfDayBlock({ title, settings }: { title: string | nul
                 </>
               )}
             </span>
-            {media?.credit && <span className="text-sm text-muted">Larawan: {media.credit}</span>}
+            {media?.credit && <span className="text-sm text-muted">{fmt(t.blocks.photoCredit, { credit: media.credit })}</span>}
           </figcaption>
         </figure>
       </div>
@@ -39,11 +41,12 @@ export async function PhotoOfDayBlock({ title, settings }: { title: string | nul
   );
 }
 
-export function QuoteOfDayBlock({ title, settings }: { title: string | null; settings: BlockSettings<"quote_of_day"> }) {
+export async function QuoteOfDayBlock({ title, settings }: { title: string | null; settings: BlockSettings<"quote_of_day"> }) {
+  const { t } = await getI18n();
   return (
     <section className="bg-navy py-14 text-white md:py-18">
       <div className="container-site max-w-4xl text-center">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/60">{title ?? "Sipi ng Araw"}</p>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/60">{title ?? t.blocks.quoteOfDay}</p>
         <blockquote className="mt-5">
           <p className="text-3xl font-semibold leading-snug md:text-[2.5rem]">“{settings.quote}”</p>
           <footer className="mt-6 text-base text-white/80">
@@ -53,7 +56,7 @@ export function QuoteOfDayBlock({ title, settings }: { title: string | null; set
               <>
                 {" · "}
                 <a href={settings.source_url} target="_blank" rel="noopener noreferrer nofollow" className="underline underline-offset-2">
-                  Pinagmulan
+                  {t.blocks.quoteSource}
                 </a>
               </>
             )}

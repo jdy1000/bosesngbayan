@@ -111,6 +111,26 @@ describe("homepage block schemas", () => {
     expect(parseSection({ id: "q", block_type: "quote_of_day", title: null, description: null, settings: defaultSettings("quote_of_day") }).block).toBeNull();
     expect(parseSection({ id: "s", block_type: "marquee", title: null, description: null, settings: {} }).block).toBeNull();
   });
+
+  it("uses English titles and link labels only in English mode, falling back when they are empty", async () => {
+    const { parseSection } = await import("@/lib/homepage/blocks");
+    const raw = {
+      id: "s",
+      block_type: "trending_topics",
+      title: "Mga Paksa",
+      title_en: "Topics",
+      description: "Paglalarawan",
+      description_en: null,
+      settings: { view_all: { label: "Lahat ng paksa", label_en: "All topics", href: "/paksa" } },
+    };
+    const label = (b: ReturnType<typeof parseSection>["block"]) => (b?.settings as { view_all: { label: string } }).view_all.label;
+    const fil = parseSection(raw).block;
+    expect([fil?.title, label(fil)]).toEqual(["Mga Paksa", "Lahat ng paksa"]);
+    const en = parseSection(raw, "en").block;
+    expect([en?.title, en?.description, label(en)]).toEqual(["Topics", "Paglalarawan", "All topics"]);
+    const noEn = parseSection({ ...raw, settings: { view_all: { label: "Lahat ng paksa", href: "/paksa" } } }, "en").block;
+    expect(label(noEn)).toBe("Lahat ng paksa");
+  });
 });
 
 describe("brand contrast", () => {

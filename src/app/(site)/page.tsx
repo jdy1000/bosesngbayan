@@ -2,6 +2,8 @@ import { RenderBlocks } from "@/components/public/blocks/render-blocks";
 import { EmptyState } from "@/components/public/article-card";
 import { getHomepage } from "@/lib/cms/homepage";
 import { getSiteSettings } from "@/lib/cms/site";
+import { getI18n } from "@/lib/i18n/server";
+import { localizeSettings } from "@/lib/settings/schema";
 import { buildMetadata } from "@/lib/seo";
 
 export function generateMetadata() {
@@ -9,15 +11,16 @@ export function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const [homepage, settings] = await Promise.all([getHomepage("published"), getSiteSettings()]);
-  const { site_name, tagline } = settings.general;
+  const { locale, t } = await getI18n();
+  const [homepage, settings] = await Promise.all([getHomepage("published", undefined, locale), getSiteSettings()]);
+  const { site_name, tagline } = localizeSettings(settings, locale).general;
   // The news layout has no visible page title (the masthead is the logo), so the h1 is for screen readers and search.
   const title = <h1 className="sr-only">{tagline ? `${site_name}: ${tagline}` : site_name}</h1>;
   if (!homepage || homepage.blocks.length === 0) {
     return (
       <div className="container-site py-20">
         {title}
-        <EmptyState title="Inihahanda pa ang homepage.">Walang nakalathalang homepage configuration sa Studio.</EmptyState>
+        <EmptyState title={t.common.home.emptyTitle}>{t.common.home.emptyBody}</EmptyState>
       </div>
     );
   }

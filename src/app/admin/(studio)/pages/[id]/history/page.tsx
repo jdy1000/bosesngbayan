@@ -7,7 +7,7 @@ import { formatDateTime } from "@/lib/format";
 import { getPageRevisions } from "@/lib/studio/pages";
 import { restorePageRevision } from "../../actions";
 
-export const metadata: Metadata = { title: "Mga rebisyon ng pahina" };
+export const metadata: Metadata = { title: "Page revisions" };
 
 export default async function PageHistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,16 +20,16 @@ export default async function PageHistoryPage({ params }: { params: Promise<{ id
   return (
     <>
       <PageHeader
-        title="Mga rebisyon"
+        title="Revisions"
         description={page.title}
         breadcrumb={[
-          { label: "Mga Pahina", href: "/admin/pages" },
+          { label: "Pages", href: "/admin/pages" },
           { label: "Editor", href: `/admin/pages/${id}` },
         ]}
       />
-      <Panel description="Nagagawa sa bawat manwal na pag-save at pagbabago ng status. Ang pag-restore ay nagbabalik ng pamagat, slug, buod, nilalaman at SEO — hindi ang status.">
+      <Panel description="Created on every manual save and status change. Restoring brings back the title, slug, summary, content and SEO — not the status.">
         {revisions.length === 0 ? (
-          <Empty title="Wala pang rebisyon." />
+          <Empty title="No revisions yet." />
         ) : (
           <ol className="divide-y divide-line">
             {revisions.map((r) => (
@@ -39,14 +39,14 @@ export default async function PageHistoryPage({ params }: { params: Promise<{ id
                     #{r.revision_number} · {r.title}
                   </p>
                   <p className="text-xs text-muted">
-                    {formatDateTime(r.created_at)} · {r.author?.display_name ?? "Sistema"}
+                    {formatDateTime(r.created_at)} · {r.author?.display_name ?? "System"}
                     {r.note && ` · ${r.note}`}
                   </p>
                 </div>
-                <ActionForm action={restorePageRevision} confirm={`Ibalik ang rebisyon #${r.revision_number}? Ise-save muna ang kasalukuyang bersyon bilang rebisyon.`}>
+                <ActionForm action={restorePageRevision} confirm={`Restore revision #${r.revision_number}? The current version will be saved as a revision first.`}>
                   <input type="hidden" name="revision_id" value={r.id} />
-                  <SubmitButton variant="outline" pendingLabel="Ibinabalik…">
-                    I-restore
+                  <SubmitButton variant="outline" pendingLabel="Restoring…">
+                    Restore
                   </SubmitButton>
                 </ActionForm>
               </li>

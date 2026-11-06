@@ -8,22 +8,22 @@ import { fieldErrors, toActionError } from "@/lib/actions";
 import type { FormActionResult } from "@/components/studio/action-form";
 import { MEDIA_KINDS, kindForMime, removeObject, storeUpload } from "@/lib/studio/media";
 
-const NOT_ALLOWED = "Wala kang pahintulot na baguhin ang media na ito.";
-const IN_USE = "Ginagamit pa ang media na ito. Alisin muna ito sa mga nakalistang lugar bago burahin.";
+const NOT_ALLOWED = "You don't have permission to change this media.";
+const IN_USE = "This media is still in use. Remove it from the listed places before deleting.";
 
 const optionalText = (max: number) =>
   z
     .string()
     .trim()
-    .max(max, `Hanggang ${max} karakter lamang.`)
+    .max(max, `${max} characters maximum.`)
     .transform((v) => (v === "" ? null : v));
 const folderSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .max(60, "Hanggang 60 karakter ang folder.")
+  .max(60, "Folder: 60 characters maximum.")
   .transform((v) => v || "pangkalahatan");
-const idSchema = z.uuid("Hindi wastong media.");
+const idSchema = z.uuid("Invalid media.");
 
 export type UploadResult = { ok: true; id: string; fileName: string } | { ok: false; error: string };
 
@@ -32,7 +32,7 @@ export async function uploadMediaFile(formData: FormData): Promise<UploadResult>
   try {
     const ctx = await requirePermission("media.upload");
     const file = formData.get("file");
-    if (!(file instanceof File)) return { ok: false, error: "Walang napiling file." };
+    if (!(file instanceof File)) return { ok: false, error: "No file selected." };
     const folder = folderSchema.safeParse(formData.get("folder") ?? "");
     if (!folder.success) return { ok: false, error: folder.error.issues[0]!.message };
 
@@ -71,7 +71,7 @@ const externalSchema = z.object({
     .string()
     .trim()
     .max(500)
-    .refine((v) => /^https:\/\/[^\s]+$/.test(v) && URL.canParse(v), { message: "Ilagay ang buong https:// URL." }),
+    .refine((v) => /^https:\/\/[^\s]+$/.test(v) && URL.canParse(v), { message: "Enter a full https:// URL." }),
   kind: z.enum(MEDIA_KINDS),
   title: optionalText(200),
   folder: folderSchema,
@@ -98,7 +98,7 @@ export async function addExternalMedia(_prev: FormActionResult, formData: FormDa
       .single();
     if (error) return toActionError(error);
     revalidatePath("/admin/media");
-    return { ok: true, message: "Naidagdag ang external media.", redirectTo: `/admin/media/${data.id}` };
+    return { ok: true, message: "External media added.", redirectTo: `/admin/media/${data.id}` };
   } catch (e) {
     return toActionError(e);
   }
@@ -107,7 +107,7 @@ export async function addExternalMedia(_prev: FormActionResult, formData: FormDa
 const metaSchema = z.object({
   id: idSchema,
   title: optionalText(200),
-  file_name: z.string().trim().min(1, "Kailangan ang pangalan ng file.").max(200),
+  file_name: z.string().trim().min(1, "File name is required.").max(200),
   alt_text: optionalText(300),
   caption: optionalText(600),
   credit: optionalText(200),
@@ -125,7 +125,7 @@ export async function updateMediaMeta(_prev: FormActionResult, formData: FormDat
     if (error) return toActionError(error);
     if (!data?.length) return { ok: false, error: NOT_ALLOWED };
     revalidatePath("/admin/media");
-    return { ok: true, message: "Na-save ang detalye ng media." };
+    return { ok: true, message: "Media details saved." };
   } catch (e) {
     return toActionError(e);
   }
@@ -137,11 +137,11 @@ export async function replaceMediaFile(formData: FormData): Promise<UploadResult
     const ctx = await requireAnyPermission("media.upload", "media.manage_any");
     const id = idSchema.parse(formData.get("id"));
     const file = formData.get("file");
-    if (!(file instanceof File)) return { ok: false, error: "Walang napiling file." };
+    if (!(file instanceof File)) return { ok: false, error: "No file selected." };
 
     const { data: current, error: readError } = await ctx.supabase.from("media_assets").select("id, storage_path").eq("id", id).maybeSingle();
     if (readError) return toActionError(readError);
-    if (!current?.storage_path) return { ok: false, error: "External media ito; palitan ang URL sa halip na mag-upload." };
+    if (!current?.storage_path) return { ok: false, error: "This is external media; change the URL instead of uploading." };
 
     const stored = await storeUpload(ctx, file);
     if (!stored.ok) return stored;
@@ -179,7 +179,7 @@ export async function updateExternalUrl(_prev: FormActionResult, formData: FormD
     if (error) return toActionError(error);
     if (!data?.length) return { ok: false, error: NOT_ALLOWED };
     revalidatePath("/admin/media");
-    return { ok: true, message: "Na-update ang URL." };
+    return { ok: true, message: "URL updated." };
   } catch (e) {
     return toActionError(e);
   }

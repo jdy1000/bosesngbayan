@@ -510,6 +510,8 @@ export type Database = {
           settings: Json;
           created_at: string;
           updated_at: string;
+          title_en: string | null;
+          description_en: string | null;
         };
         Insert: {
           id?: string;
@@ -522,6 +524,8 @@ export type Database = {
           settings?: Json;
           created_at?: string;
           updated_at?: string;
+          title_en?: string | null;
+          description_en?: string | null;
         };
         Update: {
           id?: string;
@@ -534,6 +538,8 @@ export type Database = {
           settings?: Json;
           created_at?: string;
           updated_at?: string;
+          title_en?: string | null;
+          description_en?: string | null;
         };
         Relationships: [
           { foreignKeyName: "homepage_sections_configuration_id_fkey"; columns: ["configuration_id"]; isOneToOne: false; referencedRelation: "homepage_configurations"; referencedColumns: ["id"] },
@@ -694,6 +700,7 @@ export type Database = {
           open_in_new_tab: boolean;
           created_at: string;
           updated_at: string;
+          label_en: string | null;
         };
         Insert: {
           id?: string;
@@ -706,6 +713,7 @@ export type Database = {
           open_in_new_tab?: boolean;
           created_at?: string;
           updated_at?: string;
+          label_en?: string | null;
         };
         Update: {
           id?: string;
@@ -718,6 +726,7 @@ export type Database = {
           open_in_new_tab?: boolean;
           created_at?: string;
           updated_at?: string;
+          label_en?: string | null;
         };
         Relationships: [
           { foreignKeyName: "navigation_items_menu_id_fkey"; columns: ["menu_id"]; isOneToOne: false; referencedRelation: "navigation_menus"; referencedColumns: ["id"] },

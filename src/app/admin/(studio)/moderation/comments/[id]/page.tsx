@@ -7,7 +7,7 @@ import { PageHeader, Panel, StatusBadge } from "@/components/studio/ui";
 import { MODERATION_STATUS } from "../../labels";
 import { ActivityHistory, ModerationPanel, ReportsPanel } from "../../parts";
 
-export const metadata = { title: "Komento" };
+export const metadata = { title: "Comment" };
 
 export default async function ModerationCommentPage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await requireStaffPage("moderation.manage");
@@ -37,16 +37,16 @@ export default async function ModerationCommentPage({ params }: { params: Promis
   return (
     <>
       <PageHeader
-        title={`Komento ni ${comment.author_name}`}
+        title={`Comment by ${comment.author_name}`}
         breadcrumb={[{ label: "Moderation", href: "/admin/moderation?tab=comments" }]}
         description={<StatusBadge status={comment.status} map={MODERATION_STATUS} />}
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
-          <Panel title="Buong komento">
+          <Panel title="Full comment">
             {parent && (
               <blockquote className="mb-4 border-l-4 border-line pl-3 text-sm text-muted">
-                Tugon kay {parent.author_name}: “{truncate(parent.body, 200)}”
+                Reply to {parent.author_name}: “{truncate(parent.body, 200)}”
               </blockquote>
             )}
             <p className="whitespace-pre-line break-words text-[0.95rem] leading-relaxed text-ink">{comment.body}</p>
@@ -56,10 +56,10 @@ export default async function ModerationCommentPage({ params }: { params: Promis
         </div>
         <aside className="space-y-6">
           <ModerationPanel targetType="comment" targetId={comment.id} status={comment.status} currentNote={comment.moderator_note} />
-          <Panel title="Detalye">
+          <Panel title="Details">
             <dl className="space-y-2 text-sm">
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Sa</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">On</dt>
                 <dd>
                   {comment.article ? (
                     <Link href={`/balita/${comment.article.slug}`} target="_blank" className="text-brand hover:underline">
@@ -75,16 +75,16 @@ export default async function ModerationCommentPage({ params }: { params: Promis
                 </dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Email (staff lamang)</dt>
-                <dd className="break-words">{comment.author_email ?? "Hindi ibinigay"}</dd>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Email (staff only)</dt>
+                <dd className="break-words">{comment.author_email ?? "Not provided"}</dd>
               </div>
               <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Isinumite</dt>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Submitted</dt>
                 <dd>{formatDateTime(comment.created_at)}</dd>
               </div>
               {comment.moderated_at && (
                 <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Huling moderation</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Last moderated</dt>
                   <dd>{formatDateTime(comment.moderated_at)}</dd>
                 </div>
               )}

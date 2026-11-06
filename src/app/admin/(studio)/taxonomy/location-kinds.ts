@@ -3,9 +3,9 @@ export type LocationKind = (typeof LOCATION_KINDS)[number];
 
 export const LOCATION_KIND_LABELS: Record<LocationKind, string> = {
   island_group: "Island group",
-  region: "Rehiyon",
-  province: "Lalawigan",
-  city: "Lungsod / bayan",
+  region: "Region",
+  province: "Province",
+  city: "City / town",
 };
 
 /** Required parent kind for each level (island group is the root). */

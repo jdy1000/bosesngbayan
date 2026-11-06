@@ -76,6 +76,10 @@ Comments and community posts start as `pending` and are published only through t
 - `purge_old_analytics()` deletes page-view events older than 13 months and stale rate-limit rows.
 - Newsletter records hold only the email address, consent (`consent_at`, `consent_text`), the source and status. Unsubscribe uses an unguessable per-subscriber UUID token through a POST, so link scanners cannot unsubscribe people. Suppressed addresses are kept only to honour the opt-out.
 - Rotating `HASH_SECRET` invalidates every existing voter and visitor hash. Do this deliberately.
+- Reader preferences are two cookies: `bnb_lang` (`fil`/`en`) and `bnb_theme` (`light`/`dark`).
+  - They are set by server actions (`src/lib/preferences.ts`) that accept only those values.
+  - They are `HttpOnly` and `SameSite=Lax`, `Secure` in production, and last one year.
+  - They hold no identifier and are not linked to analytics.
 
 ## 7. Secrets
 
@@ -103,7 +107,7 @@ Production browser source maps are disabled (`productionBrowserSourceMaps: false
 
 - `script-src 'self' 'nonce-…' 'strict-dynamic'`. Next attaches the nonce to its own scripts, and every page renders dynamically so the nonce is always fresh. Development adds `'unsafe-eval'` for React refresh.
 - `style-src 'self' 'unsafe-inline'`, needed for the brand variables, `next/font` and TipTap inline styles. Inline styles cannot execute script.
-- `img-src 'self' data: blob: https:`, because media can be an external https URL.
+- `img-src 'self' data: blob: https:` plus the configured Supabase origin, because media can be an external https URL and a local Supabase stack serves storage over http.
 - `connect-src 'self'` plus the Supabase origin.
 - `frame-src` is limited to YouTube.
 - `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, and `upgrade-insecure-requests` in production.

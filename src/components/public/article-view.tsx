@@ -4,13 +4,15 @@ import { ArticleCard, SectionHeading } from "@/components/public/article-card";
 import { ShareButtons } from "@/components/public/share-buttons";
 import type { ArticleCard as Card, ArticleDetail } from "@/lib/cms/articles";
 import { formatDateTime } from "@/lib/format";
+import { fmt } from "@/lib/i18n/config";
+import { getI18n } from "@/lib/i18n/server";
 import { mediaUrl } from "@/lib/media";
 
 /**
  * Article presentation shared by the public page and the protected Studio preview.
  * `bodyHtml` was sanitized on save (src/lib/rich-text/render.ts) — never pass unsanitized HTML here.
  */
-export function ArticleView({
+export async function ArticleView({
   article,
   related,
   shareUrl,
@@ -23,6 +25,8 @@ export function ArticleView({
   afterBody?: React.ReactNode;
   banner?: React.ReactNode;
 }) {
+  const { locale, t } = await getI18n();
+  const m = t.article;
   const image = mediaUrl(article.image);
   const firstPublished = article.first_published_at ?? article.published_at;
   const updated =
@@ -34,14 +38,14 @@ export function ArticleView({
     <article>
       {banner}
       <div className="container-site max-w-[860px] pt-8 md:pt-12">
-        <nav aria-label="Breadcrumb" className="mb-5 text-sm text-muted">
+        <nav aria-label={m.breadcrumb} className="mb-5 text-sm text-muted">
           <ol className="flex flex-wrap items-center gap-1.5">
             <li>
-              <Link href="/" className="hover:text-brand">Bahay</Link>
+              <Link href="/" className="hover:text-brand">{m.home}</Link>
             </li>
             <li aria-hidden="true">/</li>
             <li>
-              <Link href="/balita" className="hover:text-brand">Mga Balita</Link>
+              <Link href="/balita" className="hover:text-brand">{m.news}</Link>
             </li>
             {article.category && (
               <>
@@ -54,7 +58,7 @@ export function ArticleView({
           </ol>
         </nav>
         <div className="flex flex-wrap gap-2">
-          {article.is_breaking && <span className="category-badge bg-accent text-white">Breaking</span>}
+          {article.is_breaking && <span className="category-badge bg-accent text-white">{m.breaking}</span>}
           {article.category && (
             <Link href={`/paksa/${article.category.slug}`} className="category-badge">
               {article.category.name}
@@ -73,7 +77,7 @@ export function ArticleView({
           <div className="text-sm text-ink-soft">
             {article.author && (
               <p>
-                Ni <strong className="font-semibold text-ink">{article.author.display_name}</strong>
+                {m.byline} <strong className="font-semibold text-ink">{article.author.display_name}</strong>
                 {article.author.title ? `, ${article.author.title}` : ""}
                 {article.contributors.length > 0 &&
                   ` · ${article.contributors
@@ -85,15 +89,15 @@ export function ArticleView({
             <p className="mt-0.5 text-muted">
               {firstPublished && (
                 <>
-                  Inilathala <time dateTime={firstPublished}>{formatDateTime(firstPublished)}</time>
+                  {m.published} <time dateTime={firstPublished}>{formatDateTime(firstPublished, locale)}</time>
                 </>
               )}
               {updated && (
                 <>
-                  {" · "}In-update <time dateTime={updated}>{formatDateTime(updated)}</time>
+                  {" · "}{m.updated} <time dateTime={updated}>{formatDateTime(updated, locale)}</time>
                 </>
               )}
-              {article.reading_minutes > 0 && ` · ${article.reading_minutes} minutong basa`}
+              {article.reading_minutes > 0 && ` · ${fmt(m.readingMinutes, { n: article.reading_minutes })}`}
             </p>
           </div>
           <ShareButtons url={shareUrl} title={article.title} />
@@ -108,7 +112,7 @@ export function ArticleView({
           {(article.image?.caption || article.image?.credit) && (
             <figcaption className="mt-2 text-sm text-muted">
               {article.image?.caption}
-              {article.image?.credit && <span className="ml-1 text-muted/80">Larawan: {article.image.credit}</span>}
+              {article.image?.credit && <span className="ml-1 text-muted/80">{fmt(m.photoCredit, { credit: article.image.credit })}</span>}
             </figcaption>
           )}
         </figure>
@@ -117,18 +121,18 @@ export function ArticleView({
       <div className="container-site max-w-[760px] py-10">
         {article.correction_note && (
           <aside className="mb-8 rounded border-l-4 border-accent bg-red-50/60 px-5 py-4 text-[0.95rem] text-ink">
-            <p className="font-bold">Pagwawasto</p>
+            <p className="font-bold">{m.correction}</p>
             <p className="mt-1">{article.correction_note}</p>
           </aside>
         )}
         <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: article.body_html }} />
         {article.source_attribution && (
           <p className="mt-10 border-t border-line pt-4 text-sm text-muted">
-            <strong className="font-semibold text-ink-soft">Mga pinagkunan:</strong> {article.source_attribution}
+            <strong className="font-semibold text-ink-soft">{m.sources}</strong> {article.source_attribution}
           </p>
         )}
         {article.tags.length > 0 && (
-          <ul className="mt-6 flex flex-wrap gap-2" aria-label="Mga tag">
+          <ul className="mt-6 flex flex-wrap gap-2" aria-label={m.tags}>
             {article.tags.map((t) => (
               <li key={t.id}>
                 <Link href={`/tag/${t.slug}`} className="chip">
@@ -140,7 +144,7 @@ export function ArticleView({
         )}
         {article.author?.bio && (
           <div className="mt-10 rounded border-t-[3px] border-ink bg-surface p-5">
-            <p className="text-sm font-bold text-ink">Tungkol kay {article.author.display_name}</p>
+            <p className="text-sm font-bold text-ink">{fmt(m.aboutAuthor, { name: article.author.display_name })}</p>
             <p className="mt-1 text-[0.95rem] text-ink-soft">{article.author.bio}</p>
           </div>
         )}
@@ -150,7 +154,7 @@ export function ArticleView({
       {related.length > 0 && (
         <section className="bg-surface py-14">
           <div className="container-site">
-            <SectionHeading title="Kaugnay na mga Balita" />
+            <SectionHeading title={m.related} />
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((a) => (
                 <ArticleCard key={a.id} article={a} />

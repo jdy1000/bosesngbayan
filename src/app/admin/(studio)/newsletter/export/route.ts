@@ -39,10 +39,10 @@ export async function GET(request: NextRequest) {
 
     const header = ["email", "status", "consent_given", "consent_text", "consent_at_utc", "source", "subscribed_at_utc", "unsubscribed_at_utc", "suppressed_at_utc", "suppression_reason"];
     const date = new Date().toISOString().slice(0, 10);
-    return csvResponse(toCsv(header, rows), `newsletter-${status ?? "lahat"}-${date}.csv`);
+    return csvResponse(toCsv(header, rows), `newsletter-${status ?? "all"}-${date}.csv`);
   } catch (e) {
     if (e instanceof AuthorizationError) return NextResponse.json({ error: e.message }, { status: 403 });
     logServerError("newsletter_export_failed", e);
-    return NextResponse.json({ error: "Hindi ma-export ang mga subscriber." }, { status: 500 });
+    return NextResponse.json({ error: "Could not export subscribers." }, { status: 500 });
   }
 }

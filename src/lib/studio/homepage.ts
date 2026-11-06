@@ -11,7 +11,7 @@ export function validateSettings(type: BlockType, raw: unknown) {
 }
 
 export function settingsIssues(type: string, raw: unknown): string[] {
-  if (!isBlockType(type)) return [`Hindi kilalang block type: ${type}`];
+  if (!isBlockType(type)) return [`Unknown block type: ${type}`];
   const r = validateSettings(type, raw);
   return r.success ? [] : r.error.issues.map((i) => `${i.path.join(".") || "settings"}: ${i.message}`);
 }
@@ -28,7 +28,7 @@ export async function getDraftConfigId(ctx: StaffContext): Promise<string | null
 export async function listSections(ctx: StaffContext, configurationId: string) {
   const { data, error } = await ctx.supabase
     .from("homepage_sections")
-    .select("id, block_type, position, is_enabled, title, description, settings, updated_at")
+    .select("id, block_type, position, is_enabled, title, description, title_en, description_en, settings, updated_at")
     .eq("configuration_id", configurationId)
     .order("position")
     .order("created_at");
@@ -91,8 +91,8 @@ export async function loadBuilder(ctx: StaffContext) {
   for (const a of articles.data ?? []) articleMap[a.id] = { id: a.id, title: a.title, published: a.status === "published" };
 
   const options: BuilderOptions = {
-    polls: (polls.data ?? []).map((p) => ({ id: p.id, label: p.status === "closed" ? `${p.question} (sarado)` : p.question })),
-    categories: (categories.data ?? []).map((c) => ({ id: c.id, label: c.is_active ? c.name : `${c.name} (hindi aktibo)` })),
+    polls: (polls.data ?? []).map((p) => ({ id: p.id, label: p.status === "closed" ? `${p.question} (closed)` : p.question })),
+    categories: (categories.data ?? []).map((c) => ({ id: c.id, label: c.is_active ? c.name : `${c.name} (inactive)` })),
     locations: (locations.data ?? []).map((l) => ({ id: l.id, label: `${l.name} · ${l.kind.replace("_", " ")}` })),
     mediaMap,
     articleMap,
@@ -105,6 +105,8 @@ export async function loadBuilder(ctx: StaffContext) {
     isEnabled: s.is_enabled,
     title: s.title,
     description: s.description,
+    titleEn: s.title_en,
+    descriptionEn: s.description_en,
     settings: (s.settings ?? {}) as Record<string, unknown>,
     issues: settingsIssues(s.block_type, s.settings),
     updatedAt: s.updated_at,

@@ -58,15 +58,15 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
   if (mode === "reset") {
     return (
       <div>
-        <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">I-reset ang password</h1>
+        <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Reset password</h1>
         <p className="mt-3 text-base leading-relaxed text-ink-soft">
-          Ilagay ang email ng iyong account at padadalhan ka namin ng link para gumawa ng bagong password.
+          Enter your account email and we will send you a link to create a new password.
         </p>
         <form action={resetAction} className="mt-8 flex flex-col gap-5">
           {emailField}
           {resetState.error && <Notice tone="error">{resetState.error}</Notice>}
           {resetState.message && <Notice tone="info">{resetState.message}</Notice>}
-          <SubmitButton pending={resetPending} idle="Ipadala ang reset link" busy="Ipinapadala…" />
+          <SubmitButton pending={resetPending} idle="Send reset link" busy="Sending…" />
         </form>
         <button
           type="button"
@@ -74,7 +74,7 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
           className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-brand transition-colors hover:text-brand-700"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
-          Bumalik sa login
+          Back to sign in
         </button>
       </div>
     );
@@ -82,11 +82,11 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
 
   return (
     <div>
-      <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Mag-login sa Studio</h1>
-      <p className="mt-3 text-base leading-relaxed text-ink-soft">Gamitin ang email at password ng iyong newsroom account.</p>
+      <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Sign in to Studio</h1>
+      <p className="mt-3 text-base leading-relaxed text-ink-soft">Use the email and password of your newsroom account.</p>
 
       <form action={loginAction} className="mt-8 flex flex-col gap-5">
-        {linkExpired && <Notice tone="error">Nag-expire o hindi wasto ang link. Humingi ng bagong imbitasyon o i-reset ang password.</Notice>}
+        {linkExpired && <Notice tone="error">This link has expired or is invalid. Ask for a new invitation or reset your password.</Notice>}
         {emailField}
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-4">
@@ -98,17 +98,17 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
               onClick={() => switchTo("reset")}
               className="text-sm font-semibold text-brand transition-colors hover:text-brand-700"
             >
-              Nakalimutan?
+              Forgot password?
             </button>
           </div>
           <PasswordInput id="login-password" name="password" required autoComplete="current-password" className={fieldClass} />
         </div>
         {loginState.error && <Notice tone="error">{loginState.error}</Notice>}
-        <SubmitButton pending={loginPending} idle="Mag-login" busy="Nagla-login…" />
+        <SubmitButton pending={loginPending} idle="Sign in" busy="Signing in…" />
       </form>
 
       <p className="mt-6 text-sm leading-relaxed text-muted">
-        Walang account? Ang mga account ay sa pamamagitan lamang ng imbitasyon mula sa editor o administrator ng site.
+        No account? Accounts are by invitation only, from a site editor or administrator.
       </p>
     </div>
   );

@@ -11,13 +11,13 @@ import { CommunityFields, ContactFields, FooterFields, GeneralFields, Newsletter
 export const metadata: Metadata = { title: "Site Settings" };
 
 const TABS = [
-  { key: "general", label: "Pangkalahatan", description: "Pangalan, brand, logo at header CTA." },
-  { key: "social", label: "Social", description: "Mga opisyal na social media link (https:// lamang)." },
-  { key: "contact", label: "Contact", description: "Pampublikong contact information." },
-  { key: "footer", label: "Footer", description: "Newsletter box at mga kategorya sa footer." },
-  { key: "publication", label: "Publication", description: "Mga default sa paglalathala." },
-  { key: "community", label: "Komunidad", description: "Moderation at Usap Bayan submissions." },
-  { key: "newsletter", label: "Newsletter", description: "Sign-up at consent text." },
+  { key: "general", label: "General", description: "Name, brand, logo and header CTA." },
+  { key: "social", label: "Social", description: "Official social media links (https:// only)." },
+  { key: "contact", label: "Contact", description: "Public contact information." },
+  { key: "footer", label: "Footer", description: "Newsletter box and footer categories." },
+  { key: "publication", label: "Publication", description: "Publishing defaults." },
+  { key: "community", label: "Community", description: "Moderation and Usap Bayan submissions." },
+  { key: "newsletter", label: "Newsletter", description: "Sign-up and consent text." },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
@@ -33,16 +33,16 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         title="Site Settings"
         description={
           <>
-            Mga pampublikong setting ng site. Ang global SEO ay nasa <Link href="/admin/seo" className="font-semibold text-brand hover:underline">SEO at Redirects</Link>.
+            Public site settings. Global SEO lives in <Link href="/admin/seo" className="font-semibold text-brand hover:underline">SEO and Redirects</Link>.
           </>
         }
       />
       <div className="mb-5">
         <Notice>
-          Hindi dito inilalagay ang mga secret (API key, password, SMTP o service-role key). Nasa environment variables ng deployment ang mga iyon, at lahat ng nandito ay nababasa ng publiko.
+          Do not put secrets here (API keys, passwords, SMTP or service-role keys). Those belong in the deployment environment variables, and everything here is publicly readable.
         </Notice>
       </div>
-      <nav aria-label="Mga seksyon ng settings" className="mb-5 flex gap-1 overflow-x-auto border-b border-line">
+      <nav aria-label="Settings sections" className="mb-5 flex gap-1 overflow-x-auto border-b border-line">
         {TABS.map((t) => (
           <Link
             key={t.key}
@@ -54,12 +54,12 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           </Link>
         ))}
       </nav>
-      <Panel title={tab.label} description={<>{tab.description}{updatedAt[tab.key] && <> · Huling binago {formatDateTime(updatedAt[tab.key])}</>}</>}>
+      <Panel title={tab.label} description={<>{tab.description}{updatedAt[tab.key] && <> · Last modified {formatDateTime(updatedAt[tab.key])}</>}</>}>
         <ActionForm action={saveSettings} key={tab.key}>
           <input type="hidden" name="key" value={tab.key} />
           <TabFields tab={tab.key} ctx={ctx} settings={settings} />
           <div className="mt-6 border-t border-line pt-4">
-            <SubmitButton>I-save ang {tab.label}</SubmitButton>
+            <SubmitButton>Save {tab.label}</SubmitButton>
           </div>
         </ActionForm>
       </Panel>

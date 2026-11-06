@@ -14,17 +14,17 @@ export function OptionsPanel({
   canManage: boolean;
 }) {
   return (
-    <Panel title="Mga pagpipilian" description={locked ? "Maaari pa ring baguhin ang pagkakasunod-sunod." : "I-edit, alisin o ayusin ang pagkakasunod-sunod."}>
+    <Panel title="Options" description={locked ? "You can still change the order." : "Edit, remove or reorder options."}>
       {locked && (
         <div className="mb-4">
           <Notice tone="warn">
-            May mga boto na ang poll na ito kaya naka-lock ang tanong, uri, patakaran sa pagboto at mga pagpipilian para mapanatili ang
-            integridad ng resulta. Kung kailangang baguhin, <strong>isara ito at gumawa ng bagong poll</strong>.
+            This poll already has votes, so the question, type, voting policy and options are locked to protect the integrity of
+            the results. If they need to change, <strong>close it and create a new poll</strong>.
           </Notice>
         </div>
       )}
       {options.length === 0 ? (
-        <p className="text-sm text-muted">Wala pang pagpipilian.</p>
+        <p className="text-sm text-muted">No options yet.</p>
       ) : (
         <ol className="space-y-2">
           {options.map((o, i) => (
@@ -35,7 +35,7 @@ export function OptionsPanel({
                   <input type="hidden" name="option_id" value={o.id} />
                   <span className="w-6 text-sm font-semibold text-muted">{i + 1}.</span>
                   <label htmlFor={`opt-${o.id}`} className="sr-only">
-                    Pagpipilian {i + 1}
+                    Option {i + 1}
                   </label>
                   <input
                     id={`opt-${o.id}`}
@@ -47,20 +47,20 @@ export function OptionsPanel({
                   />
                   {!locked && (
                     <SubmitButton name="op" value="save" variant="outline">
-                      I-save
+                      Save
                     </SubmitButton>
                   )}
                   <SubmitButton name="op" value="up" variant="ghost" pendingLabel="…">
                     <span aria-hidden="true">↑</span>
-                    <span className="sr-only">Itaas</span>
+                    <span className="sr-only">Move up</span>
                   </SubmitButton>
                   <SubmitButton name="op" value="down" variant="ghost" pendingLabel="…">
                     <span aria-hidden="true">↓</span>
-                    <span className="sr-only">Ibaba</span>
+                    <span className="sr-only">Move down</span>
                   </SubmitButton>
                   {!locked && (
-                    <SubmitButton name="op" value="remove" variant="ghost" pendingLabel="Inaalis…">
-                      Alisin
+                    <SubmitButton name="op" value="remove" variant="ghost" pendingLabel="Removing…">
+                      Remove
                     </SubmitButton>
                   )}
                 </ActionForm>
@@ -77,11 +77,11 @@ export function OptionsPanel({
         <ActionForm action={addOption} resetOnSuccess className="mt-4 flex flex-wrap items-center gap-2">
           <input type="hidden" name="poll_id" value={pollId} />
           <label htmlFor="new-option" className="sr-only">
-            Bagong pagpipilian
+            New option
           </label>
-          <input id="new-option" name="label" required maxLength={200} placeholder="Bagong pagpipilian…" className="field min-w-48 flex-1" />
-          <SubmitButton variant="outline" pendingLabel="Idinadagdag…">
-            Idagdag
+          <input id="new-option" name="label" required maxLength={200} placeholder="New option…" className="field min-w-48 flex-1" />
+          <SubmitButton variant="outline" pendingLabel="Adding…">
+            Add
           </SubmitButton>
         </ActionForm>
       )}

@@ -12,7 +12,7 @@ export async function saveSettings(_prev: FormActionResult, fd: FormData): Promi
     const key = editableSettingsKey.parse(fd.get("key"));
     await saveSettingsFromForm(ctx, key, fd);
     revalidatePath("/", "layout");
-    return { ok: true, message: "Na-save ang settings. Makikita na ito sa site." };
+    return { ok: true, message: "Settings saved. The changes are now live on the site." };
   } catch (e) {
     if (e instanceof SettingsValidationError) return { ok: false, error: e.message };
     return toActionError(e);

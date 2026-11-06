@@ -50,25 +50,25 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <PageHeader title="Media Library" description="Mga larawan, video reference at file na ginagamit sa mga artikulo, pahina at homepage." />
+      <PageHeader title="Media Library" description="Images, video references and files used in articles, pages and the homepage." />
       {sp.deleted && (
         <div className="mb-4">
-          <Notice tone="success">Nabura ang media.</Notice>
+          <Notice tone="success">Media deleted.</Notice>
         </div>
       )}
 
       {canUpload && (
         <div className="mb-6 grid gap-4 lg:grid-cols-[3fr_2fr]">
-          <Panel title="Mag-upload" description="Sinusuri ng server ang bawat file batay sa laman nito, hindi sa pangalan.">
+          <Panel title="Upload" description="The server checks every file by its contents, not its name.">
             <MediaUploader folders={folders} />
           </Panel>
-          <Panel title="External media" description="Video o file na naka-host sa labas (https lamang).">
+          <Panel title="External media" description="Video or file hosted elsewhere (https only).">
             <ActionForm action={addExternalMedia} className="space-y-3" resetOnSuccess>
               <Field label="URL" htmlFor="ext-url">
                 <input id="ext-url" name="url" type="url" required placeholder="https://www.youtube.com/watch?v=…" className="field" />
               </Field>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Uri" htmlFor="ext-kind">
+                <Field label="Type" htmlFor="ext-kind">
                   <select id="ext-kind" name="kind" defaultValue="video" className="field">
                     {MEDIA_KINDS.map((k) => (
                       <option key={k} value={k}>
@@ -81,10 +81,10 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
                   <input id="ext-folder" name="folder" list="media-folders" placeholder="pangkalahatan" maxLength={60} className="field" />
                 </Field>
               </div>
-              <Field label="Pamagat" htmlFor="ext-title">
+              <Field label="Title" htmlFor="ext-title">
                 <input id="ext-title" name="title" maxLength={200} className="field" />
               </Field>
-              <SubmitButton pendingLabel="Idinadagdag…">Idagdag</SubmitButton>
+              <SubmitButton pendingLabel="Adding…">Add</SubmitButton>
             </ActionForm>
           </Panel>
         </div>
@@ -94,16 +94,16 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
         <input type="hidden" name="view" value={view} />
         <div className="min-w-56 flex-1">
           <label htmlFor="media-q" className="mb-1.5 block text-sm font-semibold text-ink">
-            Hanapin
+            Search
           </label>
-          <input id="media-q" name="q" type="search" defaultValue={q} placeholder="Pamagat, file name o alt text" className="field" />
+          <input id="media-q" name="q" type="search" defaultValue={q} placeholder="Title, file name or alt text" className="field" />
         </div>
         <div>
           <label htmlFor="media-filter-folder" className="mb-1.5 block text-sm font-semibold text-ink">
             Folder
           </label>
           <select id="media-filter-folder" name="folder" defaultValue={folder} className="field">
-            <option value="">Lahat</option>
+            <option value="">All</option>
             {folders.map((f) => (
               <option key={f} value={f}>
                 {f}
@@ -113,10 +113,10 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
         </div>
         <div>
           <label htmlFor="media-filter-kind" className="mb-1.5 block text-sm font-semibold text-ink">
-            Uri
+            Type
           </label>
           <select id="media-filter-kind" name="kind" defaultValue={kind} className="field">
-            <option value="">Lahat</option>
+            <option value="">All</option>
             {MEDIA_KINDS.map((k) => (
               <option key={k} value={k}>
                 {MEDIA_KIND_LABELS[k]}
@@ -125,9 +125,9 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
           </select>
         </div>
         <button type="submit" className="btn btn-outline min-h-10 px-4 text-sm">
-          I-filter
+          Filter
         </button>
-        <div className="ml-auto flex gap-1" aria-label="Paraan ng pagtingin">
+        <div className="ml-auto flex gap-1" aria-label="View mode">
           <Link
             href={withParams("/admin/media", { ...base, view: "grid" })}
             aria-current={view === "grid" ? "page" : undefined}
@@ -142,20 +142,20 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
             className={`inline-flex h-10 w-10 items-center justify-center rounded-lg border ${view === "list" ? "border-brand text-brand" : "border-line text-muted hover:border-brand"}`}
           >
             <List className="h-4 w-4" aria-hidden="true" />
-            <span className="sr-only">Listahan</span>
+            <span className="sr-only">List</span>
           </Link>
         </div>
       </form>
 
-      {error && <Notice tone="error">Hindi makuha ang media. Subukang i-refresh.</Notice>}
+      {error && <Notice tone="error">Couldn’t load media. Try refreshing.</Notice>}
       {!error && missingAlt > 0 && (
         <div className="mb-4">
-          <Notice tone="warn">{missingAlt} larawan sa pahinang ito ang walang alt text. Kailangan ito para sa accessibility at SEO.</Notice>
+          <Notice tone="warn">{missingAlt} {missingAlt === 1 ? "image" : "images"} on this page {missingAlt === 1 ? "has" : "have"} no alt text. Alt text is needed for accessibility and SEO.</Notice>
         </div>
       )}
       {!error && (items ?? []).length === 0 && (
-        <Empty title={q || folder || kind ? "Walang tumugma sa filter" : "Wala pang media"}>
-          {canUpload ? "Mag-upload ng unang larawan gamit ang form sa itaas." : "Wala kang pahintulot mag-upload."}
+        <Empty title={q || folder || kind ? "Nothing matches the filter" : "No media yet"}>
+          {canUpload ? "Upload the first image with the form above." : "You don't have permission to upload."}
         </Empty>
       )}
 
@@ -163,14 +163,14 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {(items ?? []).map((m) => (
             <li key={m.id}>
-              <Link href={`/admin/media/${m.id}`} className="group block overflow-hidden rounded-2xl bg-white shadow-card ring-1 ring-line hover:ring-brand">
+              <Link href={`/admin/media/${m.id}`} className="group block overflow-hidden rounded-2xl bg-paper shadow-card ring-1 ring-line hover:ring-brand">
                 <Thumb kind={m.kind} url={mediaUrl(m)} alt={m.alt_text} />
                 <div className="px-2.5 py-2">
                   <p className="truncate text-sm font-semibold text-ink">{m.title || m.file_name}</p>
                   <p className="truncate text-xs text-muted">
                     {m.folder} · {formatDate(m.created_at)}
                   </p>
-                  {m.kind === "image" && !m.alt_text && <p className="mt-0.5 text-[0.7rem] font-semibold text-amber-700">Walang alt text</p>}
+                  {m.kind === "image" && !m.alt_text && <p className="mt-0.5 text-[0.7rem] font-semibold text-amber-700">No alt text</p>}
                 </div>
               </Link>
             </li>
@@ -179,7 +179,7 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
       )}
 
       {!error && (items ?? []).length > 0 && view === "list" && (
-        <Table head={["", "Pamagat", "Uri", "Folder", "Laki", "In-upload ni", "Petsa"]}>
+        <Table head={["", "Title", "Type", "Folder", "Size", "Uploaded by", "Date"]}>
           {(items ?? []).map((m) => (
             <tr key={m.id}>
               <td className="w-20">
@@ -192,7 +192,7 @@ export default async function MediaLibraryPage({ searchParams }: { searchParams:
                   {m.title || m.file_name}
                 </Link>
                 <p className="text-xs text-muted">{m.file_name}</p>
-                {m.kind === "image" && !m.alt_text && <Badge tone="amber">Walang alt text</Badge>}
+                {m.kind === "image" && !m.alt_text && <Badge tone="amber">No alt text</Badge>}
               </td>
               <td>{MEDIA_KIND_LABELS[m.kind]}</td>
               <td>{m.folder}</td>

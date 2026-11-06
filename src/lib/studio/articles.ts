@@ -16,10 +16,10 @@ const MEDIA = "id, storage_path, external_url, alt_text, caption, credit, width,
 const PAGE_SIZE = 20;
 
 export const ARTICLE_SORTS = {
-  updated: { column: "updated_at", label: "Huling binago" },
-  published: { column: "published_at", label: "Petsa ng paglathala" },
-  created: { column: "created_at", label: "Petsa ng paggawa" },
-  title: { column: "title", label: "Pamagat (A–Z)" },
+  updated: { column: "updated_at", label: "Last modified" },
+  published: { column: "published_at", label: "Publication date" },
+  created: { column: "created_at", label: "Date created" },
+  title: { column: "title", label: "Title (A–Z)" },
 } as const;
 export type ArticleSort = keyof typeof ARTICLE_SORTS;
 

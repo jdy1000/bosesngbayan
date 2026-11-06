@@ -14,9 +14,9 @@ export function PasswordInput({ className = "field", ...props }: Props) {
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        aria-label="Ipakita ang password"
+        aria-label="Show password"
         aria-pressed={visible}
-        title={visible ? "Itago ang password" : "Ipakita ang password"}
+        title={visible ? "Hide password" : "Show password"}
         className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r text-muted transition-colors hover:text-ink focus-visible:text-ink"
       >
         {visible ? <EyeOff aria-hidden="true" className="size-[18px]" /> : <Eye aria-hidden="true" className="size-[18px]" />}

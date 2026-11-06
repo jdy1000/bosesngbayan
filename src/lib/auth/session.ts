@@ -14,7 +14,7 @@ export interface StaffContext {
 }
 
 export class AuthorizationError extends Error {
-  constructor(message = "Wala kang pahintulot para sa aksyong ito.") {
+  constructor(message = "You do not have permission for this action.") {
     super(message);
     this.name = "AuthorizationError";
   }
@@ -63,7 +63,7 @@ export async function requireStaffPage(permission?: Permission): Promise<StaffCo
 /** For server actions / route handlers: throws instead of redirecting. */
 export async function requirePermission(...required: Permission[]): Promise<StaffContext> {
   const ctx = await getStaffContext();
-  if (!ctx) throw new AuthorizationError("Kailangan mong mag-login.");
+  if (!ctx) throw new AuthorizationError("You need to sign in.");
   for (const p of required) {
     if (!ctx.permissions.has(p)) throw new AuthorizationError();
   }
@@ -73,7 +73,7 @@ export async function requirePermission(...required: Permission[]): Promise<Staf
 /** At least one of the given permissions. */
 export async function requireAnyPermission(...anyOf: Permission[]): Promise<StaffContext> {
   const ctx = await getStaffContext();
-  if (!ctx) throw new AuthorizationError("Kailangan mong mag-login.");
+  if (!ctx) throw new AuthorizationError("You need to sign in.");
   if (!anyOf.some((p) => ctx.permissions.has(p))) throw new AuthorizationError();
   return ctx;
 }

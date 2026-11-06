@@ -8,14 +8,14 @@ export function PollShowcaseForm({ value, onChange, options }: BlockFormProps<"p
   return (
     <div className="space-y-4">
       <OptionSelect
-        label="Tampok na botohan"
+        label="Featured poll"
         value={value.poll_id}
         onChange={(v) => onChange({ ...value, poll_id: v })}
         options={options.polls}
-        noneLabel="Awtomatiko (featured poll)"
+        noneLabel="Automatic (featured poll)"
       />
-      <CheckField label="Ipakita ang listahan ng aktibong botohan" checked={value.show_active_list} onChange={(v) => onChange({ ...value, show_active_list: v })} />
-      <NumberField label="Bilang sa listahan" value={value.limit} onChange={(v) => onChange({ ...value, limit: v })} min={1} max={6} />
+      <CheckField label="Show the list of active polls" checked={value.show_active_list} onChange={(v) => onChange({ ...value, show_active_list: v })} />
+      <NumberField label="Number in list" value={value.limit} onChange={(v) => onChange({ ...value, limit: v })} min={1} max={6} />
     </div>
   );
 }
@@ -24,8 +24,8 @@ export function CommunityForm({ value, onChange }: BlockFormProps<"community">) 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <NumberField label="Bilang ng post" value={value.limit} onChange={(v) => onChange({ ...value, limit: v })} min={1} max={12} />
-        <CheckField label="Featured lamang" checked={value.featured_only} onChange={(v) => onChange({ ...value, featured_only: v })} />
+        <NumberField label="Number of posts" value={value.limit} onChange={(v) => onChange({ ...value, limit: v })} min={1} max={12} />
+        <CheckField label="Featured only" checked={value.featured_only} onChange={(v) => onChange({ ...value, featured_only: v })} />
       </div>
       <LinkField label="CTA" value={value.cta} onChange={(v) => onChange({ ...value, cta: v })} />
     </div>
@@ -39,7 +39,7 @@ export function NewsletterForm({ value, onChange }: BlockFormProps<"newsletter">
       value={value.source}
       onChange={(v) => onChange({ ...value, source: v })}
       max={40}
-      hint="Itinatala kasama ng subscription para malaman kung saan nag-sign up."
+      hint="Stored with the subscription to show where people signed up."
     />
   );
 }
@@ -59,9 +59,9 @@ export function CustomCtaForm({ value, onChange, options }: BlockFormProps<"cust
         <SelectField label="Variant" value={value.variant} onChange={(v) => onChange({ ...value, variant: v || "simple" })} options={VARIANTS} />
         <LinkField label="CTA" value={value.cta} onChange={(v) => onChange({ ...value, cta: v })} />
       </div>
-      <MediaField label="Larawan" value={value.image_id} onChange={(v) => onChange({ ...value, image_id: v })} options={options} />
+      <MediaField label="Image" value={value.image_id} onChange={(v) => onChange({ ...value, image_id: v })} options={options} />
       <fieldset className="space-y-2">
-        <legend className="mb-1.5 text-sm font-semibold text-ink">Mga item ({value.items.length}/6)</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-ink">Items ({value.items.length}/6)</legend>
         {value.items.map((it, i) => (
           <div key={i} className="grid items-end gap-2 sm:grid-cols-[160px_1fr_auto]">
             <SelectField label="Icon" value={it.icon} onChange={(v) => setItem(i, { icon: v || "chart" })} options={CTA_ICONS.map((c) => ({ value: c, label: c }))} />
@@ -71,13 +71,13 @@ export function CustomCtaForm({ value, onChange, options }: BlockFormProps<"cust
               onClick={() => onChange({ ...value, items: value.items.filter((_, j) => j !== i) })}
               className="btn min-h-10 px-3 text-sm text-accent-700 hover:bg-surface-2"
             >
-              Alisin
+              Remove
             </button>
           </div>
         ))}
         {value.items.length < 6 && (
           <button type="button" onClick={() => onChange({ ...value, items: [...value.items, { icon: "chart", label: "" }] })} className="btn btn-outline min-h-9 px-3 text-sm">
-            + Magdagdag ng item
+            + Add item
           </button>
         )}
       </fieldset>

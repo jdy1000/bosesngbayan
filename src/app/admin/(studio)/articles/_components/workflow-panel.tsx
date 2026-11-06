@@ -21,13 +21,13 @@ export function WorkflowPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  if (actions.length === 0) return <p className="text-sm text-muted">Walang available na aksyon sa workflow para sa iyong role sa status na ito.</p>;
+  if (actions.length === 0) return <p className="text-sm text-muted">No workflow actions are available for your role at this status.</p>;
 
   function run(action: Action) {
     if (action.confirm && !window.confirm(action.confirm)) return;
     setError(null);
     start(async () => {
-      if (!(await beforeTransition())) return setError("I-save muna ang mga pagbabago bago baguhin ang status.");
+      if (!(await beforeTransition())) return setError("Save your changes before changing the status.");
       const res = await transitionArticle(articleId, { to: action.to, note: text, publish_at: when });
       if (!res.ok) return setError(res.error);
       setActive(null);
@@ -56,12 +56,12 @@ export function WorkflowPanel({
         <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
           {active.input === "schedule" ? (
             <label className="block text-sm font-semibold text-ink">
-              Petsa at oras ng paglathala (Asia/Manila)
+              Publish date and time (Asia/Manila)
               <input type="datetime-local" className="field mt-1" value={when} onChange={(e) => setWhen(e.target.value)} required />
             </label>
           ) : (
             <label className="block text-sm font-semibold text-ink">
-              {active.input === "reason" ? "Dahilan ng pag-reject (kailangan)" : "Tala para sa may-akda (opsyonal)"}
+              {active.input === "reason" ? "Rejection reason (required)" : "Note for the author (optional)"}
               <textarea className="field mt-1 min-h-20" value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />
             </label>
           )}
@@ -72,15 +72,15 @@ export function WorkflowPanel({
               disabled={pending || (active.input === "reason" && !text.trim()) || (active.input === "schedule" && !when)}
               onClick={() => run(active)}
             >
-              {pending ? "Pinoproseso…" : active.label}
+              {pending ? "Processing…" : active.label}
             </button>
             <button type="button" className="btn btn-outline min-h-9 px-3 text-sm" onClick={() => setActive(null)}>
-              Kanselahin
+              Cancel
             </button>
           </div>
         </div>
       )}
-      {pending && !active && <p className="text-sm text-muted">Pinoproseso…</p>}
+      {pending && !active && <p className="text-sm text-muted">Processing…</p>}
       {error && (
         <p role="alert" className="text-sm font-medium text-accent-700">
           {error}

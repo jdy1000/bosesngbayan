@@ -10,6 +10,8 @@ import { COMMUNITY_KIND_LABELS, listApprovedPosts } from "@/lib/cms/community";
 import { getMediaById, getSiteSettings } from "@/lib/cms/site";
 import { timeAgo, truncate } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
+import { getLocale, getI18n } from "@/lib/i18n/server";
+import { localizeSettings } from "@/lib/settings/schema";
 
 const ICONS: Record<BlockSettings<"custom_cta">["items"][number]["icon"], LucideIcon> = {
   chart: ChartColumnBig,
@@ -22,28 +24,26 @@ const ICONS: Record<BlockSettings<"custom_cta">["items"][number]["icon"], Lucide
   shield: ShieldCheck,
 };
 
-function PollSidePanel({ others }: { others: Awaited<ReturnType<typeof listPublicPolls>> }) {
+async function PollSidePanel({ others }: { others: Awaited<ReturnType<typeof listPublicPolls>> }) {
+  const { t } = await getI18n();
   return (
     <aside className="space-y-8">
       <div className="rounded-md border-t-[3px] border-ink bg-surface p-6">
-        <h3 className="text-lg font-semibold text-ink">Paano binibilang ang boto</h3>
-        <p className="mt-2 text-[0.95rem] leading-relaxed text-ink-soft">
-          Isang boto bawat browser ang pinapayagan (may ilang botohan na naglilimita rin bawat network), at sa server sinusuri ang bawat boto. Ang mga online
-          poll ay boluntaryo at hindi kumakatawan sa buong populasyon ng Pilipinas.
-        </p>
+        <h3 className="text-lg font-semibold text-ink">{t.blocks.howVotesCount}</h3>
+        <p className="mt-2 text-[0.95rem] leading-relaxed text-ink-soft">{t.blocks.howVotesCountBody}</p>
         <Link href="/botohan#metodolohiya" className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
-          Basahin ang metodolohiya <span aria-hidden="true">→</span>
+          {t.blocks.readMethodology} <span aria-hidden="true">→</span>
         </Link>
       </div>
       {others.length > 0 && (
         <div>
-          <h3 className="border-b-2 border-ink pb-2 text-lg font-semibold text-ink">Iba pang botohan</h3>
+          <h3 className="border-b-2 border-ink pb-2 text-lg font-semibold text-ink">{t.blocks.otherPolls}</h3>
           <ul className="divide-y divide-line">
             {others.map((p) => (
               <li key={p.id}>
                 <Link href={`/botohan/${p.slug}`} className="group block py-3">
                   <span className={`text-[0.7rem] font-bold uppercase tracking-[0.08em] ${isPollOpen(p) ? "text-accent" : "text-muted"}`}>
-                    {isPollOpen(p) ? "Bukas" : "Sarado"}
+                    {isPollOpen(p) ? t.blocks.pollOpen : t.blocks.pollClosed}
                   </span>
                   <span className="mt-0.5 block text-[0.95rem] font-medium leading-snug text-ink group-hover:text-brand">{p.question}</span>
                 </Link>
@@ -57,17 +57,18 @@ function PollSidePanel({ others }: { others: Awaited<ReturnType<typeof listPubli
 }
 
 export async function PollShowcaseBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"poll_showcase"> }) {
-  const [primary, active, recent] = await Promise.all([
+  const [primary, active, recent, { t }] = await Promise.all([
     settings.poll_id ? getPublicPollById(settings.poll_id) : Promise.resolve(null),
     settings.show_active_list ? listPublicPolls("active", settings.limit + 1) : Promise.resolve([]),
     listPublicPolls("all", 6),
+    getI18n(),
   ]);
   const polls = [primary, ...active.filter((p) => p.id !== primary?.id)].filter((p) => p !== null).slice(0, settings.limit);
   if (polls.length === 0 && !settings.show_active_list) return null; // A single-poll module with no open poll stays out of the way.
   return (
     <section className="py-10 md:py-12">
       <div className="container-site">
-        <SectionHeading title={title ?? "Mga Botohan"} description={description} action={{ label: "Lahat ng botohan", href: "/botohan" }} />
+        <SectionHeading title={title ?? t.blocks.polls} description={description} action={{ label: t.blocks.allPolls, href: "/botohan" }} />
         {polls.length === 1 ? (
           <div className="grid gap-10 lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-7">
@@ -86,12 +87,12 @@ export async function PollShowcaseBlock({ title, description, settings }: { titl
                 ))}
               </div>
             ) : (
-              <EmptyState title="Walang bukas na botohan ngayon.">Bumalik muli—maglalabas ang newsroom ng bagong tanong.</EmptyState>
+              <EmptyState title={t.blocks.noOpenPollsTitle}>{t.blocks.noOpenPollsBody}</EmptyState>
             )}
             <p className="mt-6 text-sm text-muted">
-              Ang mga online poll ay boluntaryo at hindi kumakatawan sa buong populasyon ng Pilipinas.{" "}
+              {t.blocks.pollCaveat}{" "}
               <Link href="/botohan#metodolohiya" className="font-semibold text-brand hover:underline">
-                Alamin kung paano binibilang
+                {t.blocks.learnHowCounted}
               </Link>
             </p>
           </>
@@ -102,7 +103,10 @@ export async function PollShowcaseBlock({ title, description, settings }: { titl
 }
 
 export async function CommunityBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"community"> }) {
-  const { items } = await listApprovedPosts({ featuredOnly: settings.featured_only, pageSize: settings.limit, withTotal: false });
+  const [{ items }, { locale, t }] = await Promise.all([
+    listApprovedPosts({ featuredOnly: settings.featured_only, pageSize: settings.limit, withTotal: false }),
+    getI18n(),
+  ]);
   return (
     <section className="py-14 md:py-18">
       <div className="container-site">
@@ -111,7 +115,7 @@ export async function CommunityBlock({ title, description, settings }: { title: 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {items.map((p) => (
               <article key={p.id} className="card group relative flex flex-col p-6">
-                <p className="text-xs font-bold uppercase tracking-wider text-accent">{COMMUNITY_KIND_LABELS[p.kind]}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-accent">{COMMUNITY_KIND_LABELS[locale][p.kind]}</p>
                 <h3 className="mt-2 text-lg font-semibold leading-snug text-ink group-hover:text-brand">
                   <Link href={`/usap-bayan/${p.id}`} className="after:absolute after:inset-0">
                     {p.title}
@@ -120,15 +124,15 @@ export async function CommunityBlock({ title, description, settings }: { title: 
                 <p className="mt-2 line-clamp-3 text-[0.95rem] text-ink-soft">{truncate(p.body, 220)}</p>
                 <p className="mt-auto pt-4 text-sm text-muted">
                   {p.author_name}
-                  {p.author_location ? ` · ${p.author_location}` : ""} · {timeAgo(p.published_at)}
+                  {p.author_location ? ` · ${p.author_location}` : ""} · {timeAgo(p.published_at, undefined, locale)}
                 </p>
               </article>
             ))}
           </div>
         ) : (
-          <EmptyState title="Wala pang naaprubahang pananaw.">
+          <EmptyState title={t.blocks.communityEmptyTitle}>
             <Link href="/usap-bayan#magbahagi" className="font-semibold text-brand hover:underline">
-              Ikaw ang mauna—ibahagi ang iyong pananaw.
+              {t.blocks.communityEmptyCta}
             </Link>
           </EmptyState>
         )}
@@ -138,12 +142,12 @@ export async function CommunityBlock({ title, description, settings }: { title: 
 }
 
 export async function NewsletterBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"newsletter"> }) {
-  const site = await getSiteSettings();
+  const site = localizeSettings(await getSiteSettings(), await getLocale());
   if (!site.newsletter.enabled) return null;
   return (
     <section className="py-10 md:py-12">
       <div className="container-site">
-        <div className="grid items-center gap-8 border-t-[3px] border-accent bg-white p-8 shadow-[var(--shadow-card)] md:p-12 lg:grid-cols-2 lg:gap-14">
+        <div className="grid items-center gap-8 border-t-[3px] border-accent bg-paper p-8 shadow-[var(--shadow-card)] md:p-12 lg:grid-cols-2 lg:gap-14">
           <div>
             <p className="category-badge text-accent">Newsletter</p>
             <h2 className="mt-2 text-[1.6rem] font-semibold leading-tight tracking-[-0.01em] text-ink md:text-[2rem]">{title ?? site.footer.newsletter_title}</h2>

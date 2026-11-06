@@ -35,7 +35,7 @@ export function RichTextEditor({
   initialContent,
   onChange,
   disabled = false,
-  label = "Nilalaman",
+  label = "Content",
 }: {
   name: string;
   initialContent: unknown;
@@ -64,11 +64,11 @@ export function RichTextEditor({
   });
 
   return (
-    <div className="rounded-xl border border-line bg-white focus-within:border-brand">
+    <div className="rounded-xl border border-line bg-paper focus-within:border-brand">
       <input ref={inputRef} type="hidden" name={name} defaultValue={JSON.stringify(initialContent)} />
       {editor && !disabled && <Toolbar editor={editor} />}
       <EditorContent editor={editor} />
-      {!editor && <p className="px-5 py-4 text-sm text-muted">Inihahanda ang editor…</p>}
+      {!editor && <p className="px-5 py-4 text-sm text-muted">Loading editor…</p>}
     </div>
   );
 }
@@ -111,20 +111,20 @@ function Toolbar({ editor }: { editor: Editor }) {
 
   function setLink() {
     const prev = (editor.getAttributes("link").href as string | undefined) ?? "";
-    const raw = window.prompt("URL ng link (https://… o mailto:…). Iwanang blangko para alisin.", prev);
+    const raw = window.prompt("Link URL (https://… or mailto:…). Leave blank to remove the link.", prev);
     if (raw === null) return;
     const href = raw.trim();
     if (!href) return void c().extendMarkRange("link").unsetLink().run();
-    if (!isSafeHref(href)) return window.alert("Hindi wastong URL. Gumamit ng https://, http:// o mailto:.");
+    if (!isSafeHref(href)) return window.alert("Invalid URL. Use https://, http:// or mailto:.");
     c().extendMarkRange("link").setLink({ href }).run();
   }
 
   function addYoutube() {
-    const raw = window.prompt("YouTube URL (hal. https://www.youtube.com/watch?v=…)");
+    const raw = window.prompt("YouTube URL (e.g. https://www.youtube.com/watch?v=…)");
     if (raw === null) return;
     const src = raw.trim();
     if (!YOUTUBE_URL.test(src) || !editor.commands.setYoutubeVideo({ src })) {
-      window.alert("Hindi wastong YouTube URL.");
+      window.alert("Invalid YouTube URL.");
     }
   }
 
@@ -135,7 +135,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   }
 
   return (
-    <div role="toolbar" aria-label="Mga kasangkapan sa pag-format" className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-xl border-b border-line bg-surface px-2 py-1.5">
+    <div role="toolbar" aria-label="Formatting tools" className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 rounded-t-xl border-b border-line bg-surface px-2 py-1.5">
       <Btn label="Heading 2" active={s.h2} onClick={() => c().toggleHeading({ level: 2 }).run()} icon={<Heading2 />} />
       <Btn label="Heading 3" active={s.h3} onClick={() => c().toggleHeading({ level: 3 }).run()} icon={<Heading3 />} />
       <Btn label="Heading 4" active={s.h4} onClick={() => c().toggleHeading({ level: 4 }).run()} icon={<Heading4 />} />
@@ -151,7 +151,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Btn label="Blockquote" active={s.quote} onClick={() => c().toggleBlockquote().run()} icon={<Quote />} />
       <Btn label="Pull quote" active={s.pull} onClick={togglePull} icon={<MessageSquareQuote />} />
       <Sep />
-      <Btn label="Larawan mula sa Media Library" onClick={() => setImageOpen(true)} icon={<ImagePlus />} />
+      <Btn label="Image from Media Library" onClick={() => setImageOpen(true)} icon={<ImagePlus />} />
       <Btn label="YouTube video" onClick={addYoutube} icon={<Video />} />
       <Btn label="Table" active={s.table} onClick={() => c().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} icon={<Table />} />
       <Btn label="Horizontal rule" onClick={() => c().setHorizontalRule().run()} icon={<Minus />} />
@@ -160,11 +160,11 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Btn label="Redo" disabled={!s.canRedo} onClick={() => c().redo().run()} icon={<Redo2 />} />
       {s.table && (
         <span className="ml-1 flex flex-wrap gap-1 text-xs">
-          <TextBtn onClick={() => c().addRowAfter().run()}>+ Hilera</TextBtn>
-          <TextBtn onClick={() => c().addColumnAfter().run()}>+ Kolum</TextBtn>
-          <TextBtn onClick={() => c().deleteRow().run()}>− Hilera</TextBtn>
-          <TextBtn onClick={() => c().deleteColumn().run()}>− Kolum</TextBtn>
-          <TextBtn onClick={() => c().deleteTable().run()}>Tanggalin ang table</TextBtn>
+          <TextBtn onClick={() => c().addRowAfter().run()}>+ Row</TextBtn>
+          <TextBtn onClick={() => c().addColumnAfter().run()}>+ Column</TextBtn>
+          <TextBtn onClick={() => c().deleteRow().run()}>− Row</TextBtn>
+          <TextBtn onClick={() => c().deleteColumn().run()}>− Column</TextBtn>
+          <TextBtn onClick={() => c().deleteTable().run()}>Delete table</TextBtn>
         </span>
       )}
       {imageOpen && <FigureDialog editor={editor} onClose={() => setImageOpen(false)} />}
@@ -182,7 +182,7 @@ function Btn({ label, icon, onClick, active = false, disabled = false }: { label
       disabled={disabled}
       onClick={onClick}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-md [&_svg]:h-4 [&_svg]:w-4 focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-40 ${
-        active ? "bg-brand-100 text-brand-700" : "text-ink-soft hover:bg-white"
+        active ? "bg-brand-100 text-brand-700" : "text-ink-soft hover:bg-paper"
       }`}
     >
       {icon}
@@ -192,7 +192,7 @@ function Btn({ label, icon, onClick, active = false, disabled = false }: { label
 
 function TextBtn({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="rounded-md border border-line bg-white px-2 py-1 font-semibold text-ink-soft hover:border-brand">
+    <button type="button" onClick={onClick} className="rounded-md border border-line bg-paper px-2 py-1 font-semibold text-ink-soft hover:border-brand">
       {children}
     </button>
   );
@@ -226,12 +226,12 @@ function FigureDialog({ editor, onClose }: { editor: Editor; onClose: () => void
   }
 
   return (
-    <dialog ref={ref} onClose={onClose} aria-label="Magsingit ng larawan" className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl p-0 backdrop:bg-black/40">
+    <dialog ref={ref} onClose={onClose} aria-label="Insert image" className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl p-0 backdrop:bg-black/40">
       <div className="space-y-4 p-5">
-        <h2 className="text-base font-bold text-ink">Magsingit ng larawan</h2>
-        <MediaPicker name="_figure_media" label="Larawan" onChange={setMedia} />
+        <h2 className="text-base font-bold text-ink">Insert image</h2>
+        <MediaPicker name="_figure_media" label="Image" onChange={setMedia} />
         {media && !media.alt_text && (
-          <p className="text-xs font-semibold text-amber-800">Walang alt text ang larawang ito. Idagdag ito sa Media Library para sa accessibility.</p>
+          <p className="text-xs font-semibold text-amber-800">This image has no alt text. Add it in the Media Library for accessibility.</p>
         )}
         <label className="block text-sm font-semibold text-ink">
           Caption
@@ -243,10 +243,10 @@ function FigureDialog({ editor, onClose }: { editor: Editor; onClose: () => void
         </label>
         <div className="flex justify-end gap-2">
           <button type="button" className="btn btn-outline min-h-10 px-4 text-sm" onClick={onClose}>
-            Kanselahin
+            Cancel
           </button>
           <button type="button" className="btn btn-primary min-h-10 px-4 text-sm" disabled={!media?.url} onClick={insert}>
-            Isingit
+            Insert
           </button>
         </div>
       </div>

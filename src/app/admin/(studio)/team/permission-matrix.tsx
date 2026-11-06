@@ -12,13 +12,13 @@ export function PermissionMatrixView({ matrix, canEdit, editRole }: { matrix: Pe
   return (
     <Panel
       title="Permission matrix"
-      description="Ang database ang nagpapatupad ng mga pahintulot na ito (RLS at server actions), hindi lamang ang mga button sa Studio."
+      description="The database enforces these permissions (RLS and server actions), not just the buttons in Studio."
       actions={
         canEdit && (
           <div className="flex flex-wrap gap-1.5">
             {ROLES.filter((r) => r !== "owner").map((r) => (
               <Link key={r} href={`/admin/team?edit=${r}#matrix`} className={`rounded-lg border px-2.5 py-1 text-xs font-semibold ${editRole === r ? "border-brand bg-brand-50 text-brand" : "border-line hover:border-brand"}`}>
-                I-edit: {ROLE_LABELS[r]}
+                Edit: {ROLE_LABELS[r]}
               </Link>
             ))}
           </div>
@@ -28,9 +28,9 @@ export function PermissionMatrixView({ matrix, canEdit, editRole }: { matrix: Pe
       <div id="matrix" className="scroll-mt-6" />
       {editRole && canEdit && (
         <div className="mb-6 rounded-xl border border-brand-200 bg-brand-50/50 p-4">
-          <h3 className="mb-1 text-sm font-bold text-ink">Mga pahintulot ng {ROLE_LABELS[editRole]}</h3>
+          <h3 className="mb-1 text-sm font-bold text-ink">Permissions for {ROLE_LABELS[editRole]}</h3>
           <div className="mb-3">
-            <Notice tone="warn">Agad na nagkakabisa ang pagbabago para sa lahat ng may role na ito. Naka-lock ang Owner at ang “roles.manage”. Naka-audit ang bawat pagbabago.</Notice>
+            <Notice tone="warn">Changes take effect immediately for everyone with this role. Owner and “roles.manage” are locked. Every change is audited.</Notice>
           </div>
           <ActionForm action={saveRolePermissions} key={editRole}>
             <input type="hidden" name="role" value={editRole} />
@@ -46,9 +46,9 @@ export function PermissionMatrixView({ matrix, canEdit, editRole }: { matrix: Pe
               ))}
             </div>
             <div className="mt-4 flex items-center gap-3">
-              <SubmitButton>I-save ang pahintulot</SubmitButton>
+              <SubmitButton>Save permissions</SubmitButton>
               <Link href="/admin/team#matrix" className="text-sm font-semibold text-ink-soft hover:text-ink">
-                Kanselahin
+                Cancel
               </Link>
             </div>
           </ActionForm>
@@ -58,7 +58,7 @@ export function PermissionMatrixView({ matrix, canEdit, editRole }: { matrix: Pe
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-line text-xs font-semibold uppercase tracking-wide text-muted">
             <tr>
-              <th scope="col" className="py-2 pr-4">Pahintulot</th>
+              <th scope="col" className="py-2 pr-4">Permission</th>
               {ROLES.map((r) => (
                 <th key={r} scope="col" className="px-2 py-2 text-center">
                   {ROLE_LABELS[r]}
@@ -81,12 +81,12 @@ export function PermissionMatrixView({ matrix, canEdit, editRole }: { matrix: Pe
                     {has(r, p.key) ? (
                       <>
                         <Check className="mx-auto h-4 w-4 text-emerald-700" aria-hidden="true" />
-                        <span className="sr-only">Mayroon</span>
+                        <span className="sr-only">Granted</span>
                       </>
                     ) : (
                       <>
                         <Minus className="mx-auto h-4 w-4 text-line" aria-hidden="true" />
-                        <span className="sr-only">Wala</span>
+                        <span className="sr-only">Not granted</span>
                       </>
                     )}
                   </td>

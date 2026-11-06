@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useI18n } from "@/components/public/i18n-provider";
+import { fmt } from "@/lib/i18n/config";
 
 interface Question {
   question: string;
@@ -13,6 +15,8 @@ interface Question {
 
 /** Self-scored quiz. Answers are not submitted or stored anywhere. */
 export function NewsQuiz({ questions }: { questions: Question[] }) {
+  const { t } = useI18n();
+  const m = t.blocks.quiz;
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
   const answered = answers.filter((a) => a !== null).length;
   const score = answers.filter((a, i) => a === questions[i]?.correct_index).length;
@@ -24,8 +28,8 @@ export function NewsQuiz({ questions }: { questions: Question[] }) {
         const done = picked !== null && picked !== undefined;
         return (
           <fieldset key={qi} className="card p-6">
-            <legend className="sr-only">Tanong {qi + 1}</legend>
-            <p className="text-xs font-bold uppercase tracking-wider text-brand">Tanong {qi + 1}</p>
+            <legend className="sr-only">{fmt(m.question, { n: qi + 1 })}</legend>
+            <p className="text-xs font-bold uppercase tracking-wider text-brand">{fmt(m.question, { n: qi + 1 })}</p>
             <p className="mt-1 text-xl font-semibold text-ink">{q.question}</p>
             <div className="mt-4 grid gap-2">
               {q.options.map((opt, oi) => {
@@ -40,7 +44,7 @@ export function NewsQuiz({ questions }: { questions: Question[] }) {
                     className={`min-h-12 rounded-xl px-4 py-2.5 text-left text-[0.95rem] font-medium shadow-[inset_0_0_0_1px_var(--color-line)] transition-colors enabled:hover:bg-brand-50 ${state}`}
                   >
                     {opt}
-                    {done && isCorrect && <span className="sr-only"> (tamang sagot)</span>}
+                    {done && isCorrect && <span className="sr-only">{m.correctAnswer}</span>}
                   </button>
                 );
               })}
@@ -48,14 +52,14 @@ export function NewsQuiz({ questions }: { questions: Question[] }) {
             {done && (
               <div role="status" className="mt-4 text-[0.95rem] text-ink-soft">
                 <strong className={picked === q.correct_index ? "text-emerald-700" : "text-accent"}>
-                  {picked === q.correct_index ? "Tama!" : "Mali."}
+                  {picked === q.correct_index ? m.correct : m.wrong}
                 </strong>{" "}
                 {q.explanation}
                 {q.article_slug && (
                   <>
                     {" "}
                     <Link href={`/balita/${q.article_slug}`} className="font-semibold text-brand hover:underline">
-                      Basahin ang balita
+                      {m.readStory}
                     </Link>
                   </>
                 )}
@@ -66,7 +70,7 @@ export function NewsQuiz({ questions }: { questions: Question[] }) {
       })}
       {answered === questions.length && (
         <p role="status" className="rounded-xl bg-navy px-5 py-4 text-center font-semibold text-white">
-          Iskor mo: {score} sa {questions.length}
+          {fmt(m.score, { score, total: questions.length })}
         </p>
       )}
     </div>

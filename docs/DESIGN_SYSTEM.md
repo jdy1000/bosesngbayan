@@ -31,14 +31,14 @@ The original poll hero (`blocks/hero-block.tsx`) remains available as the `hero`
 | Token | Value | Use |
 | --- | --- | --- |
 | `brand` (`--brand-primary`) | `#1d4ed8` cobalt | Primary buttons, links, focus ring, active nav |
-| `brand-50/100/200` | mixes with white | Tinted surfaces, badges, hover fills |
-| `brand-600/700` | mixes with black | Hover and pressed states, badge text |
+| `brand-50/100/200` | mixes toward the page (`--tint-base`: white, or black in dark mode) | Tinted surfaces, badges, hover fills |
+| `brand-600/700/800` | mixes away from the page (`--shade-base`: black, or white in dark mode) | Hover and pressed states, badge text |
 | `navy` (`--brand-navy`) | `#0b1f5c` | Headlines, footer, dark bands |
 | `accent` (`--brand-accent`) | `#d62828` Philippine red | Section rule, breaking label, the highlighted headline word, pull-quote mark |
-| `ink` / `ink-soft` / `muted` | `#0f1b3d` / `#3b4766` / `#5b6785` | Body text, secondary text, metadata |
-| `line` | `#dfe5f2` | Borders and dividers |
-| `surface` / `surface-2` | `#f4f7fd` / `#eaf0fb` | Cool-grey section backgrounds |
-| `paper` | `#ffffff` | Page background |
+| `ink` / `ink-soft` / `muted` | `#121418` / `#3f4550` / `#5f6672` | Body text, secondary text, metadata |
+| `line` | `#e4e6ea` | Borders and dividers |
+| `surface` / `surface-2` | `#f7f7f8` / `#eeeff2` | Section backgrounds |
+| `paper` | `#ffffff` | Page background, cards, fields (`bg-paper`, never `bg-white`) |
 
 Measured contrast (WCAG 2.x):
 
@@ -47,12 +47,31 @@ Measured contrast (WCAG 2.x):
 | white on brand | 6.70:1 |
 | white on navy | 15.39:1 |
 | white on accent | 5.01:1 |
-| ink on white | 16.87:1 |
-| ink-soft on white | 9.21:1 |
-| muted on white | 5.64:1 |
-| muted on surface | 5.26:1 |
+| ink on white | 18.44:1 |
+| ink-soft on white | 9.64:1 |
+| muted on white | 5.78:1 |
+| muted on surface | 5.40:1 |
 
 All of these pass AA for body text. The placeholder grey `#8a94ad` is 3.03:1, so it is used only for placeholders, never for content.
+
+### Dark mode
+
+Light is the default. A reader, or a staff member in Studio, can switch to dark with the sun/moon button. The choice is stored in the `bnb_theme` cookie, and the server writes `<html data-theme>` so the first paint already uses the right theme. The neutral roles are CSS variables on `:root`, redefined under `:root[data-theme="dark"]`:
+
+| Role | Dark value | Contrast |
+| --- | --- | --- |
+| `paper` | `#000000` (true black) | |
+| `surface` / `surface-2` | `#0e0e10` / `#19191c` | |
+| `line` | `#2a2a2e` | |
+| `ink` | `#f2f2f3` | 18.77:1 on paper |
+| `ink-soft` | `#c9c9cd` | 12.72:1 on paper |
+| `muted` | `#9d9da4` | 7.79:1 on paper, 6.51:1 on surface-2 |
+| chart second series | `#9db0ea` | 9.83:1 on paper |
+
+Rules:
+- Use the role tokens (`bg-paper`, `text-ink`, `border-line` and so on). `bg-white` is kept only where the surface stays white in both themes: the Breaking label on the red strip, the pressed FIL/EN pill on navy, and `.btn-light` on navy.
+- The navy header, footer and Studio sidebar stay navy in both themes as brand chrome.
+- In dark mode, `text-brand`, article links, `text-navy` headings and `text-accent-700` error text switch to lighter equivalents (see the end of `globals.css`), because the light-mode colours fall below 4.5:1 on black. The Tailwind status tints (`red-50`, `emerald-50/700/800`, `amber-50/700/800/900` and their `-200` borders) point to dark equivalents.
 
 **Rule:** a custom brand colour set in Studio must keep white text at ≥4.5:1. Settings validation rejects brand and accent colours that fail this against white.
 

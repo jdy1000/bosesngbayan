@@ -15,9 +15,9 @@ const schema = z.object({
 });
 
 const MESSAGES = {
-  subscribed: "Inalis ang suppression; aktibo muli ang subscription.",
-  unsubscribed: "Na-unsubscribe ang email.",
-  suppressed: "Na-suppress ang email; hindi na ito padadalhan.",
+  subscribed: "Suppression lifted; the subscription is active again.",
+  unsubscribed: "Email unsubscribed.",
+  suppressed: "Email suppressed; it will no longer receive mail.",
 } as const;
 
 export async function setSubscriberStatus(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
@@ -27,17 +27,17 @@ export async function setSubscriberStatus(_prev: FormActionResult, fd: FormData)
     const current = must(
       await ctx.supabase.from("newsletter_subscribers").select("status, subscribed_at, unsubscribed_at").eq("id", input.id).single(),
     );
-    if (current.status === input.status) return { ok: false, error: "Ganito na ang status ng subscriber." };
+    if (current.status === input.status) return { ok: false, error: "The subscriber already has this status." };
     if (input.status === "subscribed") {
       // Consent rule: staff may only lift a suppression for someone who had not unsubscribed.
       // Anyone who unsubscribed must re-subscribe through the public form, which records fresh consent.
       const unsubscribedAfterSubscribing =
         current.unsubscribed_at !== null && new Date(current.unsubscribed_at) >= new Date(current.subscribed_at);
       if (current.status !== "suppressed" || unsubscribedAfterSubscribing) {
-        return { ok: false, error: "Ang nag-unsubscribe ay kailangang mag-subscribe muli mismo sa site para maitala ang bagong pahintulot." };
+        return { ok: false, error: "Someone who unsubscribed must re-subscribe on the site themselves so fresh consent is recorded." };
       }
     }
-    if (input.status === "suppressed" && !input.reason) return { ok: false, error: "Ilagay ang dahilan ng suppression." };
+    if (input.status === "suppressed" && !input.reason) return { ok: false, error: "Enter a reason for the suppression." };
     // set_subscriber_status re-checks newsletter.manage and writes the audit log.
     unwrap(await ctx.supabase.rpc("set_subscriber_status", { p_id: input.id, p_status: input.status, p_reason: input.reason }));
     revalidatePath("/admin/newsletter");

@@ -14,7 +14,7 @@ import { ContributorsPicker, RelatedPicker, TagPicker } from "./relation-pickers
 import { WorkflowPanel } from "./workflow-panel";
 import { availableActions, type WorkflowPerms } from "./workflow";
 
-const KIND_LABEL: Record<string, string> = { island_group: "Pangkat ng isla", region: "Rehiyon", province: "Lalawigan", city: "Lungsod" };
+const KIND_LABEL: Record<string, string> = { island_group: "Island group", region: "Region", province: "Province", city: "City" };
 
 export function ArticleEditor({
   data,
@@ -61,17 +61,17 @@ export function ArticleEditor({
     >
       <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-3 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 xl:col-span-2">
         <StatusBadge status={article.status} />
-        {disabled ? <span className="text-sm text-muted">Basahin lamang</span> : <SaveIndicator status={status} message={message} savedAt={savedAt} />}
+        {disabled ? <span className="text-sm text-muted">Read only</span> : <SaveIndicator status={status} message={message} savedAt={savedAt} />}
         <div className="ml-auto flex flex-wrap gap-2">
           <Link href={`/admin/preview/articles/${article.id}`} target="_blank" onClick={(e) => previewAfterSave(e, isDirty() && !disabled, saveNow)} className="btn btn-outline min-h-9 px-3 text-sm">
             <Eye className="h-4 w-4" aria-hidden="true" /> Preview
           </Link>
           <Link href={`/admin/articles/${article.id}/history`} className="btn btn-outline min-h-9 px-3 text-sm">
-            <History className="h-4 w-4" aria-hidden="true" /> Kasaysayan
+            <History className="h-4 w-4" aria-hidden="true" /> History
           </Link>
           {!disabled && (
             <button type="submit" disabled={status === "saving" || status === "conflict"} className="btn btn-primary min-h-9 px-3 text-sm">
-              <Save className="h-4 w-4" aria-hidden="true" /> I-save
+              <Save className="h-4 w-4" aria-hidden="true" /> Save
             </button>
           )}
         </div>
@@ -80,9 +80,9 @@ export function ArticleEditor({
       {status === "conflict" && (
         <div className="xl:col-span-2">
           <Notice tone="error">
-            {message} Huminto ang autosave. Kopyahin ang iyong mga pagbabago kung kailangan, saka{" "}
+            {message} Autosave has stopped. Copy your changes if you need them, then{" "}
             <button type="button" className="font-semibold underline" onClick={() => window.location.reload()}>
-              i-reload ang pinakabagong bersyon
+              reload the latest version
             </button>
             .
           </Notice>
@@ -91,21 +91,21 @@ export function ArticleEditor({
       {disabled && (
         <div className="xl:col-span-2">
           <Notice tone="info">
-            Hindi mo maaaring i-edit ang artikulong ito sa status na “{article.status}”. Ang mga writer ay nag-e-edit lamang ng sariling draft o ni-reject na
-            artikulo.
+            You cannot edit this article while its status is “{article.status}”. Writers can only edit their own drafts or rejected
+            articles.
           </Notice>
         </div>
       )}
       {article.status === "rejected" && article.rejection_reason && (
         <div className="xl:col-span-2">
           <Notice tone="warn">
-            <strong>Dahilan ng pag-reject:</strong> {article.rejection_reason}
+            <strong>Rejection reason:</strong> {article.rejection_reason}
           </Notice>
         </div>
       )}
 
       <fieldset disabled={disabled} className="min-w-0 space-y-5">
-        <Field label="Pamagat" htmlFor="title" error={err("title")}>
+        <Field label="Title" htmlFor="title" error={err("title")}>
           <input
             id="title"
             name="title"
@@ -128,9 +128,9 @@ export function ArticleEditor({
           error={err("slug")}
           hint={
             article.first_published_at
-              ? "Nailathala na ito: ang pagpalit ng slug ay sisira sa lumang link. Magdagdag ng redirect sa SEO kung papalitan."
+              ? "Already published: changing the slug breaks the old link. Add a redirect in SEO if you change it."
               : slugAuto
-                ? "Awtomatikong sinusundan ang pamagat hanggang baguhin mo."
+                ? "Follows the title automatically until you edit it."
                 : `/balita/${slug}`
           }
         >
@@ -148,21 +148,21 @@ export function ArticleEditor({
             }}
           />
         </Field>
-        <Field label="Excerpt" htmlFor="excerpt" hint="Maikling buod para sa mga card at search." error={err("excerpt")}>
+        <Field label="Excerpt" htmlFor="excerpt" hint="Short summary for cards and search." error={err("excerpt")}>
           <textarea id="excerpt" name="excerpt" className="field min-h-20" maxLength={600} defaultValue={article.excerpt ?? ""} />
         </Field>
         <div>
-          <p className="mb-1.5 text-sm font-semibold text-ink">Nilalaman</p>
-          <RichTextEditor name="body" initialContent={article.body} onChange={markDirty} disabled={disabled} label="Nilalaman ng artikulo" />
-          <p className="mt-1 text-xs text-muted">Tantiyang pagbasa: {article.reading_minutes} minuto (kinukuwenta muli sa bawat pag-save).</p>
+          <p className="mb-1.5 text-sm font-semibold text-ink">Body</p>
+          <RichTextEditor name="body" initialContent={article.body} onChange={markDirty} disabled={disabled} label="Article body" />
+          <p className="mt-1 text-xs text-muted">Estimated reading time: {article.reading_minutes} min (recalculated on every save).</p>
         </div>
 
-        <Panel title="Pinagkunan at pagwawasto">
+        <Panel title="Sources and corrections">
           <div className="space-y-4">
             <Field label="Source attribution" htmlFor="source_attribution">
               <textarea id="source_attribution" name="source_attribution" className="field min-h-20" maxLength={1000} defaultValue={article.source_attribution ?? ""} />
             </Field>
-            <Field label="Correction note" htmlFor="correction_note" hint="Lalabas sa itaas ng artikulo bilang “Pagwawasto”.">
+            <Field label="Correction note" htmlFor="correction_note" hint="Shown at the top of the article as “Pagwawasto” (correction).">
               <textarea id="correction_note" name="correction_note" className="field min-h-20" maxLength={1000} defaultValue={article.correction_note ?? ""} />
             </Field>
           </div>
@@ -175,26 +175,26 @@ export function ArticleEditor({
         </Panel>
 
         <fieldset disabled={disabled} className="min-w-0 space-y-5">
-          <Panel title="Paglalathala">
+          <Panel title="Publishing">
             <div className="space-y-4">
-              <Field label="Kategorya" htmlFor="category_id" hint="Kailangan bago isumite o i-publish.">
+              <Field label="Category" htmlFor="category_id" hint="Required before submitting or publishing.">
                 <select id="category_id" name="category_id" className="field" defaultValue={article.category_id ?? ""}>
-                  <option value="">— Walang kategorya —</option>
+                  <option value="">— No category —</option>
                   {options.categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
-                      {c.is_active ? "" : " (hindi aktibo)"}
+                      {c.is_active ? "" : " (inactive)"}
                     </option>
                   ))}
                 </select>
               </Field>
               <div>
-                <p className="mb-1.5 text-sm font-semibold text-ink">Mga tag</p>
+                <p className="mb-1.5 text-sm font-semibold text-ink">Tags</p>
                 <TagPicker tags={options.tags} initial={data.tagIds} canCreate={perms.taxonomy} disabled={disabled} onChange={markDirty} />
               </div>
-              <Field label="Lokasyon" htmlFor="location_id">
+              <Field label="Location" htmlFor="location_id">
                 <select id="location_id" name="location_id" className="field" defaultValue={article.location_id ?? ""}>
-                  <option value="">— Walang lokasyon —</option>
+                  <option value="">— No location —</option>
                   {Object.entries(KIND_LABEL).map(([kind, label]) => (
                     <optgroup key={kind} label={label}>
                       {options.locations
@@ -209,7 +209,7 @@ export function ArticleEditor({
                 </select>
               </Field>
               {perms.editAny ? (
-                <Field label="May-akda" htmlFor="author_id">
+                <Field label="Author" htmlFor="author_id">
                   <select id="author_id" name="author_id" className="field" defaultValue={article.author_id}>
                     {options.people.map((p) => (
                       <option key={p.id} value={p.id}>
@@ -220,21 +220,21 @@ export function ArticleEditor({
                 </Field>
               ) : (
                 <p className="text-sm">
-                  <span className="font-semibold text-ink">May-akda:</span> {options.people.find((p) => p.id === article.author_id)?.display_name ?? "—"}
+                  <span className="font-semibold text-ink">Author:</span> {options.people.find((p) => p.id === article.author_id)?.display_name ?? "—"}
                 </p>
               )}
               <div>
-                <p className="mb-1.5 text-sm font-semibold text-ink">Mga kontribyutor</p>
+                <p className="mb-1.5 text-sm font-semibold text-ink">Contributors</p>
                 <ContributorsPicker people={options.people} initial={data.contributors} disabled={disabled} onChange={markDirty} />
               </div>
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="allow_comments" defaultChecked={article.allow_comments} /> Payagan ang mga komento (may moderation)
+                <input type="checkbox" name="allow_comments" defaultChecked={article.allow_comments} /> Allow comments (moderated)
               </label>
             </div>
           </Panel>
 
           {perms.publish && (
-            <Panel title="Homepage placement" description="Para sa may pahintulot mag-publish.">
+            <Panel title="Homepage placement" description="For users with publish permission.">
               <input type="hidden" name="placement_present" value="1" />
               <div className="space-y-2 text-sm">
                 <label className="flex items-center gap-2">
@@ -251,26 +251,26 @@ export function ArticleEditor({
           )}
 
           <Panel title="Featured image">
-            <MediaPicker name="featured_image_id" label="Larawan" defaultValue={data.image} onChange={(m) => (setFeatured(m), markDirty())} />
+            <MediaPicker name="featured_image_id" label="Image" defaultValue={data.image} onChange={(m) => (setFeatured(m), markDirty())} />
             <ImageMeta image={featured} />
           </Panel>
 
-          <Panel title="SEO at social">
+          <Panel title="SEO and social">
             <div className="space-y-4">
-              <Field label="SEO title" htmlFor="seo_title" hint="Kung blangko, gagamitin ang pamagat." error={err("seo_title")}>
+              <Field label="SEO title" htmlFor="seo_title" hint="If blank, the title is used." error={err("seo_title")}>
                 <input id="seo_title" name="seo_title" className="field" maxLength={120} defaultValue={article.seo_title ?? ""} />
               </Field>
-              <Field label="SEO description" htmlFor="seo_description" hint="Kung blangko, gagamitin ang excerpt." error={err("seo_description")}>
+              <Field label="SEO description" htmlFor="seo_description" hint="If blank, the excerpt is used." error={err("seo_description")}>
                 <textarea id="seo_description" name="seo_description" className="field min-h-20" maxLength={320} defaultValue={article.seo_description ?? ""} />
               </Field>
-              <Field label="Canonical URL" htmlFor="canonical_url" hint="Para lamang sa nilalamang unang nailathala sa ibang site." error={err("canonical_url")}>
+              <Field label="Canonical URL" htmlFor="canonical_url" hint="Only for content first published on another site." error={err("canonical_url")}>
                 <input id="canonical_url" name="canonical_url" type="url" className="field" placeholder="https://…" defaultValue={article.canonical_url ?? ""} />
               </Field>
-              <MediaPicker name="og_image_id" label="Open Graph image (opsyonal)" defaultValue={data.og} onChange={markDirty} />
+              <MediaPicker name="og_image_id" label="Open Graph image (optional)" defaultValue={data.og} onChange={markDirty} />
             </div>
           </Panel>
 
-          <Panel title="Kaugnay na mga artikulo">
+          <Panel title="Related articles">
             <RelatedPicker articleId={article.id} initial={data.related} disabled={disabled} onChange={markDirty} />
           </Panel>
         </fieldset>
@@ -302,7 +302,7 @@ function ImageMeta({ image }: { image: PickedImage | PickedMedia | null }) {
           <span className="font-semibold text-ink">Alt text:</span> {image.alt_text}
         </p>
       ) : (
-        <p className="font-semibold text-amber-800">Walang alt text ang larawang ito — idagdag ito sa Media Library bago i-publish.</p>
+        <p className="font-semibold text-amber-800">This image has no alt text — add it in the Media Library before publishing.</p>
       )}
       {caption && (
         <p>
@@ -315,7 +315,7 @@ function ImageMeta({ image }: { image: PickedImage | PickedMedia | null }) {
         </p>
       )}
       <p className="text-muted">
-        Ang alt text, caption at credit ay nakaimbak sa{" "}
+        Alt text, caption and credit are stored in the{" "}
         <Link href="/admin/media" className="font-semibold text-brand hover:underline">
           Media Library
         </Link>
@@ -326,8 +326,8 @@ function ImageMeta({ image }: { image: PickedImage | PickedMedia | null }) {
 }
 
 function workflowSummary(a: ArticleForEdit["article"]): string {
-  if (a.status === "scheduled") return `Lalabas sa ${formatDateTime(a.published_at)}`;
-  if (a.status === "published") return `Nailathala ${formatDateTime(a.first_published_at ?? a.published_at)}`;
-  if (a.status === "pending_review" && a.submitted_at) return `Isinumite ${formatDateTime(a.submitted_at)}`;
-  return `Huling binago ${formatDateTime(a.updated_at)}`;
+  if (a.status === "scheduled") return `Goes live ${formatDateTime(a.published_at)}`;
+  if (a.status === "published") return `Published ${formatDateTime(a.first_published_at ?? a.published_at)}`;
+  if (a.status === "pending_review" && a.submitted_at) return `Submitted ${formatDateTime(a.submitted_at)}`;
+  return `Last modified ${formatDateTime(a.updated_at)}`;
 }

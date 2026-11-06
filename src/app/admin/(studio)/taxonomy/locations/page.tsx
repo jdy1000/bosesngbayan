@@ -5,7 +5,7 @@ import { deleteLocation, saveLocation } from "../place-actions";
 import { LOCATION_KINDS, LOCATION_KIND_LABELS, type LocationKind } from "../location-kinds";
 import { TaxonomyTabs } from "../tabs";
 
-export const metadata = { title: "Mga lokasyon" };
+export const metadata = { title: "Locations" };
 
 interface Loc {
   id: string;
@@ -40,16 +40,16 @@ export default async function LocationsPage() {
 
   return (
     <>
-      <PageHeader title="Kategorya at Tag" description="Hierarkiya ng lugar para sa regional news: island group → rehiyon → lalawigan → lungsod/bayan." />
+      <PageHeader title="Categories & tags" description="Place hierarchy for regional news: island group → region → province → city/town." />
       <TaxonomyTabs current="/admin/taxonomy/locations" />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div>
           {error ? (
-            <Notice tone="error">Hindi makuha ang mga lokasyon.</Notice>
+            <Notice tone="error">Couldn’t load locations.</Notice>
           ) : !tree.length ? (
-            <Empty title="Wala pang lokasyon">Magsimula sa mga island group: Luzon, Visayas at Mindanao.</Empty>
+            <Empty title="No locations yet">Start with the island groups: Luzon, Visayas and Mindanao.</Empty>
           ) : (
-            <Table head={["Lokasyon", "Uri", "Status", "Aksyon"]}>
+            <Table head={["Location", "Type", "Status", "Actions"]}>
               {tree.map(({ loc, depth }) => (
                 <tr key={loc.id}>
                   <td>
@@ -62,19 +62,19 @@ export default async function LocationsPage() {
                     </p>
                   </td>
                   <td className="text-ink-soft">{LOCATION_KIND_LABELS[loc.kind]}</td>
-                  <td>{loc.is_active ? <Badge tone="green">Aktibo</Badge> : <Badge>Nakatago</Badge>}</td>
+                  <td>{loc.is_active ? <Badge tone="green">Active</Badge> : <Badge>Hidden</Badge>}</td>
                   <td>
                     <details>
-                      <summary className="cursor-pointer text-sm font-semibold text-brand">I-edit</summary>
+                      <summary className="cursor-pointer text-sm font-semibold text-brand">Edit</summary>
                       <ActionForm action={saveLocation} className="mt-3 space-y-3">
                         <input type="hidden" name="id" value={loc.id} />
                         <LocationFields value={loc} all={rows} idPrefix={loc.id} />
-                        <SubmitButton variant="outline">I-save</SubmitButton>
+                        <SubmitButton variant="outline">Save</SubmitButton>
                       </ActionForm>
-                      <ActionForm action={deleteLocation} className="mt-3" confirm={`Burahin ang ${loc.name}?`}>
+                      <ActionForm action={deleteLocation} className="mt-3" confirm={`Delete ${loc.name}?`}>
                         <input type="hidden" name="id" value={loc.id} />
-                        <SubmitButton variant="ghost" pendingLabel="Binubura…">
-                          Burahin
+                        <SubmitButton variant="ghost" pendingLabel="Deleting…">
+                          Delete
                         </SubmitButton>
                       </ActionForm>
                     </details>
@@ -84,10 +84,10 @@ export default async function LocationsPage() {
             </Table>
           )}
         </div>
-        <Panel title="Bagong lokasyon">
+        <Panel title="New location">
           <ActionForm action={saveLocation} resetOnSuccess className="space-y-3">
             <LocationFields all={rows} idPrefix="new" />
-            <SubmitButton>Idagdag</SubmitButton>
+            <SubmitButton>Add</SubmitButton>
           </ActionForm>
         </Panel>
       </div>
@@ -99,13 +99,13 @@ function LocationFields({ value, all, idPrefix }: { value?: Loc; all: Loc[]; idP
   const parents = all.filter((l) => l.kind !== "city" && l.id !== value?.id);
   return (
     <>
-      <Field label="Pangalan" htmlFor={`${idPrefix}-name`}>
+      <Field label="Name" htmlFor={`${idPrefix}-name`}>
         <input id={`${idPrefix}-name`} name="name" required maxLength={120} defaultValue={value?.name} className="field" />
       </Field>
-      <Field label="Slug" htmlFor={`${idPrefix}-slug`} hint="Blangko = mula sa pangalan.">
+      <Field label="Slug" htmlFor={`${idPrefix}-slug`} hint="Blank = generated from the name.">
         <input id={`${idPrefix}-slug`} name="slug" maxLength={140} pattern="[a-z0-9]+(-[a-z0-9]+)*" defaultValue={value?.slug} className="field" />
       </Field>
-      <Field label="Uri" htmlFor={`${idPrefix}-kind`}>
+      <Field label="Type" htmlFor={`${idPrefix}-kind`}>
         <select id={`${idPrefix}-kind`} name="kind" defaultValue={value?.kind ?? "region"} className="field">
           {LOCATION_KINDS.map((k) => (
             <option key={k} value={k}>
@@ -114,9 +114,9 @@ function LocationFields({ value, all, idPrefix }: { value?: Loc; all: Loc[]; idP
           ))}
         </select>
       </Field>
-      <Field label="Sakop ng" htmlFor={`${idPrefix}-parent`} hint="Wala para sa island group. Rehiyon → island group, lalawigan → rehiyon, lungsod → lalawigan.">
+      <Field label="Parent" htmlFor={`${idPrefix}-parent`} hint="None for an island group. Region → island group, province → region, city → province.">
         <select id={`${idPrefix}-parent`} name="parent_id" defaultValue={value?.parent_id ?? ""} className="field">
-          <option value="">— Wala —</option>
+          <option value="">— None —</option>
           {parents.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name} ({LOCATION_KIND_LABELS[p.kind]})
@@ -124,12 +124,12 @@ function LocationFields({ value, all, idPrefix }: { value?: Loc; all: Loc[]; idP
           ))}
         </select>
       </Field>
-      <Field label="Ayos (sort order)" htmlFor={`${idPrefix}-sort`}>
+      <Field label="Sort order" htmlFor={`${idPrefix}-sort`}>
         <input id={`${idPrefix}-sort`} name="sort_order" type="number" defaultValue={value?.sort_order ?? 0} className="field" />
       </Field>
       <label className="inline-flex min-h-11 items-center gap-2 text-sm">
         <input type="checkbox" name="is_active" defaultChecked={value?.is_active ?? true} className="size-4" />
-        Aktibo
+        Active
       </label>
     </>
   );

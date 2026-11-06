@@ -17,7 +17,7 @@ export interface PickedMedia {
  */
 export function MediaPicker({
   name,
-  label = "Larawan",
+  label = "Image",
   defaultValue = null,
   onChange,
 }: {
@@ -81,11 +81,11 @@ export function MediaPicker({
         </div>
         <div className="flex flex-col items-start gap-1.5">
           <button type="button" className="btn btn-outline min-h-9 px-3 text-sm" onClick={() => setOpen(true)}>
-            {value ? "Palitan" : "Pumili ng larawan"}
+            {value ? "Change" : "Choose image"}
           </button>
           {value && (
             <button type="button" className="text-xs font-semibold text-accent-700 hover:underline" onClick={() => choose(null)}>
-              Alisin
+              Remove
             </button>
           )}
         </div>
@@ -95,26 +95,26 @@ export function MediaPicker({
         ref={dialogRef}
         onClose={() => setOpen(false)}
         className="m-auto w-[min(920px,calc(100vw-2rem))] rounded-2xl p-0 backdrop:bg-black/50"
-        aria-label="Pumili ng larawan"
+        aria-label="Choose image"
       >
         <div className="flex items-center gap-3 border-b border-line p-4">
           <input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Hanapin sa Media Library…"
+            placeholder="Search the Media Library…"
             className="field"
             autoFocus
           />
-          <button type="button" onClick={() => setOpen(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-surface-2" aria-label="Isara">
+          <button type="button" onClick={() => setOpen(false)} className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-surface-2" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-4">
-          {status === "error" && <p className="text-sm text-accent-700">Hindi makuha ang media. Subukang muli.</p>}
+          {status === "error" && <p className="text-sm text-accent-700">Could not load media. Try again.</p>}
           {status !== "error" && items.length === 0 && (
             <p className="py-8 text-center text-sm text-muted">
-              {status === "loading" ? "Naglo-load…" : "Walang nahanap. Mag-upload muna sa Media Library."}
+              {status === "loading" ? "Loading…" : "Nothing found. Upload images in the Media Library first."}
             </p>
           )}
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -132,7 +132,7 @@ export function MediaPicker({
                     )}
                   </div>
                   <p className="truncate px-2 py-1.5 text-xs text-ink-soft">{m.title || m.file_name}</p>
-                  {!m.alt_text && <p className="px-2 pb-1.5 text-[0.7rem] font-semibold text-amber-700">Walang alt text</p>}
+                  {!m.alt_text && <p className="px-2 pb-1.5 text-[0.7rem] font-semibold text-amber-700">No alt text</p>}
                 </button>
               </li>
             ))}

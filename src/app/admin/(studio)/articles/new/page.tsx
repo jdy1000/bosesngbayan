@@ -4,7 +4,7 @@ import { ActionForm, SubmitButton } from "@/components/studio/action-form";
 import { Field, PageHeader, Panel } from "@/components/studio/ui";
 import { createArticle } from "../actions";
 
-export const metadata: Metadata = { title: "Bagong artikulo" };
+export const metadata: Metadata = { title: "New article" };
 
 export default async function NewArticlePage() {
   const ctx = await requireStaffPage("articles.create");
@@ -12,15 +12,15 @@ export default async function NewArticlePage() {
 
   return (
     <>
-      <PageHeader title="Bagong artikulo" breadcrumb={[{ label: "Mga Artikulo", href: "/admin/articles" }]} description="Gagawa ito ng draft; ikaw ang may-akda. Maaari mong baguhin ang lahat sa editor." />
+      <PageHeader title="New article" breadcrumb={[{ label: "Articles", href: "/admin/articles" }]} description="This creates a draft with you as the author. You can change everything in the editor." />
       <Panel className="max-w-2xl">
         <ActionForm action={createArticle} className="space-y-4">
-          <Field label="Pamagat" htmlFor="title">
+          <Field label="Title" htmlFor="title">
             <input id="title" name="title" className="field" required maxLength={300} autoFocus />
           </Field>
-          <Field label="Kategorya (opsyonal)" htmlFor="category_id">
+          <Field label="Category (optional)" htmlFor="category_id">
             <select id="category_id" name="category_id" className="field" defaultValue="">
-              <option value="">— Pipiliin mamaya —</option>
+              <option value="">— Choose later —</option>
               {(categories ?? []).map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -28,7 +28,7 @@ export default async function NewArticlePage() {
               ))}
             </select>
           </Field>
-          <SubmitButton pendingLabel="Ginagawa…">Gumawa ng draft</SubmitButton>
+          <SubmitButton pendingLabel="Creating…">Create draft</SubmitButton>
         </ActionForm>
       </Panel>
     </>

@@ -3,7 +3,7 @@ import { z } from "zod";
 /** Zod helpers for FormData-backed server actions. */
 
 /** Trimmed optional text; empty string becomes null. */
-export function optionalText(max: number, message = `Hanggang ${max} character lamang.`) {
+export function optionalText(max: number, message = `Up to ${max} characters.`) {
   return z.preprocess(
     (v) => (typeof v === "string" && v.trim() !== "" ? v.trim() : null),
     z.string().max(max, message).nullable(),
@@ -13,7 +13,7 @@ export function optionalText(max: number, message = `Hanggang ${max} character l
 export function requiredText(min: number, max: number, label: string) {
   return z.preprocess(
     (v) => (typeof v === "string" ? v.trim() : ""),
-    z.string().min(min, `${label}: kailangan ng hindi bababa sa ${min} character.`).max(max, `${label}: hanggang ${max} character lamang.`),
+    z.string().min(min, `${label}: at least ${min} characters required.`).max(max, `${label}: up to ${max} characters.`),
   );
 }
 
@@ -25,5 +25,5 @@ export const optionalUuid = z.preprocess((v) => (typeof v === "string" && v !== 
 
 export const slugField = z.preprocess(
   (v) => (typeof v === "string" ? v.trim() : ""),
-  z.string().max(140, "Masyadong mahaba ang slug.").regex(/^([a-z0-9]+(-[a-z0-9]+)*)?$/, "Slug: maliliit na titik, numero at gitling lamang."),
+  z.string().max(140, "The slug is too long.").regex(/^([a-z0-9]+(-[a-z0-9]+)*)?$/, "Slug: lowercase letters, numbers and hyphens only."),
 );

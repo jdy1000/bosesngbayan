@@ -21,7 +21,7 @@ export async function moderate(_prev: FormActionResult, fd: FormData): Promise<F
     const ctx = await requirePermission("moderation.manage");
     const input = moderateSchema.parse(Object.fromEntries(fd));
     if (input.target_type === "comment" && (input.action === "feature" || input.action === "unfeature")) {
-      return { ok: false, error: "Ang mga post lamang ang maaaring i-feature." };
+      return { ok: false, error: "Only posts can be featured." };
     }
     // moderate_content re-checks moderation.manage, validates the action and writes the activity log.
     unwrap(
@@ -40,7 +40,7 @@ export async function moderate(_prev: FormActionResult, fd: FormData): Promise<F
       const comment = must(await ctx.supabase.from("comments").select("article:articles(slug)").eq("id", input.target_id).single());
       if (comment.article?.slug) revalidatePath(`/balita/${comment.article.slug}`);
     }
-    return { ok: true, message: `Tapos: ${ACTION_LABELS[input.action]}.` };
+    return { ok: true, message: `Done: ${ACTION_LABELS[input.action]}.` };
   } catch (e) {
     return toActionError(e);
   }
@@ -58,7 +58,7 @@ export async function resolveReport(_prev: FormActionResult, fd: FormData): Prom
     const input = reportSchema.parse(Object.fromEntries(fd));
     unwrap(await ctx.supabase.rpc("resolve_report", { p_report_id: input.report_id, p_status: input.status, p_note: input.note }));
     revalidatePath("/admin/moderation", "layout");
-    return { ok: true, message: input.status === "open" ? "Binuksan muli ang ulat." : "Na-update ang ulat." };
+    return { ok: true, message: input.status === "open" ? "Report reopened." : "Report updated." };
   } catch (e) {
     return toActionError(e);
   }

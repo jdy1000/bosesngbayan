@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireStaffPage } from "@/lib/auth/session";
-import { COMMUNITY_KIND_LABELS, type CommunityKind } from "@/lib/cms/community";
+import { COMMUNITY_KIND_LABELS, COMMUNITY_KINDS } from "@/lib/cms/community";
 import { formatDateTime, truncate } from "@/lib/format";
 import { REPORT_REASONS, REPORT_REASON_LABELS } from "@/lib/report-reasons";
 import { Badge, Empty, Notice, PageHeader, Pagination, StatusBadge, Table, withParams } from "@/components/studio/ui";
@@ -10,9 +10,9 @@ export const metadata = { title: "Moderation" };
 
 const PAGE_SIZE = 25;
 const TABS = [
-  { key: "posts", label: "Mga post" },
-  { key: "comments", label: "Mga komento" },
-  { key: "reports", label: "Mga ulat" },
+  { key: "posts", label: "Posts" },
+  { key: "comments", label: "Comments" },
+  { key: "reports", label: "Reports" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 type Search = Record<string, string | undefined>;
@@ -34,14 +34,14 @@ export default async function ModerationPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title="Moderation" description="Suriin ang mga isinumite ng komunidad, mga komento at mga ulat bago o pagkatapos lumabas sa publiko." />
-      <nav aria-label="Mga queue" className="mb-5 flex flex-wrap gap-2">
+      <PageHeader title="Moderation" description="Review community submissions, comments and reports before or after they appear publicly." />
+      <nav aria-label="Queues" className="mb-5 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <Link
             key={t.key}
             href={withParams("/admin/moderation", { tab: t.key })}
             aria-current={tab === t.key ? "page" : undefined}
-            className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ${tab === t.key ? "bg-navy text-white" : "border border-line bg-white text-ink-soft hover:border-brand"}`}
+            className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ${tab === t.key ? "bg-navy text-white" : "border border-line bg-paper text-ink-soft hover:border-brand"}`}
           >
             {t.label}
             {counts[t.key] ? <span className="rounded-full bg-accent px-2 text-xs text-white tabular-nums">{counts[t.key]}</span> : null}
@@ -64,14 +64,14 @@ function Filters({ tab, q, children }: { tab: Tab; q?: string; children: React.R
       {q !== undefined && (
         <div className="min-w-56 flex-1">
           <label htmlFor="q" className="sr-only">
-            Hanapin
+            Search
           </label>
-          <input id="q" name="q" defaultValue={q} placeholder="Hanapin ang teksto o pangalan…" className="field" />
+          <input id="q" name="q" defaultValue={q} placeholder="Search text or name…" className="field" />
         </div>
       )}
       {children}
       <button type="submit" className="btn btn-outline min-h-11 px-4 text-sm">
-        I-filter
+        Filter
       </button>
     </form>
   );
@@ -84,7 +84,7 @@ function StatusSelect({ value, options }: { value: string; options: { value: str
         Status
       </label>
       <select id="status" name="status" defaultValue={value} className="field">
-        <option value="all">Lahat ng status</option>
+        <option value="all">All statuses</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}
@@ -99,7 +99,7 @@ const statusOptions = MODERATION_STATUSES.map((s) => ({ value: s, label: MODERAT
 
 async function PostsQueue({ sp, ctx }: { sp: Search; ctx: Ctx }) {
   const status = sp.status === "all" ? undefined : (pick(MODERATION_STATUSES, sp.status) ?? "pending");
-  const kind = pick(Object.keys(COMMUNITY_KIND_LABELS) as CommunityKind[], sp.kind);
+  const kind = pick(COMMUNITY_KINDS, sp.kind);
   const q = (sp.q ?? "").trim().slice(0, 100);
   const page = Math.max(1, Number(sp.page) || 1);
   let query = ctx.supabase
@@ -118,11 +118,11 @@ async function PostsQueue({ sp, ctx }: { sp: Search; ctx: Ctx }) {
         <StatusSelect value={status ?? "all"} options={statusOptions} />
         <div>
           <label htmlFor="kind" className="sr-only">
-            Uri
+            Type
           </label>
           <select id="kind" name="kind" defaultValue={kind ?? ""} className="field">
-            <option value="">Lahat ng uri</option>
-            {Object.entries(COMMUNITY_KIND_LABELS).map(([v, l]) => (
+            <option value="">All types</option>
+            {Object.entries(COMMUNITY_KIND_LABELS.en).map(([v, l]) => (
               <option key={v} value={v}>
                 {l}
               </option>
@@ -131,12 +131,12 @@ async function PostsQueue({ sp, ctx }: { sp: Search; ctx: Ctx }) {
         </div>
       </Filters>
       {error ? (
-        <Notice tone="error">Hindi makuha ang mga post.</Notice>
+        <Notice tone="error">Could not load posts.</Notice>
       ) : !data?.length ? (
-        <Empty title={status === "pending" ? "Walang naghihintay na post" : "Walang tumugmang post"}>Malinis ang queue na ito.</Empty>
+        <Empty title={status === "pending" ? "No pending posts" : "No matching posts"}>This queue is clear.</Empty>
       ) : (
         <>
-          <Table head={["Post", "Uri", "May-akda", "Status", "Mga ulat", "Isinumite"]}>
+          <Table head={["Post", "Type", "Author", "Status", "Reports", "Submitted"]}>
             {data.map((p) => (
               <tr key={p.id}>
                 <td className="max-w-md">
@@ -144,7 +144,7 @@ async function PostsQueue({ sp, ctx }: { sp: Search; ctx: Ctx }) {
                     {p.title}
                   </Link>
                 </td>
-                <td className="text-ink-soft">{COMMUNITY_KIND_LABELS[p.kind]}</td>
+                <td className="text-ink-soft">{COMMUNITY_KIND_LABELS.en[p.kind]}</td>
                 <td className="text-ink-soft">{p.author_name}</td>
                 <td>
                   <div className="flex flex-wrap gap-1.5">
@@ -186,12 +186,12 @@ async function CommentsQueue({ sp, ctx }: { sp: Search; ctx: Ctx }) {
         <StatusSelect value={status ?? "all"} options={statusOptions} />
       </Filters>
       {error ? (
-        <Notice tone="error">Hindi makuha ang mga komento.</Notice>
+        <Notice tone="error">Could not load comments.</Notice>
       ) : !data?.length ? (
-        <Empty title={status === "pending" ? "Walang naghihintay na komento" : "Walang tumugmang komento"}>Malinis ang queue na ito.</Empty>
+        <Empty title={status === "pending" ? "No pending comments" : "No matching comments"}>This queue is clear.</Empty>
       ) : (
         <>
-          <Table head={["Komento", "Sa", "May-akda", "Status", "Mga ulat", "Isinumite"]}>
+          <Table head={["Comment", "On", "Author", "Status", "Reports", "Submitted"]}>
             {data.map((c) => (
               <tr key={c.id}>
                 <td className="max-w-md">
@@ -235,31 +235,31 @@ async function ReportsQueue({ sp, ctx }: { sp: Search; ctx: Ctx }) {
         <StatusSelect value={status ?? "all"} options={REPORT_STATUSES.map((s) => ({ value: s, label: REPORT_STATUS[s].label }))} />
         <div>
           <label htmlFor="reason" className="sr-only">
-            Dahilan
+            Reason
           </label>
           <select id="reason" name="reason" defaultValue={reason ?? ""} className="field">
-            <option value="">Lahat ng dahilan</option>
+            <option value="">All reasons</option>
             {REPORT_REASONS.map((r) => (
               <option key={r} value={r}>
-                {REPORT_REASON_LABELS[r]}
+                {REPORT_REASON_LABELS.en[r]}
               </option>
             ))}
           </select>
         </div>
       </Filters>
       {error ? (
-        <Notice tone="error">Hindi makuha ang mga ulat.</Notice>
+        <Notice tone="error">Could not load reports.</Notice>
       ) : !data?.length ? (
-        <Empty title={status === "open" ? "Walang bukas na ulat" : "Walang tumugmang ulat"}>Ang mga ulat mula sa publiko ay lalabas dito.</Empty>
+        <Empty title={status === "open" ? "No open reports" : "No matching reports"}>Reports from the public will appear here.</Empty>
       ) : (
         <>
-          <Table head={["Dahilan", "Tinutukoy", "Detalye", "Status", "Iniulat"]}>
+          <Table head={["Reason", "Target", "Details", "Status", "Reported"]}>
             {data.map((r) => {
               const href = r.community_post_id ? `/admin/moderation/posts/${r.community_post_id}` : `/admin/moderation/comments/${r.comment_id}`;
-              const target = r.post?.title ?? (r.comment ? `Komento: ${truncate(r.comment.body, 80)}` : "—");
+              const target = r.post?.title ?? (r.comment ? `Comment: ${truncate(r.comment.body, 80)}` : "—");
               return (
                 <tr key={r.id}>
-                  <td className="font-semibold">{REPORT_REASON_LABELS[r.reason]}</td>
+                  <td className="font-semibold">{REPORT_REASON_LABELS.en[r.reason]}</td>
                   <td className="max-w-sm">
                     <Link href={href} className="text-ink hover:text-brand">
                       {target}

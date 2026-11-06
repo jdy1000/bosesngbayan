@@ -17,7 +17,7 @@ function revalidateSite() {
 
 const categorySchema = z.object({
   id: optionalUuid,
-  name: requiredText(1, 80, "Pangalan"),
+  name: requiredText(1, 80, "Name"),
   slug: slugField,
   description: optionalText(600),
   image_id: optionalUuid,
@@ -35,7 +35,7 @@ export async function saveCategory(_prev: FormActionResult, fd: FormData): Promi
     if (id) {
       must(await ctx.supabase.from("categories").update(row).eq("id", id).select("id").single());
       revalidateSite();
-      return { ok: true, message: "Na-save ang kategorya." };
+      return { ok: true, message: "Category saved." };
     }
     const last = must(await ctx.supabase.from("categories").select("sort_order").order("sort_order", { ascending: false }).limit(1));
     const created = must(
@@ -46,7 +46,7 @@ export async function saveCategory(_prev: FormActionResult, fd: FormData): Promi
         .single(),
     );
     revalidateSite();
-    return { ok: true, message: "Nagawa ang kategorya.", redirectTo: `/admin/taxonomy/categories/${created.id}` };
+    return { ok: true, message: "Category created.", redirectTo: `/admin/taxonomy/categories/${created.id}` };
   } catch (e) {
     return toActionError(e);
   }
@@ -62,15 +62,15 @@ export async function categoryOp(_prev: FormActionResult, fd: FormData): Promise
       const cat = must(await ctx.supabase.from("categories").select("is_active").eq("id", id).single());
       must(await ctx.supabase.from("categories").update({ is_active: !cat.is_active }).eq("id", id).select("id").single());
       revalidateSite();
-      return { ok: true, message: cat.is_active ? "Itinago ang kategorya sa publiko." : "Aktibo na ang kategorya." };
+      return { ok: true, message: cat.is_active ? "Category hidden from the public site." : "Category is now active." };
     }
     if (op === "delete") {
       const { count } = await ctx.supabase.from("articles").select("id", { count: "exact", head: true }).eq("category_id", id);
-      if (count) return { ok: false, error: `Hindi mabubura: ginagamit ng ${count} artikulo. Ilipat muna ang mga artikulo o i-deactivate na lamang ang kategorya.` };
+      if (count) return { ok: false, error: `Can't delete: used by ${count} ${count === 1 ? "article" : "articles"}. Move the articles first, or deactivate the category instead.` };
       // articles.category_id is ON DELETE RESTRICT, so articles hidden from this session still block deletion (23503).
       unwrap(await ctx.supabase.from("categories").delete().eq("id", id));
       revalidateSite();
-      return { ok: true, message: "Nabura ang kategorya.", redirectTo: "/admin/taxonomy" };
+      return { ok: true, message: "Category deleted.", redirectTo: "/admin/taxonomy" };
     }
     const rows = must(await ctx.supabase.from("categories").select("id, sort_order").order("sort_order").order("name"));
     const ordered = rows.map((r) => ({ id: r.id, position: r.sort_order }));
@@ -78,7 +78,7 @@ export async function categoryOp(_prev: FormActionResult, fd: FormData): Promise
       unwrap(await ctx.supabase.from("categories").update({ sort_order: u.position }).eq("id", u.id));
     }
     revalidateSite();
-    return { ok: true, message: "Na-update ang pagkakasunod-sunod." };
+    return { ok: true, message: "Order updated." };
   } catch (e) {
     return toActionError(e);
   }
@@ -86,7 +86,7 @@ export async function categoryOp(_prev: FormActionResult, fd: FormData): Promise
 
 const tagSchema = z.object({
   id: optionalUuid,
-  name: requiredText(1, 80, "Pangalan"),
+  name: requiredText(1, 80, "Name"),
   slug: slugField,
   description: optionalText(600),
 });
@@ -99,7 +99,7 @@ export async function saveTag(_prev: FormActionResult, fd: FormData): Promise<Fo
     if (id) must(await ctx.supabase.from("tags").update(row).eq("id", id).select("id").single());
     else unwrap(await ctx.supabase.from("tags").insert(row));
     revalidateSite();
-    return { ok: true, message: id ? "Na-save ang tag." : "Nagawa ang tag." };
+    return { ok: true, message: id ? "Tag saved." : "Tag created." };
   } catch (e) {
     return toActionError(e);
   }
@@ -112,7 +112,7 @@ export async function deleteTag(_prev: FormActionResult, fd: FormData): Promise<
     // article_tags rows cascade; trending topics pointing at this tag cascade too (confirmed in the UI).
     unwrap(await ctx.supabase.from("tags").delete().eq("id", id));
     revalidateSite();
-    return { ok: true, message: "Nabura ang tag." };
+    return { ok: true, message: "Tag deleted." };
   } catch (e) {
     return toActionError(e);
   }

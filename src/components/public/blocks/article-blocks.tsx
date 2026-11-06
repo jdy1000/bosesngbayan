@@ -11,6 +11,8 @@ import {
 import { listApprovedPosts, COMMUNITY_KIND_LABELS } from "@/lib/cms/community";
 import { listCategories, listLocations, listTrendingTopics, type CategorySummary } from "@/lib/cms/site";
 import { formatDateline } from "@/lib/format";
+import { fmt } from "@/lib/i18n/config";
+import { getI18n } from "@/lib/i18n/server";
 
 type ListSettings = BlockSettings<"article_grid">;
 export type ListLayout = "grid" | "list" | "side";
@@ -40,6 +42,7 @@ const section = "py-10 md:py-12";
 /** Lead story, right rail, and a row of three (Morning "hero"). The lead image is the page's LCP. */
 export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"top_stories"> }) {
   const want = 1 + settings.rail_count + settings.below_count;
+  const { t } = await getI18n();
   const [leadPick, latest] = await Promise.all([
     settings.lead_source === "manual" && settings.lead_article_id
       ? getPublicArticlesByIds([settings.lead_article_id]).then((r) => r[0])
@@ -53,7 +56,7 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
     return (
       <section className={section}>
         <div className="container-site">
-          <EmptyState title="Wala pang nailalathalang balita.">Lalabas dito ang mga pangunahing balita kapag nailathala na ng newsroom.</EmptyState>
+          <EmptyState title={t.blocks.topStoriesEmptyTitle}>{t.blocks.topStoriesEmptyBody}</EmptyState>
         </div>
       </section>
     );
@@ -64,7 +67,7 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
   const below = rest.slice(settings.rail_count, settings.rail_count + settings.below_count);
 
   return (
-    <section aria-label="Mga pangunahing balita" className="pb-8 pt-8 md:pb-10 md:pt-10">
+    <section aria-label={t.blocks.topStories} className="pb-8 pt-8 md:pb-10 md:pt-10">
       {/* lg: two shared rows (subgrid), so the story row and the rail list start on the same rule. */}
       <div className="container-site grid gap-10 lg:grid-cols-12 lg:gap-x-8">
         <div className="grid content-start gap-10 lg:col-span-8 lg:row-span-2 lg:grid-rows-subgrid">
@@ -79,7 +82,7 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
         </div>
         {railTop && (
           <aside
-            aria-label="Iba pang balita"
+            aria-label={t.blocks.moreStories}
             className="grid content-start gap-6 lg:col-span-4 lg:row-span-2 lg:grid-rows-subgrid lg:gap-10 lg:border-l lg:border-line lg:pl-8"
           >
             <ArticleCard article={railTop} />
@@ -129,10 +132,11 @@ function SideTitle({ children }: { children: React.ReactNode }) {
 }
 
 /** Section index: always available, so the sidebar never sits empty before view data exists. */
-function TopicIndex({ categories }: { categories: CategorySummary[] }) {
+async function TopicIndex({ categories }: { categories: CategorySummary[] }) {
+  const { t } = await getI18n();
   return (
     <div>
-      <SideTitle>Mga Paksa</SideTitle>
+      <SideTitle>{t.blocks.topics}</SideTitle>
       <ul className="divide-y divide-line">
         {categories.map((c) => (
           <li key={c.id}>
@@ -149,14 +153,15 @@ function TopicIndex({ categories }: { categories: CategorySummary[] }) {
 
 type Post = Awaited<ReturnType<typeof listApprovedPosts>>["items"][number];
 
-function CommunityPicks({ posts }: { posts: Post[] }) {
+async function CommunityPicks({ posts }: { posts: Post[] }) {
+  const { locale, t } = await getI18n();
   return (
     <div>
       <SideTitle>Usap Bayan</SideTitle>
       <ul className="divide-y divide-line">
         {posts.map((p) => (
           <li key={p.id} className="py-3.5">
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-accent">{COMMUNITY_KIND_LABELS[p.kind]}</p>
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-accent">{COMMUNITY_KIND_LABELS[locale][p.kind]}</p>
             <Link href={`/usap-bayan/${p.id}`} className="mt-1 block text-[0.95rem] font-medium leading-snug text-ink hover:text-brand">
               {p.title}
             </Link>
@@ -168,7 +173,7 @@ function CommunityPicks({ posts }: { posts: Post[] }) {
         ))}
       </ul>
       <Link href="/usap-bayan#magbahagi" className="btn mt-4 min-h-10 w-full border border-ink px-4 text-sm text-ink hover:bg-ink hover:text-white">
-        Ibahagi ang iyong boses
+        {t.blocks.shareVoice}
       </Link>
     </div>
   );
@@ -188,6 +193,7 @@ export async function ArticleListBlock({
   tone?: "default" | "surface";
 }) {
   const sidebarWanted = layout === "list" && settings.with_sidebar;
+  const { t } = await getI18n();
   const [articles, trending, categories, posts] = await Promise.all([
     resolveArticles(settings),
     sidebarWanted ? getMostReadArticles(7, 5) : Promise.resolve([] as Article[]),
@@ -202,7 +208,7 @@ export async function ArticleListBlock({
 
   const body =
     articles.length === 0 ? (
-      <EmptyState title="Wala pang nailalathalang balita.">Lalabas dito ang mga kwento kapag nailathala na ng newsroom.</EmptyState>
+      <EmptyState title={t.blocks.listEmptyTitle}>{t.blocks.listEmptyBody}</EmptyState>
     ) : layout === "list" ? (
       <div className="divide-y divide-line">
         {articles.map((a) => (
@@ -234,7 +240,7 @@ export async function ArticleListBlock({
             <div className="lg:col-span-8">{body}</div>
             <aside className="space-y-10 lg:sticky lg:top-32 lg:col-span-4 lg:self-start">
               {trending.length > 0 ? (
-                <RankedList title="Trending" articles={trending} note="Batay sa pagbisita sa nakalipas na 7 araw." />
+                <RankedList title="Trending" articles={trending} note={t.blocks.trendingNote} />
               ) : (
                 topics.length > 0 && <TopicIndex categories={topics} />
               )}
@@ -271,7 +277,7 @@ export async function BreakingNewsBlock({ settings }: { settings: BlockSettings<
   return (
     <section aria-label="Breaking news" className="bg-accent text-white">
       <div className="container-site flex items-center gap-4 overflow-x-auto py-2.5 text-sm [scrollbar-width:none]">
-        <span className="shrink-0 rounded-[3px] bg-white px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-accent">Breaking</span>
+        <span className="shrink-0 rounded-[3px] bg-white px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wider text-[var(--brand-accent)]">Breaking</span>
         <ul className="flex gap-8 whitespace-nowrap">
           {items.map((a) => (
             <li key={a.id}>
@@ -288,11 +294,11 @@ export async function BreakingNewsBlock({ settings }: { settings: BlockSettings<
 
 /** Dateline + editorially managed trending topics (Istorya strip under the masthead). */
 export async function TrendingTopicsBlock({ title, settings }: { title: string | null; settings: BlockSettings<"trending_topics"> }) {
-  const topics = await listTrendingTopics();
+  const [topics, { locale }] = await Promise.all([listTrendingTopics(), getI18n()]);
   return (
-    <section aria-label={title ?? "Trending"} className="border-b border-line bg-white">
+    <section aria-label={title ?? "Trending"} className="border-b border-line bg-paper">
       <div className="container-site flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-6">
-        <p className="shrink-0 text-[0.8rem] font-medium text-ink-soft">{formatDateline()}</p>
+        <p className="shrink-0 text-[0.8rem] font-medium text-ink-soft">{formatDateline(undefined, locale)}</p>
         {topics.length > 0 && (
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <h2 className="inline-flex shrink-0 items-center gap-1.5 text-[0.7rem] font-bold uppercase tracking-[0.08em] text-brand-700">
@@ -339,7 +345,7 @@ function ColumnHead({ title, href, linkLabel }: { title: string; href: string; l
 }
 
 export async function CategoryShowcaseBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"category_showcase"> }) {
-  const all = await listCategories();
+  const [all, { t }] = await Promise.all([listCategories(), getI18n()]);
   const chosen = settings.category_ids.length
     ? settings.category_ids.map((id) => all.find((c) => c.id === id)).filter((c) => c !== undefined)
     : all.filter((c) => c.is_featured);
@@ -357,7 +363,7 @@ export async function CategoryShowcaseBlock({ title, description, settings }: { 
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           {filled.map(({ category, items }) => (
             <div key={category.id}>
-              <ColumnHead title={category.name} href={`/paksa/${category.slug}`} linkLabel="Lahat" />
+              <ColumnHead title={category.name} href={`/paksa/${category.slug}`} linkLabel={t.blocks.all} />
               <div className="space-y-5">
                 <ArticleCard article={items[0]} />
                 {items.slice(1).map((a) => (
@@ -373,12 +379,15 @@ export async function CategoryShowcaseBlock({ title, description, settings }: { 
 }
 
 export async function MostReadBlock({ title, settings }: { title: string | null; settings: BlockSettings<"most_read"> }) {
-  const items = await getMostReadArticles(settings.days, settings.limit);
+  const [items, { t }] = await Promise.all([getMostReadArticles(settings.days, settings.limit), getI18n()]);
   if (items.length === 0) return null; // Ranking needs real page-view data; never invent one.
   return (
     <section className={section}>
       <div className="container-site">
-        <SectionHeading title={title ?? "Pinakabinabasa"} description={`Batay sa mga pagbisita sa nakalipas na ${settings.days} araw.`} />
+        <SectionHeading
+          title={title ?? t.blocks.mostRead}
+          description={fmt(settings.days === 1 ? t.blocks.mostReadNoteOne : t.blocks.mostReadNote, { days: settings.days })}
+        />
         <ol className="grid gap-x-10 gap-y-6 md:grid-cols-2">
           {items.map((a, i) => (
             <li key={a.id} className="flex gap-4">
@@ -398,7 +407,7 @@ export async function MostReadBlock({ title, settings }: { title: string | null;
 
 /** Island groups with their regions as chips, then the latest stories from each (Istorya "Interactive Philippines"). */
 export async function RegionalNewsBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"regional_news"> }) {
-  const locations = await listLocations();
+  const [locations, { t }] = await Promise.all([listLocations(), getI18n()]);
   const chosen = settings.location_ids.length
     ? settings.location_ids.map((id) => locations.find((l) => l.id === id)).filter((l) => l !== undefined)
     : locations.filter((l) => l.kind === "island_group");
@@ -414,19 +423,19 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
   return (
     <section className={`bg-surface ${section}`}>
       <div className="container-site">
-        <SectionHeading title={title ?? "Balitang Rehiyon"} description={description} />
+        <SectionHeading title={title ?? t.blocks.regionalNews} description={description} />
         {/* md+: each column spans three shared rows (head, region chips, stories), so story lists start level however the chips wrap. */}
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
           {groups.map(({ loc, children, items }) => (
             <div key={loc.id} className="md:row-span-3 md:grid md:grid-rows-subgrid md:gap-y-0">
-              <ColumnHead title={loc.name} href={`/rehiyon/${loc.slug}`} linkLabel="Lahat" />
+              <ColumnHead title={loc.name} href={`/rehiyon/${loc.slug}`} linkLabel={t.blocks.all} />
               {children.length > 0 ? (
-                <ul className="mb-6 flex flex-wrap content-start gap-2" aria-label={`Mga rehiyon sa ${loc.name}`}>
+                <ul className="mb-6 flex flex-wrap content-start gap-2" aria-label={fmt(t.blocks.regionsIn, { name: loc.name })}>
                   {children.map((c) => (
                     <li key={c.id}>
                       <Link
                         href={`/rehiyon/${c.slug}`}
-                        className="inline-flex min-h-8 items-center rounded-full border border-line bg-white px-3 text-[0.78rem] font-medium text-ink-soft transition-colors hover:border-brand-200 hover:text-brand"
+                        className="inline-flex min-h-8 items-center rounded-full border border-line bg-paper px-3 text-[0.78rem] font-medium text-ink-soft transition-colors hover:border-brand-200 hover:text-brand"
                       >
                         {c.name}
                       </Link>
@@ -443,7 +452,7 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
                   ))}
                 </div>
               ) : (
-                <p className="self-start text-sm text-muted">Wala pang balita mula sa {loc.name}.</p>
+                <p className="self-start text-sm text-muted">{fmt(t.blocks.regionEmpty, { name: loc.name })}</p>
               )}
             </div>
           ))}

@@ -4,7 +4,7 @@ import { Field, PageHeader, Panel } from "@/components/studio/ui";
 import { createPoll } from "../actions";
 import { PollFields } from "../poll-fields";
 
-export const metadata = { title: "Bagong poll" };
+export const metadata = { title: "New poll" };
 
 export default async function NewPollPage() {
   const ctx = await requireStaffPage("polls.manage");
@@ -13,17 +13,17 @@ export default async function NewPollPage() {
   return (
     <>
       <PageHeader
-        title="Bagong poll"
-        breadcrumb={[{ label: "Mga Botohan", href: "/admin/polls" }]}
-        description="Mase-save ito bilang draft. I-publish kapag handa na."
+        title="New poll"
+        breadcrumb={[{ label: "Polls", href: "/admin/polls" }]}
+        description="This is saved as a draft. Publish it when it is ready."
       />
       <Panel>
         <ActionForm action={createPoll} className="space-y-6">
           <PollFields categories={categories ?? []} />
-          <Field label="Mga pagpipilian" htmlFor="options" hint="Isa bawat linya, 2–20 pagpipilian, hanggang 200 character bawat isa.">
+          <Field label="Options" htmlFor="options" hint="One per line, 2–20 options, up to 200 characters each.">
             <textarea id="options" name="options" rows={5} required className="field py-2" />
           </Field>
-          <SubmitButton pendingLabel="Ginagawa…">Gumawa ng draft</SubmitButton>
+          <SubmitButton pendingLabel="Creating…">Create draft</SubmitButton>
         </ActionForm>
       </Panel>
     </>

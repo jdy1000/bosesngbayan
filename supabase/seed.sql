@@ -63,29 +63,29 @@ insert into public.navigation_menus (key, name) values
   ('footer_legal', 'Footer — legal')
 on conflict (key) do nothing;
 
-insert into public.navigation_items (menu_id, label, href, position)
-select m.id, v.label, v.href, v.position
+insert into public.navigation_items (menu_id, label, label_en, href, position)
+select m.id, v.label, v.label_en, v.href, v.position
 from public.navigation_menus m
 join (values
-  ('header', 'Balita', '/balita', 1),
-  ('header', 'Pilipinas', '/paksa/pilipinas', 2),
-  ('header', 'Pulitika', '/paksa/pulitika', 3),
-  ('header', 'Ekonomiya', '/paksa/ekonomiya', 4),
-  ('header', 'Kalusugan', '/paksa/kalusugan', 5),
-  ('header', 'Teknolohiya', '/paksa/teknolohiya', 6),
-  ('header', 'Sports', '/paksa/sports', 7),
-  ('header', 'Opinion', '/paksa/opinion', 8),
-  ('header', 'Usap Bayan', '/usap-bayan', 9),
-  ('footer_main', 'Tungkol sa Amin', '/tungkol', 1),
-  ('footer_main', 'Mga Paksa', '/paksa', 2),
-  ('footer_main', 'Botohan', '/botohan', 3),
-  ('footer_main', 'Makipag-ugnayan', '/makipag-ugnayan', 4),
-  ('footer_main', 'Patakarang Editoryal', '/patakarang-editoryal', 5),
-  ('footer_main', 'Mag-advertise', '/mag-advertise', 6),
-  ('footer_legal', 'Tungkol', '/tungkol', 1),
-  ('footer_legal', 'Privacy Policy', '/privacy-policy', 2),
-  ('footer_legal', 'Terms of Service', '/terms-of-service', 3)
-) as v(menu_key, label, href, position) on v.menu_key = m.key
+  ('header', 'Balita', 'News', '/balita', 1),
+  ('header', 'Pilipinas', 'Philippines', '/paksa/pilipinas', 2),
+  ('header', 'Pulitika', 'Politics', '/paksa/pulitika', 3),
+  ('header', 'Ekonomiya', 'Economy', '/paksa/ekonomiya', 4),
+  ('header', 'Kalusugan', 'Health', '/paksa/kalusugan', 5),
+  ('header', 'Teknolohiya', 'Technology', '/paksa/teknolohiya', 6),
+  ('header', 'Sports', 'Sports', '/paksa/sports', 7),
+  ('header', 'Opinion', 'Opinion', '/paksa/opinion', 8),
+  ('header', 'Usap Bayan', 'Usap Bayan', '/usap-bayan', 9),
+  ('footer_main', 'Tungkol sa Amin', 'About Us', '/tungkol', 1),
+  ('footer_main', 'Mga Paksa', 'Topics', '/paksa', 2),
+  ('footer_main', 'Botohan', 'Polls', '/botohan', 3),
+  ('footer_main', 'Makipag-ugnayan', 'Contact', '/makipag-ugnayan', 4),
+  ('footer_main', 'Patakarang Editoryal', 'Editorial Policy', '/patakarang-editoryal', 5),
+  ('footer_main', 'Mag-advertise', 'Advertise', '/mag-advertise', 6),
+  ('footer_legal', 'Tungkol', 'About', '/tungkol', 1),
+  ('footer_legal', 'Privacy Policy', 'Privacy Policy', '/privacy-policy', 2),
+  ('footer_legal', 'Terms of Service', 'Terms of Service', '/terms-of-service', 3)
+) as v(menu_key, label, label_en, href, position) on v.menu_key = m.key
 where not exists (select 1 from public.navigation_items i where i.menu_id = m.id);
 
 -- Site settings (no secrets ever live here)
@@ -173,3 +173,41 @@ begin
   end loop;
 end;
 $$;
+
+-- English labels for the FIL/EN switch (ADR-015). Idempotent: fills only values that are still empty.
+update public.homepage_sections s set
+  title_en = coalesce(s.title_en, v.title_en),
+  description_en = coalesce(s.description_en, v.description_en)
+from (values
+  ('Trending', 'Trending', null),
+  ('Pinakabagong Balita', 'Latest News', null),
+  ('Pili ng Editor', 'Editor''s Picks', null),
+  ('Balitang mahalaga, diretso sa inbox mo.', 'News that matters, straight to your inbox.', 'A short summary of the top stories, once a day. Free, and you can stop anytime.'),
+  ('Mga Seksyon', 'Sections', null),
+  ('Balitang Rehiyon', 'Regional News', 'Stories from Luzon, Visayas and Mindanao.'),
+  ('Botohan ng Araw', 'Poll of the Day', null)
+) as v(title, title_en, description_en)
+where s.title = v.title and (s.title_en is null or s.description_en is null);
+
+update public.site_settings set value = jsonb_build_object(
+    'tagline_en', 'You have a voice. Your opinion matters.',
+    'description_en', 'News that matters to every Filipino — from the nation, the regions and your community.',
+    'copyright_text_en', '© {year} Boses ng Bayan. All rights reserved.') || value
+  || jsonb_build_object('header_cta', coalesce(value->'header_cta', 'null'::jsonb) || jsonb_build_object('label_en', coalesce(nullif(value->'header_cta'->>'label_en', ''), 'Subscribe')))
+where key = 'general' and value ? 'header_cta' and jsonb_typeof(value->'header_cta') = 'object';
+
+update public.site_settings set value = jsonb_build_object(
+    'newsletter_title_en', 'Stay updated!',
+    'newsletter_description_en', 'Subscribe for the latest news and polls.') || value
+where key = 'footer';
+
+update public.site_settings set value = jsonb_build_object(
+    'guidelines_en', 'Be respectful. No smears, threats, or other people''s personal information. Every submission is reviewed by our moderators before it appears.') || value
+where key = 'community';
+
+update public.site_settings set value = jsonb_build_object(
+    'consent_text_en', 'I agree to receive the Boses ng Bayan newsletter at this email address. I can unsubscribe at any time.') || value
+where key = 'newsletter';
+
+update public.homepage_sections set settings = jsonb_set(settings, '{view_all,label_en}', to_jsonb(case settings->'view_all'->>'label' when 'Lahat ng paksa' then 'All topics' else 'All news' end))
+where settings->'view_all'->>'label' in ('Lahat ng paksa', 'Lahat ng balita') and coalesce(settings->'view_all'->>'label_en', '') = '';

@@ -1,12 +1,15 @@
 import "server-only";
 import { createPublicClient } from "@/lib/supabase/server";
+import type { Locale } from "@/lib/i18n/config";
 
-export const COMMUNITY_KIND_LABELS = {
-  perspective: "Pananaw",
-  question: "Tanong ng komunidad",
-  discussion: "Talakayan",
-} as const;
-export type CommunityKind = keyof typeof COMMUNITY_KIND_LABELS;
+export const COMMUNITY_KINDS = ["perspective", "question", "discussion"] as const;
+export type CommunityKind = (typeof COMMUNITY_KINDS)[number];
+
+/** Kind labels per language. The public site picks the reader's locale; Studio (English-only) uses `.en`. */
+export const COMMUNITY_KIND_LABELS: Record<Locale, Record<CommunityKind, string>> = {
+  fil: { perspective: "Pananaw", question: "Tanong ng komunidad", discussion: "Talakayan" },
+  en: { perspective: "Perspective", question: "Community question", discussion: "Discussion" },
+};
 
 export interface CommunityPost {
   id: string;

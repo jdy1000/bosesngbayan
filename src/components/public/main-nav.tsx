@@ -6,6 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { useRouteOpen } from "@/components/use-route-open";
 import { ChevronDown, Menu, X } from "lucide-react";
 import type { NavItem } from "@/lib/cms/site";
+import { useI18n } from "@/components/public/i18n-provider";
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -50,7 +51,7 @@ function DesktopGroup({ item, pathname }: { item: NavItem; pathname: string }) {
       <ul
         id={id}
         hidden={!open}
-        className="absolute left-0 top-full z-50 mt-1 min-w-52 rounded-xl bg-white p-2 shadow-[var(--shadow-float)]"
+        className="absolute left-0 top-full z-50 mt-1 min-w-52 rounded-xl bg-paper p-2 shadow-[var(--shadow-float)]"
       >
         <li>
           <NavLink item={item} pathname={pathname} className="block rounded-lg px-3 py-2 text-sm font-semibold hover:bg-brand-50" />
@@ -69,12 +70,16 @@ export function MainNav({
   items,
   cta,
   children,
+  extras,
 }: {
   items: NavItem[];
   cta: { label: string; href: string } | null;
   children?: React.ReactNode;
+  /** Language and theme switches: in the bar from md up, inside the menu panel below md. */
+  extras?: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [open, setOpen] = useRouteOpen();
   const panelId = useId();
 
@@ -94,6 +99,7 @@ export function MainNav({
     <>
       <div className="ml-auto flex items-center gap-2">
         {children}
+        {extras && <div className="hidden items-center gap-1 md:flex">{extras}</div>}
         {cta && (
           <Link href={cta.href} className="btn hidden min-h-9 bg-accent px-4 text-white hover:bg-accent-700 sm:inline-flex">
             {cta.label}
@@ -104,7 +110,7 @@ export function MainNav({
           className="inline-flex h-11 w-11 items-center justify-center rounded text-white hover:bg-white/10 lg:hidden"
           aria-expanded={open}
           aria-controls={panelId}
-          aria-label={open ? "Isara ang menu" : "Buksan ang menu"}
+          aria-label={open ? t.common.menuClose : t.common.menuOpen}
           onClick={() => setOpen((v) => !v)}
         >
           {open ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
@@ -114,9 +120,9 @@ export function MainNav({
       <div
         id={panelId}
         hidden={!open}
-        className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-white px-4 pb-10 pt-4 lg:hidden"
+        className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-paper px-4 pb-10 pt-4 lg:hidden"
       >
-        <nav aria-label="Mobile navigation">
+        <nav aria-label={t.common.mobileNav}>
           <ul className="flex flex-col">
             {items.map((item) => (
               <li key={item.id} className="border-b border-line/70">
@@ -142,6 +148,7 @@ export function MainNav({
               {cta.label}
             </Link>
           )}
+          {extras && <div className="mt-6 flex items-center justify-between rounded bg-navy-900 p-2 md:hidden">{extras}</div>}
         </nav>
       </div>
     </>
@@ -151,8 +158,9 @@ export function MainNav({
 /** Desktop category row (second masthead row, lg and up). Scrolls sideways instead of colliding when a CMS menu grows. */
 export function DesktopNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const { t } = useI18n();
   return (
-    <nav aria-label="Pangunahing navigation" className="-mx-[0.7rem] overflow-x-auto [scrollbar-width:none]">
+    <nav aria-label={t.common.mainNav} className="-mx-[0.7rem] overflow-x-auto [scrollbar-width:none]">
       <ul className="flex items-center">
         {items.map((item) =>
           item.children.length > 0 ? (

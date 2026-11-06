@@ -26,16 +26,16 @@ export function ModerationPanel({
     return ACTION_TARGET[a] !== status;
   });
   return (
-    <Panel title="Desisyon ng moderator">
+    <Panel title="Moderator decision">
       <ActionForm action={moderate} className="space-y-4">
         <input type="hidden" name="target_type" value={targetType} />
         <input type="hidden" name="target_id" value={targetId} />
         {currentNote && (
           <p className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-soft">
-            <span className="font-semibold text-ink">Kasalukuyang tala:</span> {currentNote}
+            <span className="font-semibold text-ink">Current note:</span> {currentNote}
           </p>
         )}
-        <Field label="Bagong tala ng moderator" htmlFor="note" hint="Para sa staff lamang. Itinatala sa kasaysayan ng moderation.">
+        <Field label="New moderator note" htmlFor="note" hint="Staff only. Saved to the moderation history.">
           <textarea id="note" name="note" rows={3} maxLength={2000} className="field py-2" />
         </Field>
         <div className="flex flex-wrap gap-2">
@@ -44,7 +44,7 @@ export function ModerationPanel({
               key={a}
               name="action"
               value={a}
-              pendingLabel="Sandali…"
+              pendingLabel="Working…"
               variant={a === "approve" ? "primary" : a === "remove" || a === "reject" ? "danger" : "outline"}
             >
               {ACTION_LABELS[a]}
@@ -68,38 +68,38 @@ export interface ReportRow {
 
 export function ReportsPanel({ reports }: { reports: ReportRow[] }) {
   return (
-    <Panel title={`Mga ulat (${reports.length})`}>
+    <Panel title={`Reports (${reports.length})`}>
       {reports.length === 0 ? (
-        <p className="text-sm text-muted">Walang ulat para dito.</p>
+        <p className="text-sm text-muted">No reports for this item.</p>
       ) : (
         <ul className="space-y-4">
           {reports.map((r) => (
             <li key={r.id} className="rounded-lg border border-line p-3">
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <strong>{REPORT_REASON_LABELS[r.reason as ReportReason] ?? r.reason}</strong>
+                <strong>{REPORT_REASON_LABELS.en[r.reason as ReportReason] ?? r.reason}</strong>
                 <StatusBadge status={r.status} map={REPORT_STATUS} />
                 <span className="text-xs text-muted">{formatDateTime(r.created_at)}</span>
               </div>
               {r.details && <p className="mt-1 whitespace-pre-line text-sm text-ink-soft">{r.details}</p>}
-              {r.resolution_note && <p className="mt-1 text-xs text-muted">Tala: {r.resolution_note}</p>}
+              {r.resolution_note && <p className="mt-1 text-xs text-muted">Note: {r.resolution_note}</p>}
               <ActionForm action={resolveReport} className="mt-3 flex flex-wrap items-center gap-2">
                 <input type="hidden" name="report_id" value={r.id} />
                 <label htmlFor={`rn-${r.id}`} className="sr-only">
-                  Tala sa pagresolba
+                  Resolution note
                 </label>
-                <input id={`rn-${r.id}`} name="note" maxLength={2000} placeholder="Tala (opsyonal)" className="field min-w-48 flex-1" />
+                <input id={`rn-${r.id}`} name="note" maxLength={2000} placeholder="Note (optional)" className="field min-w-48 flex-1" />
                 {r.status === "open" ? (
                   <>
                     <SubmitButton name="status" value="resolved" variant="outline">
-                      Naresolba
+                      Resolve
                     </SubmitButton>
                     <SubmitButton name="status" value="dismissed" variant="ghost">
-                      Ibasura
+                      Dismiss
                     </SubmitButton>
                   </>
                 ) : (
                   <SubmitButton name="status" value="open" variant="ghost">
-                    Buksan muli
+                    Reopen
                   </SubmitButton>
                 )}
               </ActionForm>
@@ -122,16 +122,16 @@ export async function ActivityHistory({ ctx, entityType, entityId, reportIds }: 
   ]);
   if (own.error || reports.error) {
     return (
-      <Panel title="Kasaysayan ng moderation">
-        <p className="text-sm text-accent-700">Hindi makuha ang kasaysayan.</p>
+      <Panel title="Moderation history">
+        <p className="text-sm text-accent-700">Could not load the history.</p>
       </Panel>
     );
   }
   const rows = [...(own.data ?? []), ...(reports.data ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at));
   return (
-    <Panel title="Kasaysayan ng moderation">
+    <Panel title="Moderation history">
       {rows.length === 0 ? (
-        <p className="text-sm text-muted">Wala pang aksyon ng moderator.</p>
+        <p className="text-sm text-muted">No moderator actions yet.</p>
       ) : (
         <ol className="space-y-2 text-sm">
           {rows.map((r) => (
@@ -145,7 +145,7 @@ export async function ActivityHistory({ ctx, entityType, entityId, reportIds }: 
               )}
               {r.note && <p className="text-ink-soft">“{r.note}”</p>}
               <div className="text-xs text-muted">
-                {r.actor?.display_name ?? "Sistema"} · {formatDateTime(r.created_at)}
+                {r.actor?.display_name ?? "System"} · {formatDateTime(r.created_at)}
               </div>
             </li>
           ))}

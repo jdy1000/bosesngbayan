@@ -4,23 +4,25 @@ import { EmptyState } from "@/components/public/article-card";
 import { listCategories, listLocations } from "@/lib/cms/site";
 import { mediaUrl } from "@/lib/media";
 import { buildMetadata } from "@/lib/seo";
+import { getI18n } from "@/lib/i18n/server";
 
-export function generateMetadata() {
-  return buildMetadata({ title: "Mga Paksa", description: "Lahat ng paksa at rehiyong sinusundan ng Boses ng Bayan.", path: "/paksa" });
+export async function generateMetadata() {
+  const { t } = await getI18n();
+  return buildMetadata({ title: t.common.topics.metaTitle, description: t.common.topics.metaDescription, path: "/paksa" });
 }
 
 export default async function TopicsPage() {
-  const [categories, locations] = await Promise.all([listCategories(), listLocations()]);
+  const [categories, locations, { t }] = await Promise.all([listCategories(), listLocations(), getI18n()]);
   const regions = locations.filter((l) => l.kind === "island_group" || l.kind === "region");
 
   return (
     <div className="container-site py-10 md:py-14">
       <header className="section-kicker mb-10 max-w-3xl">
-        <h1 className="text-4xl font-semibold text-ink md:text-5xl">Mga Paksa</h1>
-        <p className="mt-3 text-lg text-ink-soft">Piliin ang paksang mahalaga sa iyo.</p>
+        <h1 className="text-4xl font-semibold text-ink md:text-5xl">{t.common.topics.title}</h1>
+        <p className="mt-3 text-lg text-ink-soft">{t.common.topics.intro}</p>
       </header>
       {categories.length === 0 ? (
-        <EmptyState title="Wala pang paksa." />
+        <EmptyState title={t.common.topics.empty} />
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((c) => {
@@ -49,7 +51,7 @@ export default async function TopicsPage() {
       )}
       {regions.length > 0 && (
         <section className="mt-14">
-          <h2 className="mb-5 text-2xl font-semibold text-ink">Ayon sa Rehiyon</h2>
+          <h2 className="mb-5 text-2xl font-semibold text-ink">{t.common.topics.byRegion}</h2>
           <ul className="flex flex-wrap gap-2">
             {regions.map((r) => (
               <li key={r.id}>

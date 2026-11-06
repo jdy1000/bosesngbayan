@@ -49,10 +49,10 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader
         title="Audit Log"
-        description="Append-only na tala ng mga sensitibong pagbabago: roles, permissions, settings, redirects, pag-deactivate ng account, at iba pa. Hindi ito nae-edit o nabubura mula sa Studio."
+        description="Append-only record of sensitive changes: roles, permissions, settings, redirects, account deactivation and more. It cannot be edited or deleted from Studio."
       />
-      <form method="get" className="mb-5 grid gap-3 rounded-2xl bg-white p-4 ring-1 ring-line sm:grid-cols-2 lg:grid-cols-6">
-        <Field label="Aksyon" htmlFor="a-action">
+      <form method="get" className="mb-5 grid gap-3 rounded-2xl bg-paper p-4 ring-1 ring-line sm:grid-cols-2 lg:grid-cols-6">
+        <Field label="Action" htmlFor="a-action">
           <input id="a-action" name="action" list="audit-actions" defaultValue={f.action} className="field min-h-10 py-1.5" />
           <datalist id="audit-actions">{KNOWN_ACTIONS.map((a) => <option key={a} value={a} />)}</datalist>
         </Field>
@@ -60,9 +60,9 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           <input id="a-entity" name="entity" list="audit-entities" defaultValue={f.entity} className="field min-h-10 py-1.5" />
           <datalist id="audit-entities">{KNOWN_ENTITIES.map((a) => <option key={a} value={a} />)}</datalist>
         </Field>
-        <Field label="Gumawa" htmlFor="a-actor">
+        <Field label="Actor" htmlFor="a-actor">
           <select id="a-actor" name="actor" defaultValue={f.actor} className="field min-h-10 py-1.5">
-            <option value="">Lahat</option>
+            <option value="">All</option>
             {(actorsRes.data ?? []).map((p) => (
               <option key={p.id} value={p.id}>
                 {p.display_name}
@@ -70,31 +70,31 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             ))}
           </select>
         </Field>
-        <Field label="Mula" htmlFor="a-from">
+        <Field label="From" htmlFor="a-from">
           <input id="a-from" name="from" type="date" defaultValue={f.from} className="field min-h-10 py-1.5" />
         </Field>
-        <Field label="Hanggang" htmlFor="a-to">
+        <Field label="To" htmlFor="a-to">
           <input id="a-to" name="to" type="date" defaultValue={f.to} className="field min-h-10 py-1.5" />
         </Field>
         <div className="flex items-end gap-2">
           <button type="submit" className="btn btn-primary min-h-10 px-4 text-sm">
-            I-filter
+            Filter
           </button>
           <Link href="/admin/audit" className="btn btn-outline min-h-10 px-3 text-sm">
-            I-reset
+            Reset
           </Link>
         </div>
       </form>
       {badRange && (
         <div className="mb-4">
-          <Notice tone="warn">Ang “Mula” ay dapat bago o kapareho ng “Hanggang”. Hindi inilapat ang petsa.</Notice>
+          <Notice tone="warn">“From” must be on or before “To”. The date filter was not applied.</Notice>
         </div>
       )}
 
       {rows.length === 0 ? (
-        <Empty title="Walang tumugmang tala." />
+        <Empty title="No matching records." />
       ) : (
-        <Table head={["Petsa (PHT)", "Gumawa", "Aksyon", "Entity", "Detalye"]}>
+        <Table head={["Date (PHT)", "Actor", "Action", "Entity", "Details"]}>
           {rows.map((r) => {
             const actor = (r.actor as { display_name: string } | null)?.display_name;
             return (
@@ -109,7 +109,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                 <td className="max-w-md">
                   {/* Rendered as text only — never as HTML. */}
                   <details>
-                    <summary className="cursor-pointer text-xs font-semibold text-brand">Tingnan</summary>
+                    <summary className="cursor-pointer text-xs font-semibold text-brand">View</summary>
                     <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap break-all rounded-lg bg-surface p-3 text-[0.72rem] leading-relaxed text-ink-soft">
                       {JSON.stringify(r.details, null, 2)}
                     </pre>

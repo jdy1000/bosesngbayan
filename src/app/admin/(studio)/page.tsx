@@ -20,10 +20,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   if (!ctx.permissions.has("dashboard.view")) {
     return (
       <>
-        <PageHeader title={`Magandang araw, ${ctx.displayName}`} />
+        <PageHeader title={`Good day, ${ctx.displayName}`} />
         <Notice tone={sp.denied === "1" ? "warn" : "info"}>
-          {sp.denied === "1" && "Wala kang pahintulot na buksan ang pahinang iyon. "}
-          Walang dashboard access ang iyong role. Gamitin ang menu para sa mga module na pinapayagan sa iyo.
+          {sp.denied === "1" && "You do not have permission to open that page. "}
+          Your role does not include dashboard access. Use the menu to open the modules you are allowed to use.
         </Notice>
       </>
     );
@@ -31,42 +31,42 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const range = parseRange(sp, "7d");
   const data = await loadDashboard(ctx, range);
   const a = data.analytics;
-  const scope = data.allArticles ? "Lahat ng artikulo" : "Mga artikulong saklaw ng iyong access";
+  const scope = data.allArticles ? "All articles" : "Articles you can access";
 
   return (
     <>
       <PageHeader
-        title={`Magandang araw, ${ctx.displayName}`}
-        description="Buod ng newsroom mula sa mga aktwal na tala sa database. Walang tinantiyang numero."
+        title={`Good day, ${ctx.displayName}`}
+        description="Newsroom summary from actual database records. No estimated numbers."
         actions={
           ctx.permissions.has("articles.create") && (
             <Link href="/admin/articles/new" className="btn btn-primary min-h-10 px-4 text-sm">
-              Bagong artikulo
+              New article
             </Link>
           )
         }
       />
       {sp.denied === "1" && (
         <div className="mb-4">
-          <Notice tone="warn">Wala kang pahintulot na buksan ang pahinang iyon. Ibinalik ka sa Dashboard.</Notice>
+          <Notice tone="warn">You do not have permission to open that page. You were sent back to the Dashboard.</Notice>
         </div>
       )}
       <RangeFilter action="/admin" range={range} today={manilaToday()} />
 
       <section aria-labelledby="articles-heading" className="mb-6">
         <h2 id="articles-heading" className="mb-3 text-sm font-bold uppercase tracking-wide text-muted">
-          Mga artikulo · {scope} (kasalukuyang status)
+          Articles · {scope} (current status)
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <Stat label="Kabuuan" value={formatNumber(data.totalArticles)} />
-          <Stat label="Nakalathala" value={formatNumber(data.statusCounts.published)} />
-          <Stat label="Para sa review" value={formatNumber(data.statusCounts.pending_review)} />
-          <Stat label="Naka-iskedyul" value={formatNumber(data.statusCounts.scheduled)} />
-          <Stat label="Nailathala ngayon" value={formatNumber(data.publishedToday)} hint="Unang paglalathala, araw sa Maynila" />
+          <Stat label="Total" value={formatNumber(data.totalArticles)} />
+          <Stat label="Published" value={formatNumber(data.statusCounts.published)} />
+          <Stat label="In review" value={formatNumber(data.statusCounts.pending_review)} />
+          <Stat label="Scheduled" value={formatNumber(data.statusCounts.scheduled)} />
+          <Stat label="Published today" value={formatNumber(data.publishedToday)} hint="First publication, Manila day" />
         </div>
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           {DASHBOARD_STATUSES.map((s) => (
-            <Link key={s} href={`/admin/articles?status=${s}`} className="inline-flex items-center gap-2 rounded-lg border border-line bg-white px-3 py-1.5 hover:border-brand">
+            <Link key={s} href={`/admin/articles?status=${s}`} className="inline-flex items-center gap-2 rounded-lg border border-line bg-paper px-3 py-1.5 hover:border-brand">
               <StatusBadge status={s} />
               <span className="font-semibold tabular-nums">{formatNumber(data.statusCounts[s])}</span>
               <span className="sr-only">{ARTICLE_STATUS[s]?.label}</span>
@@ -76,87 +76,87 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       </section>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Nailathala sa saklaw" value={formatNumber(data.publishedInRange)} hint={range.label} />
-        <Stat label="Aktibong manunulat" value={formatNumber(data.activeWriters)} hint="May-akda ng artikulong binago sa saklaw" />
-        {a && <Stat label="Page views" value={formatNumber(a.page_views)} hint="Aggregated, hindi real-time" />}
+        <Stat label="Published in range" value={formatNumber(data.publishedInRange)} hint={range.label} />
+        <Stat label="Active writers" value={formatNumber(data.activeWriters)} hint="Authors of articles modified in range" />
+        {a && <Stat label="Page views" value={formatNumber(a.page_views)} hint="Aggregated, not real-time" />}
         {data.polls && (
           <Stat
-            label={data.polls.ballotsAllTime === null ? "Mga balota sa saklaw" : "Mga balota (lahat ng panahon)"}
+            label={data.polls.ballotsAllTime === null ? "Ballots in range" : "Ballots (all time)"}
             value={formatNumber(data.polls.ballotsAllTime ?? a?.poll_ballots ?? 0)}
-            hint={`${formatNumber(data.polls.active)} aktibong botohan ngayon`}
+            hint={`${formatNumber(data.polls.active)} active polls now`}
           />
         )}
         {data.newsletter && (
-          <Stat label="Newsletter subscribers" value={formatNumber(data.newsletter.subscribed)} hint={`+${formatNumber(data.newsletter.newInRange)} sa saklaw`} />
+          <Stat label="Newsletter subscribers" value={formatNumber(data.newsletter.subscribed)} hint={`+${formatNumber(data.newsletter.newInRange)} in range`} />
         )}
       </div>
       {data.scanTruncated && (
         <div className="mb-6">
-          <Notice tone="warn">Masyadong malaki ang saklaw; ang publication activity at aktibong manunulat ay batay sa unang 5,000 tala lamang.</Notice>
+          <Notice tone="warn">The range is too large; publication activity and active writers are based on the first 5,000 records only.</Notice>
         </div>
       )}
       {data.analyticsError && (
         <div className="mb-6">
-          <Notice tone="error">Hindi makuha ang analytics para sa saklaw na ito. Subukang muli.</Notice>
+          <Notice tone="error">Could not load analytics for this range. Try again.</Notice>
         </div>
       )}
 
       <div className="mb-6 grid gap-6 xl:grid-cols-2">
         {a && (
-          <Panel title="Traffic trend" description="Page views at tinatayang bisita kada araw (Maynila).">
+          <Panel title="Traffic trend" description="Page views and estimated visitors per day (Manila).">
             {a.page_views === 0 ? (
-              <Empty title="Wala pang naitalang page view sa saklaw na ito." />
+              <Empty title="No page views recorded in this range yet." />
             ) : (
               <TrendChart
-                ariaLabel="Page views kada araw"
+                ariaLabel="Page views per day"
                 data={fillTraffic(range.days, a.views_by_day)}
                 series={[
-                  { key: "views", label: "Page views", color: "#1d4ed8" },
-                  { key: "visitors", label: "Bisita (tinatayang)", color: "#0b1f5c" },
+                  { key: "views", label: "Page views", color: "var(--color-brand)" },
+                  { key: "visitors", label: "Visitors (estimated)", color: "var(--color-chart-2)" },
                 ]}
               />
             )}
           </Panel>
         )}
-        <Panel title="Publication activity" description="Mga artikulong unang nailathala kada araw.">
+        <Panel title="Publication activity" description="Articles first published per day.">
           {data.publishedInRange === 0 ? (
-            <Empty title="Walang nailathalang artikulo sa saklaw na ito." />
+            <Empty title="No articles published in this range." />
           ) : (
-            <TrendChart kind="bar" ariaLabel="Mga nailathalang artikulo kada araw" data={data.publicationByDay} series={[{ key: "articles", label: "Artikulo", color: "#1d4ed8" }]} />
+            <TrendChart kind="bar" ariaLabel="Articles published per day" data={data.publicationByDay} series={[{ key: "articles", label: "Articles", color: "var(--color-brand)" }]} />
           )}
         </Panel>
       </div>
 
       {a && (
         <div className="mb-6 grid gap-6 lg:grid-cols-2">
-          <Panel title="Top stories" description="Pinakamaraming page view sa saklaw.">
+          <Panel title="Top stories" description="Most page views in range.">
             <RankList
-              empty="Wala pang article view sa saklaw na ito."
+              empty="No article views in this range yet."
               rows={a.top_articles.map((t) => ({ key: t.article_id, value: t.views, label: <Link href={`/admin/articles/${t.article_id}`} className="hover:text-brand">{t.title}</Link> }))}
             />
           </Panel>
-          <Panel title="Most-read categories" description="Page view ng mga artikulo ayon sa kategorya.">
-            <RankList empty="Wala pang datos ng kategorya sa saklaw na ito." rows={a.top_categories.map((c) => ({ key: c.category_id, value: c.views, label: c.name }))} />
+          <Panel title="Most-read categories" description="Article page views by category.">
+            <RankList empty="No category data in this range yet." rows={a.top_categories.map((c) => ({ key: c.category_id, value: c.views, label: c.name }))} />
           </Panel>
         </div>
       )}
 
       <Panel
         title="Recent editorial activity"
-        description="Mga pagbabago ng status at moderation sa saklaw."
+        description="Status and moderation changes in range."
         actions={ctx.permissions.has("audit.view") && <Link href="/admin/audit" className="text-sm font-semibold text-brand hover:underline">Audit log →</Link>}
         className="mb-6"
       >
         {data.activity.length === 0 ? (
-          <Empty title="Walang editorial activity sa saklaw na ito." />
+          <Empty title="No editorial activity in this range." />
         ) : (
           <ul className="divide-y divide-line text-sm">
             {data.activity.map((e) => (
               <li key={e.id} className="flex flex-col gap-1 py-2.5 sm:flex-row sm:items-center sm:gap-3">
                 <span className="w-44 shrink-0 text-xs text-muted">{formatDateTime(e.at)}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="font-semibold text-ink">{e.actor ?? (e.action === "scheduler" ? "Scheduler" : "Hindi kilala")}</span>{" "}
-                  <span className="text-ink-soft">{e.action === "transition" || e.action === "scheduler" ? "binago ang status ng" : e.action}</span>{" "}
+                  <span className="font-semibold text-ink">{e.actor ?? (e.action === "scheduler" ? "Scheduler" : "Unknown")}</span>{" "}
+                  <span className="text-ink-soft">{e.action === "transition" || e.action === "scheduler" ? "changed the status of" : e.action}</span>{" "}
                   {e.entityType === "article" && e.title ? (
                     <Link href={`/admin/articles/${e.entityId}`} className="font-medium text-ink hover:text-brand">
                       {e.title}

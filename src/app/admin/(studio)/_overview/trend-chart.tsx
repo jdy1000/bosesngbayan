@@ -29,12 +29,12 @@ export function TrendChart({
 }) {
   const common = (
     <>
-      <CartesianGrid stroke="#dfe5f2" vertical={false} />
-      <XAxis dataKey="day" tickFormatter={fmtDay} tick={{ fontSize: 12, fill: "#5b6785" }} tickLine={false} axisLine={false} minTickGap={16} />
-      <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "#5b6785" }} tickLine={false} axisLine={false} width={40} />
+      <CartesianGrid stroke="var(--color-line)" vertical={false} />
+      <XAxis dataKey="day" tickFormatter={fmtDay} tick={{ fontSize: 12, fill: "var(--color-muted)" }} tickLine={false} axisLine={false} minTickGap={16} />
+      <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "var(--color-muted)" }} tickLine={false} axisLine={false} width={40} />
       <Tooltip
         labelFormatter={(d) => String(d)}
-        contentStyle={{ borderRadius: 10, borderColor: "#dfe5f2", fontSize: 13 }}
+        contentStyle={{ borderRadius: 10, borderColor: "var(--color-line)", background: "var(--color-paper)", color: "var(--color-ink)", fontSize: 13 }}
         cursor={{ fill: "rgba(29,78,216,0.06)" }}
       />
       {series.length > 1 && <Legend wrapperStyle={{ fontSize: 12 }} />}

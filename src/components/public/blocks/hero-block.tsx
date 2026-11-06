@@ -6,6 +6,7 @@ import { getFeaturedPoll, getPublicPollById } from "@/lib/cms/polls";
 import { getMediaById, getTotalBallots } from "@/lib/cms/site";
 import { formatNumber } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
+import { getI18n } from "@/lib/i18n/server";
 
 /** Splits the headline so the configured highlight word renders in brand blue, as in the reference. */
 function Headline({ text, highlight }: { text: string; highlight: string }) {
@@ -21,10 +22,11 @@ function Headline({ text, highlight }: { text: string; highlight: string }) {
 }
 
 export async function HeroBlock({ settings }: { settings: BlockSettings<"hero"> }) {
-  const [image, poll, ballots] = await Promise.all([
+  const [image, poll, ballots, { t }] = await Promise.all([
     getMediaById(settings.image_id),
     settings.poll_id ? getPublicPollById(settings.poll_id) : getFeaturedPoll(),
     settings.show_participation_count ? getTotalBallots() : Promise.resolve(0),
+    getI18n(),
   ]);
   const src = mediaUrl(image);
 
@@ -33,7 +35,7 @@ export async function HeroBlock({ settings }: { settings: BlockSettings<"hero"> 
       <div className="container-site grid items-center gap-10 py-10 md:py-14 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:py-16">
         <div className="max-w-xl">
           {settings.eyebrow && (
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.1em] text-accent shadow-[inset_0_0_0_1px_var(--color-line)]">
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-paper px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.1em] text-accent shadow-[inset_0_0_0_1px_var(--color-line)]">
               <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
               {settings.eyebrow}
             </p>
@@ -59,7 +61,7 @@ export async function HeroBlock({ settings }: { settings: BlockSettings<"hero"> 
           {settings.show_participation_count && ballots > 0 && (
             <p className="mt-8 text-[0.95rem] text-ink-soft">
               <strong className="text-2xl font-semibold text-ink tabular-nums">{formatNumber(ballots)}</strong>{" "}
-              {settings.participation_label || "boto na ang naitala"}
+              {settings.participation_label || t.blocks.participationLabel}
             </p>
           )}
         </div>

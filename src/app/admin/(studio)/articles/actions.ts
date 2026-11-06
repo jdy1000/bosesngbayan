@@ -11,7 +11,7 @@ import { renderRichText } from "@/lib/rich-text/render";
 import { safeLike, type ArticleStatus } from "@/lib/studio/articles";
 import { articleFormSchema, type SaveResult } from "./schema";
 
-const uuid = z.uuid("Hindi wastong ID.");
+const uuid = z.uuid("Invalid ID.");
 const EDITORS = ["articles.edit_own", "articles.edit_any"] as const;
 
 async function revalidateArticle(ctx: StaffContext, slug: string, categoryId: string | null) {
@@ -36,7 +36,7 @@ function randomSuffix(): string {
 // Create / duplicate
 // ---------------------------------------------------------------------------
 const createSchema = z.object({
-  title: z.string().trim().min(1, "Ilagay ang pamagat.").max(300, "Masyadong mahaba ang pamagat."),
+  title: z.string().trim().min(1, "Enter a title.").max(300, "Title is too long."),
   category_id: z.string().trim().transform((v) => v || null).pipe(uuid.nullable()),
 });
 
@@ -54,7 +54,7 @@ export async function createArticle(_prev: FormActionResult, formData: FormData)
     let res = await insert(base);
     if (res.error?.code === "23505") res = await insert(`${base}-${randomSuffix()}`);
     const row = need(res);
-    return { ok: true, message: "Nagawa ang draft.", redirectTo: `/admin/articles/${row.id}` };
+    return { ok: true, message: "Draft created.", redirectTo: `/admin/articles/${row.id}` };
   } catch (e) {
     return toActionError(e);
   }
@@ -71,7 +71,7 @@ export async function duplicateArticle(_prev: FormActionResult, formData: FormDa
         .from("articles")
         .insert({
           slug,
-          title: `(Kopya) ${src.title}`.slice(0, 300),
+          title: `(Copy) ${src.title}`.slice(0, 300),
           subtitle: src.subtitle,
           excerpt: src.excerpt,
           body: src.body,
@@ -93,7 +93,7 @@ export async function duplicateArticle(_prev: FormActionResult, formData: FormDa
     );
     const tagRows = (src.article_tags as { tag_id: string }[]).map((t) => ({ article_id: copy.id, tag_id: t.tag_id }));
     if (tagRows.length > 0) unwrap(await ctx.supabase.from("article_tags").insert(tagRows));
-    return { ok: true, message: "Nagawa ang kopya bilang draft.", redirectTo: `/admin/articles/${copy.id}` };
+    return { ok: true, message: "Copy created as a draft.", redirectTo: `/admin/articles/${copy.id}` };
   } catch (e) {
     return toActionError(e);
   }
@@ -109,7 +109,7 @@ export async function saveArticle(id: string, expectedUpdatedAt: string, formDat
     const parsed = articleFormSchema.safeParse(Object.fromEntries(formData));
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      return { ok: false, error: issue?.message ?? "Pakisuri ang mga field.", field: String(issue?.path[0] ?? "") };
+      return { ok: false, error: issue?.message ?? "Please check the fields.", field: String(issue?.path[0] ?? "") };
     }
     const f = parsed.data;
     const rendered = renderRichText(JSON.parse(f.body));
@@ -156,13 +156,13 @@ export async function saveArticle(id: string, expectedUpdatedAt: string, formDat
       // Either someone saved a newer version, or RLS no longer lets this user edit (e.g. submitted).
       const { data: current } = await ctx.supabase.from("articles").select("updated_at").eq("id", id).maybeSingle();
       if (current && current.updated_at !== expectedUpdatedAt) {
-        return { ok: false, conflict: true, error: "May mas bagong bersyon na na-save ng ibang user o tab. Hindi ito pinatungan." };
+        return { ok: false, conflict: true, error: "A newer version was saved by another user or tab. Your changes were not saved over it." };
       }
-      return { ok: false, error: "Hindi mo na maaaring i-edit ang artikulong ito sa kasalukuyang status nito." };
+      return { ok: false, error: "You can no longer edit this article in its current status." };
     }
 
     await syncRelations(ctx, id, f);
-    if (makeRevision) unwrap(await ctx.supabase.rpc("snapshot_article", { p_article_id: id, p_note: "Manwal na pag-save" }));
+    if (makeRevision) unwrap(await ctx.supabase.rpc("snapshot_article", { p_article_id: id, p_note: "Manual save" }));
     if (isPublic(updated.status, updated.published_at)) await revalidateArticle(ctx, updated.slug, updated.category_id);
     return { ok: true, updatedAt: updated.updated_at };
   } catch (e) {
@@ -205,7 +205,7 @@ async function syncRelations(ctx: StaffContext, id: string, f: ArticleForm) {
 // ---------------------------------------------------------------------------
 const transitionSchema = z.object({
   to: z.enum(["draft", "pending_review", "approved", "rejected", "scheduled", "published", "archived"]),
-  note: z.string().trim().max(2000, "Masyadong mahaba ang tala.").optional(),
+  note: z.string().trim().max(2000, "Note is too long.").optional(),
   publish_at: z.string().optional(),
 });
 
@@ -220,13 +220,13 @@ export async function transitionArticle(
     let publishAt: string | null = null;
     if (t.to === "scheduled") {
       publishAt = manilaLocalToIso(t.publish_at ?? "");
-      if (!publishAt) return { ok: false, error: "Pumili ng wastong petsa at oras para sa iskedyul." };
+      if (!publishAt) return { ok: false, error: "Choose a valid date and time for the schedule." };
     }
     const row = need(
       await ctx.supabase.rpc("transition_article", { p_article_id: id, p_to: t.to, p_note: t.note || null, p_publish_at: publishAt }),
     );
     await revalidateArticle(ctx, row.slug, row.category_id);
-    return { ok: true, message: "Na-update ang status." };
+    return { ok: true, message: "Status updated." };
   } catch (e) {
     return toActionError(e);
   }
@@ -240,14 +240,14 @@ export async function deleteArticle(_prev: FormActionResult, formData: FormData)
     const ctx = await requirePermission("articles.delete");
     const id = uuid.parse(formData.get("id"));
     const a = need(await ctx.supabase.from("articles").select("slug, status, published_at, category_id, title").eq("id", id).single());
-    if (formData.get("confirm_title") !== a.title) return { ok: false, error: "I-type nang eksakto ang pamagat para kumpirmahin ang pagbura." };
+    if (formData.get("confirm_title") !== a.title) return { ok: false, error: "Type the exact title to confirm deletion." };
     if (isPublic(a.status, a.published_at) || a.status === "scheduled") {
-      return { ok: false, error: "Nakalathala o naka-iskedyul pa ito. I-unpublish o i-archive muna bago burahin." };
+      return { ok: false, error: "This article is still published or scheduled. Unpublish or archive it before deleting." };
     }
     const deleted = need(await ctx.supabase.from("articles").delete().eq("id", id).select("id"));
-    if (deleted.length === 0) return { ok: false, error: "Hindi nabura ang artikulo (wala kang pahintulot o wala na ito)." };
+    if (deleted.length === 0) return { ok: false, error: "The article was not deleted (you lack permission or it no longer exists)." };
     await revalidateArticle(ctx, a.slug, a.category_id);
-    return { ok: true, message: "Nabura ang artikulo.", redirectTo: "/admin/articles" };
+    return { ok: true, message: "Article deleted.", redirectTo: "/admin/articles" };
   } catch (e) {
     return toActionError(e);
   }
@@ -281,9 +281,9 @@ export async function restoreArticleRevision(_prev: FormActionResult, formData: 
     const s = snapshotSchema.parse(rev.snapshot);
     const rendered = renderRichText(s.body);
     const canEdit = need(await ctx.supabase.rpc("can_edit_article", { p_article_id: rev.article_id }));
-    if (!canEdit) return { ok: false, error: "Hindi mo maaaring i-edit ang artikulong ito sa kasalukuyang status nito." };
+    if (!canEdit) return { ok: false, error: "You cannot edit this article in its current status." };
     // Keep the current state recoverable before overwriting it.
-    unwrap(await ctx.supabase.rpc("snapshot_article", { p_article_id: rev.article_id, p_note: `Bago i-restore ang rebisyon #${rev.revision_number}` }));
+    unwrap(await ctx.supabase.rpc("snapshot_article", { p_article_id: rev.article_id, p_note: `Before restoring revision #${rev.revision_number}` }));
     const updated = need(
       await ctx.supabase
         .from("articles")
@@ -308,7 +308,7 @@ export async function restoreArticleRevision(_prev: FormActionResult, formData: 
         .eq("id", rev.article_id)
         .select("slug, status, published_at, category_id"),
     );
-    if (updated.length === 0) return { ok: false, error: "Hindi mo maaaring i-edit ang artikulong ito sa kasalukuyang status nito." };
+    if (updated.length === 0) return { ok: false, error: "You cannot edit this article in its current status." };
     const existing = need(await ctx.supabase.from("article_tags").select("tag_id").eq("article_id", rev.article_id)).map((t) => t.tag_id);
     // Tags deleted since the snapshot are skipped.
     const wanted = s.tag_ids.length ? need(await ctx.supabase.from("tags").select("id").in("id", s.tag_ids)).map((t) => t.id) : [];
@@ -318,7 +318,7 @@ export async function restoreArticleRevision(_prev: FormActionResult, formData: 
     if (add.length) unwrap(await ctx.supabase.from("article_tags").insert(add.map((tag_id) => ({ article_id: rev.article_id, tag_id }))));
     const u = updated[0]!;
     if (isPublic(u.status, u.published_at)) await revalidateArticle(ctx, u.slug, u.category_id);
-    return { ok: true, message: `Naibalik ang rebisyon #${rev.revision_number}.`, redirectTo: `/admin/articles/${rev.article_id}` };
+    return { ok: true, message: `Revision #${rev.revision_number} restored.`, redirectTo: `/admin/articles/${rev.article_id}` };
   } catch (e) {
     return toActionError(e);
   }
@@ -335,14 +335,14 @@ export async function searchArticlesForRelated(q: string, excludeId: string): Pr
   return need(await query);
 }
 
-const tagSchema = z.object({ name: z.string().trim().min(1, "Ilagay ang pangalan ng tag.").max(80, "Masyadong mahaba ang tag.") });
+const tagSchema = z.object({ name: z.string().trim().min(1, "Enter a tag name.").max(80, "Tag is too long.") });
 
 export async function createTag(name: string): Promise<{ ok: true; tag: { id: string; name: string } } | { ok: false; error: string }> {
   try {
     const ctx = await requirePermission("taxonomy.manage");
     const t = tagSchema.parse({ name });
     const slug = slugify(t.name, 80);
-    if (!slug) return { ok: false, error: "Hindi wastong pangalan ng tag." };
+    if (!slug) return { ok: false, error: "Invalid tag name." };
     const existing = unwrap(await ctx.supabase.from("tags").select("id, name").eq("slug", slug).maybeSingle());
     if (existing) return { ok: true, tag: existing };
     const tag = need(await ctx.supabase.from("tags").insert({ name: t.name, slug }).select("id, name").single());

@@ -8,7 +8,7 @@ import { PageHeader, Panel } from "@/components/studio/ui";
 import { categoryOp } from "../../actions";
 import { CategoryForm } from "../category-form";
 
-export const metadata = { title: "Kategorya" };
+export const metadata = { title: "Category" };
 
 export default async function EditCategoryPage({ params }: { params: Promise<{ id: string }> }) {
   const ctx = await requireStaffPage("taxonomy.manage");
@@ -32,11 +32,11 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
     <>
       <PageHeader
         title={category.name}
-        breadcrumb={[{ label: "Kategorya at Tag", href: "/admin/taxonomy" }]}
+        breadcrumb={[{ label: "Categories & tags", href: "/admin/taxonomy" }]}
         actions={
           category.is_active && (
             <Link href={`/paksa/${category.slug}`} target="_blank" className="text-sm font-semibold text-brand hover:underline">
-              Tingnan sa site ↗
+              View on site ↗
             </Link>
           )
         }
@@ -45,18 +45,18 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
         <Panel>
           <CategoryForm values={category} image={image} />
         </Panel>
-        <Panel title="Burahin">
+        <Panel title="Delete">
           {articleCount ? (
             <p className="text-sm text-ink-soft">
-              Ginagamit ng <strong>{articleCount}</strong> artikulo ang kategoryang ito kaya hindi ito mabubura. Ilipat muna ang mga artikulo, o itago na
-              lamang ang kategorya.
+              This category is used by <strong>{articleCount}</strong> {articleCount === 1 ? "article" : "articles"}, so it can’t be deleted. Move the articles first, or
+              hide the category instead.
             </p>
           ) : (
-            <ActionForm action={categoryOp} confirm="Burahin ang kategoryang ito? Aalisin din ang mga trending topic na tumuturo rito.">
+            <ActionForm action={categoryOp} confirm="Delete this category? Trending topics pointing to it will be removed too.">
               <input type="hidden" name="id" value={category.id} />
-              <p className="mb-3 text-sm text-ink-soft">Walang artikulong gumagamit nito. Ang mga poll at post na naka-link ay mawawalan ng kategorya.</p>
-              <SubmitButton name="op" value="delete" variant="danger" pendingLabel="Binubura…">
-                Burahin ang kategorya
+              <p className="mb-3 text-sm text-ink-soft">No articles use it. Linked polls and posts will lose their category.</p>
+              <SubmitButton name="op" value="delete" variant="danger" pendingLabel="Deleting…">
+                Delete category
               </SubmitButton>
             </ActionForm>
           )}

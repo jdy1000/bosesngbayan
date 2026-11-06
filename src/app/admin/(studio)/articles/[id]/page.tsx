@@ -7,7 +7,7 @@ import { getArticleForEdit, loadEditorOptions } from "@/lib/studio/articles";
 import { ArticleEditor } from "../_components/article-editor";
 import { deleteArticle, duplicateArticle } from "../actions";
 
-export const metadata: Metadata = { title: "I-edit ang artikulo" };
+export const metadata: Metadata = { title: "Edit article" };
 
 export default async function EditArticlePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,31 +27,31 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageHeader title={data.article.title} breadcrumb={[{ label: "Mga Artikulo", href: "/admin/articles" }]} />
+      <PageHeader title={data.article.title} breadcrumb={[{ label: "Articles", href: "/admin/articles" }]} />
       {/* Remount after a status change / restore so the form reflects the server's latest version. */}
       <ArticleEditor key={data.article.updated_at} data={data} options={options} perms={perms} userId={ctx.userId} />
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
         {has("articles.create") && (
-          <Panel title="Duplicate" description="Gagawa ng bagong draft na kopya (walang status, iskedyul o homepage flags).">
+          <Panel title="Duplicate" description="Creates a new draft copy (no status, schedule or homepage flags).">
             <ActionForm action={duplicateArticle}>
               <input type="hidden" name="id" value={id} />
-              <SubmitButton variant="outline" pendingLabel="Kinokopya…">
-                Gumawa ng kopya
+              <SubmitButton variant="outline" pendingLabel="Copying…">
+                Make a copy
               </SubmitButton>
             </ActionForm>
           </Panel>
         )}
         {has("articles.delete") && (
-          <Panel title="Burahin nang permanente" description="Mabubura rin ang mga rebisyon, komento at credits nito. Hindi ito maibabalik. I-unpublish o i-archive muna kung nakalathala.">
-            <ActionForm action={deleteArticle} confirm="Permanenteng burahin ang artikulong ito?" className="space-y-3">
+          <Panel title="Delete permanently" description="Its revisions, comments and credits are deleted too. This cannot be undone. Unpublish or archive it first if it is published.">
+            <ActionForm action={deleteArticle} confirm="Permanently delete this article?" className="space-y-3">
               <input type="hidden" name="id" value={id} />
               <label className="block text-sm font-semibold text-ink">
-                I-type ang pamagat para kumpirmahin
+                Type the title to confirm
                 <input name="confirm_title" className="field mt-1" autoComplete="off" required />
               </label>
-              <SubmitButton variant="danger" pendingLabel="Binubura…">
-                Burahin
+              <SubmitButton variant="danger" pendingLabel="Deleting…">
+                Delete
               </SubmitButton>
             </ActionForm>
           </Panel>

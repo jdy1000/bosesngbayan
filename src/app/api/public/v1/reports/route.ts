@@ -5,23 +5,26 @@ import { networkHash } from "@/lib/security/hash";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { logServerError } from "@/lib/log";
 import { REPORT_REASONS } from "@/lib/report-reasons";
+import { getMessages } from "@/lib/i18n/server";
+import type { Messages } from "@/lib/i18n/messages";
 
-
-const bodySchema = z
-  .object({
-    postId: z.uuid().nullable().default(null),
-    commentId: z.uuid().nullable().default(null),
-    reason: z.enum(REPORT_REASONS, { error: "Pumili ng dahilan." }),
-    details: z.string().trim().max(1000).default(""),
-  })
-  .refine((d) => (d.postId === null) !== (d.commentId === null), { message: "Hindi wastong target." });
+const bodySchema = (m: Messages["article"]["report"]) =>
+  z
+    .object({
+      postId: z.uuid().nullable().default(null),
+      commentId: z.uuid().nullable().default(null),
+      reason: z.enum(REPORT_REASONS, { error: m.pickReason }),
+      details: z.string().trim().max(1000).default(""),
+    })
+    .refine((d) => (d.postId === null) !== (d.commentId === null), { message: m.invalidTarget });
 
 export async function POST(request: Request) {
-  const parsed = await readJson(request, bodySchema);
+  const m = (await getMessages()).article.report;
+  const parsed = await readJson(request, bodySchema(m));
   if (parsed.response) return parsed.response;
 
   const net = networkHash(request.headers);
-  if (!(await checkRateLimit("report", net))) return jsonError("Masyadong maraming ulat. Subukan muli mamaya.", 429);
+  if (!(await checkRateLimit("report", net))) return jsonError(m.rateLimited, 429);
 
   try {
     const d = parsed.data;
@@ -33,12 +36,12 @@ export async function POST(request: Request) {
       p_network_hash: net,
     });
     if (error) {
-      if (error.message === "target_not_found") return jsonError("Hindi nahanap ang nilalaman.", 404);
+      if (error.message === "target_not_found") return jsonError(m.notFound, 404);
       throw error;
     }
-    return jsonOk({ message: "Salamat. Susuriin ng aming mga moderator ang iyong ulat." }, { status: 201 });
+    return jsonOk({ message: m.received }, { status: 201 });
   } catch (error) {
     logServerError("report_submit_failed", error);
-    return jsonError("Hindi naisumite ang ulat.", 500);
+    return jsonError(m.submitFailed, 500);
   }
 }

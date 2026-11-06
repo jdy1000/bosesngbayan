@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/components/public/i18n-provider";
 import { ReportButton } from "@/components/public/report-button";
 import { postJson } from "@/lib/client/post-json";
 
@@ -14,6 +15,7 @@ export interface CommentItem {
 }
 
 function CommentForm({ target, parentId, onDone }: { target: { articleId?: string; postId?: string }; parentId?: string; onDone?: () => void }) {
+  const m = useI18n().t.article.comments;
   const [state, setState] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -36,31 +38,31 @@ function CommentForm({ target, parentId, onDone }: { target: { articleId?: strin
       formEl.reset();
       onDone?.();
     }
-    setState(ok ? { tone: "ok", text: data.message ?? "Salamat!" } : { tone: "error", text: data.error ?? "Hindi naisumite." });
+    setState(ok ? { tone: "ok", text: data.message ?? m.thanks } : { tone: "error", text: data.error ?? m.failed });
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-ink">Pangalan</span>
+          <span className="mb-1 block text-sm font-semibold text-ink">{m.name}</span>
           <input name="authorName" required minLength={2} maxLength={80} autoComplete="name" className="field" />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold text-ink">Email (hindi ipapakita, opsyonal)</span>
+          <span className="mb-1 block text-sm font-semibold text-ink">{m.email}</span>
           <input name="authorEmail" type="email" maxLength={254} autoComplete="email" className="field" />
         </label>
       </div>
       <label className="block">
-        <span className="mb-1 block text-sm font-semibold text-ink">Komento</span>
+        <span className="mb-1 block text-sm font-semibold text-ink">{m.body}</span>
         <textarea name="body" required minLength={2} maxLength={2000} rows={4} className="field" />
       </label>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" className="btn btn-primary" disabled={pending}>
-          {pending ? "Ipinapadala…" : parentId ? "Sumagot" : "Ipadala ang komento"}
+          {pending ? m.sending : parentId ? m.reply : m.submit}
         </button>
-        <p className="text-xs text-muted">Dumadaan sa moderation ang mga komento bago lumabas.</p>
+        <p className="text-xs text-muted">{m.moderationNote}</p>
       </div>
       {state && (
         <p role={state.tone === "ok" ? "status" : "alert"} className={`text-sm font-medium ${state.tone === "ok" ? "text-brand-700" : "text-accent"}`}>
@@ -80,6 +82,7 @@ export function CommentSection({
   target: { articleId?: string; postId?: string };
   isOpen: boolean;
 }) {
+  const m = useI18n().t.article.comments;
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const roots = comments.filter((c) => !c.parent_id);
   const replies = (id: string) => comments.filter((c) => c.parent_id === id);
@@ -97,7 +100,7 @@ export function CommentSection({
         <div className="mt-2 flex gap-4">
           {isOpen && depth === 0 && (
             <button type="button" onClick={() => setReplyTo(replyTo === c.id ? null : c.id)} className="text-xs font-semibold text-brand hover:underline">
-              Sumagot
+              {m.reply}
             </button>
           )}
           <ReportButton commentId={c.id} />
@@ -115,20 +118,20 @@ export function CommentSection({
   return (
     <section aria-labelledby="comments-heading" className="mt-12 border-t border-line pt-8">
       <h2 id="comments-heading" className="text-2xl font-semibold text-ink">
-        Talakayan {comments.length > 0 && <span className="text-muted">({comments.length})</span>}
+        {m.heading} {comments.length > 0 && <span className="text-muted">({comments.length})</span>}
       </h2>
       {roots.length > 0 ? (
         <ul className="mt-2 divide-y divide-line">{roots.map((c) => renderComment(c, 0))}</ul>
       ) : (
-        <p className="mt-3 text-[0.95rem] text-muted">Wala pang naaprubahang komento.</p>
+        <p className="mt-3 text-[0.95rem] text-muted">{m.empty}</p>
       )}
       {isOpen ? (
         <div className="mt-6 rounded-xl border border-line p-5">
-          <h3 className="mb-4 font-semibold text-ink">Mag-iwan ng komento</h3>
+          <h3 className="mb-4 font-semibold text-ink">{m.leave}</h3>
           <CommentForm target={target} />
         </div>
       ) : (
-        <p className="mt-6 rounded-xl bg-surface px-4 py-3 text-sm text-ink-soft">Sarado na ang komento para dito.</p>
+        <p className="mt-6 rounded-xl bg-surface px-4 py-3 text-sm text-ink-soft">{m.closed}</p>
       )}
     </section>
   );

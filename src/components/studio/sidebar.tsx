@@ -197,7 +197,7 @@ export function StudioSidebar({ groups }: { groups: Group[] }) {
         type="button"
         onClick={() => setOpen(true)}
         className="fixed left-3 top-3 z-40 inline-flex size-10 items-center justify-center rounded-full bg-navy text-white lg:hidden"
-        aria-label="Buksan ang menu"
+        aria-label="Open menu"
         aria-expanded={open}
       >
         <Menu className="size-5" aria-hidden="true" />
@@ -212,7 +212,7 @@ export function StudioSidebar({ groups }: { groups: Group[] }) {
           <button
             type="button"
             className="absolute inset-0 bg-navy/50"
-            aria-label="Isara ang menu"
+            aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
           <div className="relative flex h-full w-72 flex-col gap-5 overflow-y-auto bg-navy py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -222,7 +222,7 @@ export function StudioSidebar({ groups }: { groups: Group[] }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-full p-2 text-white/80 hover:bg-white/10"
-                aria-label="Isara ang menu"
+                aria-label="Close menu"
               >
                 <X className="size-5" aria-hidden="true" />
               </button>

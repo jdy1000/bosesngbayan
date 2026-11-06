@@ -17,7 +17,7 @@ export interface MediaPickerItem {
 /** Image search for Studio pickers. Any active staff member; RLS governs what the session can read. */
 export async function GET(request: NextRequest) {
   const staff = await getStaffContext();
-  if (!staff) return NextResponse.json({ error: "Kailangan mong mag-login." }, { status: 401 });
+  if (!staff) return NextResponse.json({ error: "You need to sign in." }, { status: 401 });
 
   const q = (request.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 80);
   let query = staff.supabase
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query;
   if (error) {
     logServerError("media_picker_search_failed", error);
-    return NextResponse.json({ error: "Hindi makuha ang media." }, { status: 500 });
+    return NextResponse.json({ error: "Could not load media." }, { status: 500 });
   }
   const items: MediaPickerItem[] = (data ?? []).map((m) => ({
     id: m.id,

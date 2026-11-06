@@ -13,7 +13,7 @@ export function UpdatePasswordForm({ email, rules }: { email: string; rules: str
       <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
       <div className="flex flex-col gap-2">
         <label htmlFor="new-password" className="text-sm font-semibold text-ink">
-          Bagong password
+          New password
         </label>
         <PasswordInput
           id="new-password"
@@ -30,7 +30,7 @@ export function UpdatePasswordForm({ email, rules }: { email: string; rules: str
       </div>
       <div className="flex flex-col gap-2">
         <label htmlFor="confirm-password" className="text-sm font-semibold text-ink">
-          Ulitin ang password
+          Repeat password
         </label>
         <PasswordInput id="confirm-password" name="confirm" required minLength={12} autoComplete="new-password" className="field h-12 text-base" />
       </div>
@@ -41,7 +41,7 @@ export function UpdatePasswordForm({ email, rules }: { email: string; rules: str
       )}
       <button type="submit" className="btn btn-primary h-12 w-full text-[0.95rem]" disabled={pending} aria-busy={pending}>
         {pending && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
-        {pending ? "Sine-save…" : "I-save at pumasok sa Studio"}
+        {pending ? "Saving…" : "Save and enter Studio"}
       </button>
     </form>
   );

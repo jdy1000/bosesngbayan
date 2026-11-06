@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { useI18n } from "@/components/public/i18n-provider";
 
 type Status = "idle" | "submitting" | "done" | "error";
 
@@ -14,6 +15,8 @@ export function NewsletterForm({
   tone?: "light" | "dark";
 }) {
   const id = useId();
+  const { locale, t } = useI18n();
+  const m = t.newsletter;
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
@@ -30,20 +33,22 @@ export function NewsletterForm({
           email: String(form.get("email") ?? ""),
           consent: form.get("consent") === "on",
           source,
+          // The language this form was rendered in, so the stored consent is the wording on screen.
+          locale,
           website: String(form.get("website") ?? ""),
         }),
       });
       const body = (await res.json().catch(() => null)) as { message?: string; error?: string } | null;
       if (!res.ok) {
         setStatus("error");
-        setMessage(body?.error ?? "Hindi naisumite. Subukang muli.");
+        setMessage(body?.error ?? m.failed);
         return;
       }
       setStatus("done");
-      setMessage(body?.message ?? "Salamat! Naitala ang iyong subscription.");
+      setMessage(body?.message ?? m.subscribed);
     } catch {
       setStatus("error");
-      setMessage("Walang koneksyon. Subukang muli.");
+      setMessage(m.offline);
     }
   }
 
@@ -60,7 +65,7 @@ export function NewsletterForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate={false}>
       <div className="flex flex-col gap-2 sm:flex-row">
         <label htmlFor={`${id}-email`} className="sr-only">
-          Email address
+          {m.emailLabel}
         </label>
         <input
           id={`${id}-email`}
@@ -70,11 +75,11 @@ export function NewsletterForm({
           autoComplete="email"
           inputMode="email"
           maxLength={254}
-          placeholder="Ilagay ang iyong email"
+          placeholder={m.emailPlaceholder}
           className={`field min-w-0 flex-1 ${dark ? "border-white/20 bg-white/10 text-white placeholder:text-white/60" : ""}`}
         />
         <button type="submit" className={`btn ${dark ? "btn-light" : "btn-primary"}`} disabled={status === "submitting"}>
-          {status === "submitting" ? "Isinusumite…" : "Mag-subscribe"}
+          {status === "submitting" ? m.submitting : m.subscribe}
         </button>
       </div>
       {/* Honeypot: real visitors never see or fill this field. */}

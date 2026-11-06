@@ -31,6 +31,8 @@ export interface BuilderSection {
   isEnabled: boolean;
   title: string | null;
   description: string | null;
+  titleEn: string | null;
+  descriptionEn: string | null;
   settings: Record<string, unknown>;
   issues: string[];
   updatedAt: string;

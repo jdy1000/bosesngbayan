@@ -6,7 +6,7 @@ import { formatDateTime } from "@/lib/format";
 import { listStudioPages } from "@/lib/studio/pages";
 import { PAGE_STATUSES, PAGE_STATUS_LABELS, type PageStatus } from "./status";
 
-export const metadata: Metadata = { title: "Mga Pahina" };
+export const metadata: Metadata = { title: "Pages" };
 
 export default async function PagesListPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const ctx = await requireStaffPage("pages.manage");
@@ -17,15 +17,15 @@ export default async function PagesListPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader
-        title="Mga Pahina"
-        description="Mga static na pahina gaya ng Tungkol, Editorial Policy at Privacy Policy."
+        title="Pages"
+        description="Static pages such as About (Tungkol), Editorial Policy and Privacy Policy."
         actions={
           <Link href="/admin/pages/new" className="btn btn-primary min-h-10 px-4 text-sm">
-            + Bagong pahina
+            + New page
           </Link>
         }
       />
-      <nav aria-label="Filter ayon sa status" className="mb-4 flex gap-1 overflow-x-auto border-b border-line">
+      <nav aria-label="Filter by status" className="mb-4 flex gap-1 overflow-x-auto border-b border-line">
         {[undefined, ...PAGE_STATUSES].map((s) => (
           <Link
             key={s ?? "all"}
@@ -33,14 +33,14 @@ export default async function PagesListPage({ searchParams }: { searchParams: Pr
             aria-current={s === status ? "page" : undefined}
             className={`shrink-0 border-b-2 px-3 py-2 text-sm font-semibold ${s === status ? "border-brand text-brand" : "border-transparent text-ink-soft hover:text-ink"}`}
           >
-            {s ? PAGE_STATUS_LABELS[s].label : "Lahat"}
+            {s ? PAGE_STATUS_LABELS[s].label : "All"}
           </Link>
         ))}
       </nav>
       {pages.length === 0 ? (
-        <Empty title={status ? "Walang pahina sa status na ito." : "Wala pang pahina."} />
+        <Empty title={status ? "No pages with this status." : "No pages yet."} />
       ) : (
-        <Table head={["Pamagat", "URL", "Status", "Nailathala", "Huling binago"]}>
+        <Table head={["Title", "URL", "Status", "Published", "Last modified"]}>
           {pages.map((p) => (
             <tr key={p.id} className="hover:bg-surface/60">
               <td>

@@ -13,11 +13,11 @@ import type { FormActionResult } from "@/components/studio/action-form";
 const localDate = z.preprocess((v) => {
   if (typeof v !== "string" || v === "") return null;
   return manilaLocalToIso(v) ?? "invalid";
-}, z.iso.datetime({ message: "Hindi wastong petsa." }).nullable());
+}, z.iso.datetime({ message: "Invalid date." }).nullable());
 
 const pollSchema = z
   .object({
-    question: requiredText(5, 300, "Tanong"),
+    question: requiredText(5, 300, "Question"),
     slug: slugField,
     description: optionalText(1000),
     kind: z.enum(["single", "multiple"]).optional(),
@@ -29,7 +29,7 @@ const pollSchema = z
     methodology_note: optionalText(2000),
     category_id: optionalUuid,
   })
-  .refine((p) => !p.opens_at || !p.closes_at || p.closes_at > p.opens_at, { message: "Ang pagsasara ay dapat pagkatapos ng pagbubukas." });
+  .refine((p) => !p.opens_at || !p.closes_at || p.closes_at > p.opens_at, { message: "The closing time must be after the opening time." });
 
 function revalidatePoll(slug?: string | null) {
   revalidatePath("/");
@@ -47,9 +47,9 @@ function parseOptionLines(raw: FormDataEntryValue | null): string[] {
     .map((l) => l.trim())
     .filter(Boolean);
   return z
-    .array(z.string().max(200, "Hanggang 200 character bawat pagpipilian."))
-    .min(2, "Maglagay ng hindi bababa sa 2 pagpipilian (isa bawat linya).")
-    .max(20, "Hanggang 20 pagpipilian lamang.")
+    .array(z.string().max(200, "Up to 200 characters per option."))
+    .min(2, "Enter at least 2 options (one per line).")
+    .max(20, "Up to 20 options only.")
     .parse(lines);
 }
 
@@ -87,7 +87,7 @@ export async function createPoll(_prev: FormActionResult, fd: FormData): Promise
       await ctx.supabase.from("polls").delete().eq("id", poll.id);
       throw error;
     }
-    return { ok: true, message: "Nagawa ang poll bilang draft.", redirectTo: `/admin/polls/${poll.id}` };
+    return { ok: true, message: "Poll created as a draft.", redirectTo: `/admin/polls/${poll.id}` };
   } catch (e) {
     return toActionError(e);
   }
@@ -123,7 +123,7 @@ export async function updatePoll(_prev: FormActionResult, fd: FormData): Promise
     must(await ctx.supabase.from("polls").update(patch).eq("id", id).select("id").single());
     revalidatePoll(current.slug);
     if (patch.slug !== current.slug) revalidatePoll(patch.slug);
-    return { ok: true, message: "Na-save ang poll." };
+    return { ok: true, message: "Poll saved." };
   } catch (e) {
     return toActionError(e);
   }
@@ -150,45 +150,45 @@ export async function pollLifecycle(_prev: FormActionResult, fd: FormData): Prom
 
     switch (op) {
       case "publish":
-        if (poll.status !== "draft") return fail("Draft lamang ang maaaring i-publish.");
-        if (poll.options.length < 2) return fail("Kailangan ng hindi bababa sa 2 pagpipilian bago i-publish.");
-        if (poll.kind === "multiple" && poll.max_choices > poll.options.length) return fail("Mas marami ang max choices kaysa sa mga pagpipilian.");
+        if (poll.status !== "draft") return fail("Only drafts can be published.");
+        if (poll.options.length < 2) return fail("A poll needs at least 2 options before it can be published.");
+        if (poll.kind === "multiple" && poll.max_choices > poll.options.length) return fail("Max choices is higher than the number of options.");
         await update({ status: "published" });
-        message = "Nakalathala na ang poll.";
+        message = "Poll published.";
         break;
       case "unpublish":
-        if (poll.status !== "published") return fail("Hindi nakalathala ang poll.");
+        if (poll.status !== "published") return fail("This poll is not published.");
         // Product rule: a poll with ballots is never silently pulled back to draft; close or archive it.
-        if (await hasVotes(ctx, id)) return fail("May mga boto na; isara o i-archive ang poll sa halip na ibalik sa draft.");
+        if (await hasVotes(ctx, id)) return fail("This poll already has votes; close or archive it instead of returning it to draft.");
         await update({ status: "draft", is_featured: false });
-        message = "Ibinalik sa draft ang poll.";
+        message = "Poll returned to draft.";
         break;
       case "close":
-        if (poll.status !== "published") return fail("Nakalathalang poll lamang ang maaaring isara.");
+        if (poll.status !== "published") return fail("Only published polls can be closed.");
         await update({ status: "closed" });
-        message = "Isinara ang botohan.";
+        message = "Poll closed.";
         break;
       case "archive":
-        if (poll.status === "archived") return fail("Naka-archive na ito.");
+        if (poll.status === "archived") return fail("This poll is already archived.");
         await update({ status: "archived", is_featured: false });
-        message = "Na-archive ang poll.";
+        message = "Poll archived.";
         break;
       case "feature":
-        if (poll.status !== "published" && poll.status !== "closed") return fail("Nakalathala o saradong poll lamang ang maaaring i-feature.");
+        if (poll.status !== "published" && poll.status !== "closed") return fail("Only published or closed polls can be featured.");
         // Only one featured poll (unique index polls_one_featured): clear the current one first.
         unwrap(await ctx.supabase.from("polls").update({ is_featured: false, updated_by: ctx.userId }).eq("is_featured", true).neq("id", id));
         await update({ is_featured: true });
-        message = "Ito na ang featured poll.";
+        message = "This is now the featured poll.";
         break;
       case "unfeature":
         await update({ is_featured: false });
-        message = "Inalis sa featured.";
+        message = "Removed from featured.";
         break;
       case "delete":
-        if (poll.status !== "draft" || (await hasVotes(ctx, id))) return fail("Draft na walang boto lamang ang maaaring burahin. I-archive na lamang ito.");
+        if (poll.status !== "draft" || (await hasVotes(ctx, id))) return fail("Only drafts with no votes can be deleted. Archive it instead.");
         unwrap(await ctx.supabase.from("polls").delete().eq("id", id));
         revalidatePoll(poll.slug);
-        return { ok: true, message: "Nabura ang poll.", redirectTo: "/admin/polls" };
+        return { ok: true, message: "Poll deleted.", redirectTo: "/admin/polls" };
     }
     revalidatePoll(poll.slug);
     return { ok: true, message };
@@ -197,19 +197,19 @@ export async function pollLifecycle(_prev: FormActionResult, fd: FormData): Prom
   }
 }
 
-const optionSchema = z.object({ poll_id: z.uuid(), label: requiredText(1, 200, "Pagpipilian") });
+const optionSchema = z.object({ poll_id: z.uuid(), label: requiredText(1, 200, "Option") });
 
 export async function addOption(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
   try {
     const ctx = await requirePermission("polls.manage");
     const { poll_id, label } = optionSchema.parse(Object.fromEntries(fd));
     const existing = must(await ctx.supabase.from("poll_options").select("position").eq("poll_id", poll_id));
-    if (existing.length >= 20) return { ok: false, error: "Hanggang 20 pagpipilian lamang." };
+    if (existing.length >= 20) return { ok: false, error: "Up to 20 options only." };
     const position = existing.reduce((m, o) => Math.max(m, o.position), -10) + 10;
     unwrap(await ctx.supabase.from("poll_options").insert({ poll_id, label, position }));
     const poll = must(await ctx.supabase.from("polls").select("slug").eq("id", poll_id).single());
     revalidatePoll(poll.slug);
-    return { ok: true, message: "Naidagdag ang pagpipilian." };
+    return { ok: true, message: "Option added." };
   } catch (e) {
     return toActionError(e);
   }
@@ -228,11 +228,11 @@ export async function optionAction(_prev: FormActionResult, fd: FormData): Promi
     const { poll_id, option_id, op, label } = optionOpSchema.parse(Object.fromEntries(fd));
     const poll = must(await ctx.supabase.from("polls").select("slug, status").eq("id", poll_id).single());
     if (op === "save") {
-      const clean = requiredText(1, 200, "Pagpipilian").parse(label);
+      const clean = requiredText(1, 200, "Option").parse(label);
       must(await ctx.supabase.from("poll_options").update({ label: clean }).eq("id", option_id).eq("poll_id", poll_id).select("id").single());
     } else if (op === "remove") {
       const count = must(await ctx.supabase.from("poll_options").select("id").eq("poll_id", poll_id)).length;
-      if (poll.status !== "draft" && count <= 2) return { ok: false, error: "Kailangan ng hindi bababa sa 2 pagpipilian ang nakalathalang poll." };
+      if (poll.status !== "draft" && count <= 2) return { ok: false, error: "A published poll needs at least 2 options." };
       unwrap(await ctx.supabase.from("poll_options").delete().eq("id", option_id).eq("poll_id", poll_id));
     } else {
       // Reordering stays allowed after votes (poll_options_guard permits position-only updates).
@@ -242,7 +242,7 @@ export async function optionAction(_prev: FormActionResult, fd: FormData): Promi
       }
     }
     revalidatePoll(poll.slug);
-    return { ok: true, message: op === "remove" ? "Inalis ang pagpipilian." : "Na-update ang mga pagpipilian." };
+    return { ok: true, message: op === "remove" ? "Option removed." : "Options updated." };
   } catch (e) {
     return toActionError(e);
   }

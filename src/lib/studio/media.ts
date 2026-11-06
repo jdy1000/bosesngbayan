@@ -5,7 +5,7 @@ import { logServerError } from "@/lib/log";
 
 export const MEDIA_KINDS = ["image", "video", "file"] as const;
 export type MediaKind = (typeof MEDIA_KINDS)[number];
-export const MEDIA_KIND_LABELS: Record<MediaKind, string> = { image: "Larawan", video: "Video", file: "File" };
+export const MEDIA_KIND_LABELS: Record<MediaKind, string> = { image: "Image", video: "Video", file: "File" };
 
 export const MEDIA_LIST_COLUMNS =
   "id, kind, storage_path, external_url, file_name, mime_type, size_bytes, width, height, title, alt_text, caption, credit, folder, uploaded_by, created_at, updated_at, uploader:profiles!media_assets_uploaded_by_fkey(display_name)";
@@ -40,11 +40,11 @@ export interface StoredFile {
  * upload it with the caller's session client into their own `<uid>/` folder. Storage RLS decides.
  */
 export async function storeUpload(ctx: StaffContext, file: File): Promise<{ ok: true; file: StoredFile } | { ok: false; error: string }> {
-  if (file.size === 0) return { ok: false, error: "Walang laman ang file." };
-  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: `Lampas sa ${MAX_UPLOAD_BYTES / 1024 / 1024} MB ang file.` };
+  if (file.size === 0) return { ok: false, error: "The file is empty." };
+  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: `The file is larger than ${MAX_UPLOAD_BYTES / 1024 / 1024} MB.` };
   const bytes = new Uint8Array(await file.arrayBuffer());
   const mime = sniffMime(bytes);
-  if (!mime) return { ok: false, error: "Hindi suportadong uri ng file. JPEG, PNG, WebP, GIF, AVIF o PDF lamang." };
+  if (!mime) return { ok: false, error: "Unsupported file type. JPEG, PNG, WebP, GIF, AVIF or PDF only." };
   const fileName = sanitizeFileName(file.name, mime);
   const storagePath = `${ctx.userId}/${crypto.randomUUID()}-${fileName}`;
   const dims = mime.startsWith("image/") ? imageDimensions(bytes, mime) : null;
@@ -52,7 +52,7 @@ export async function storeUpload(ctx: StaffContext, file: File): Promise<{ ok: 
   const { error } = await ctx.supabase.storage.from(MEDIA_BUCKET).upload(storagePath, bytes, { contentType: mime, upsert: false });
   if (error) {
     logServerError("media_storage_upload_failed", error);
-    return { ok: false, error: "Hindi na-upload ang file. Suriin ang iyong pahintulot at subukang muli." };
+    return { ok: false, error: "The file was not uploaded. Check your permissions and try again." };
   }
   return {
     ok: true,
@@ -88,9 +88,9 @@ export async function getMediaUsages(ctx: StaffContext, mediaId: string): Promis
 }
 
 export const USAGE_LABELS: Record<string, string> = {
-  article: "Artikulo",
-  category: "Kategorya",
-  page: "Pahina",
+  article: "Article",
+  category: "Category",
+  page: "Page",
   site_setting: "Site settings",
   homepage_section: "Homepage section",
 };

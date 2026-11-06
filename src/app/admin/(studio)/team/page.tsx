@@ -9,7 +9,7 @@ import { Badge, Field, Notice, PageHeader, Panel, Table } from "@/components/stu
 import { changeRole, inviteMember, setMemberActive } from "./actions";
 import { PermissionMatrixView } from "./permission-matrix";
 
-export const metadata: Metadata = { title: "Team at Roles" };
+export const metadata: Metadata = { title: "Team and Roles" };
 
 export default async function TeamPage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   const ctx = await requireStaffPage("users.view");
@@ -21,15 +21,15 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHeader
-        title="Team at Roles"
-        description="Mga staff ng Boses ng Bayan Studio. Walang pampublikong registration: imbitasyon lamang ang paraan para magkaroon ng account."
+        title="Team and Roles"
+        description="Boses ng Bayan Studio staff. There is no public registration: an invitation is the only way to get an account."
       />
 
       {canManage && (
-        <Panel title="Mag-imbita ng staff" className="mb-6">
+        <Panel title="Invite staff" className="mb-6">
           <div className="mb-4">
             <Notice>
-              Ipinapadala ng Supabase Auth ang email ng imbitasyon. Kailangang naka-configure ang SMTP ng Supabase project (may mahigpit na limit ang default mailer); kung hindi dumating ang email, suriin ang Auth logs.
+              Supabase Auth sends the invitation email. The Supabase project needs SMTP configured (the default mailer is strictly rate-limited); if the email does not arrive, check the Auth logs.
             </Notice>
           </div>
           <ActionForm action={inviteMember} resetOnSuccess>
@@ -37,7 +37,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
               <Field label="Email" htmlFor="inv-email">
                 <input id="inv-email" name="email" type="email" required maxLength={254} autoComplete="off" className="field" />
               </Field>
-              <Field label="Pangalan" htmlFor="inv-name">
+              <Field label="Name" htmlFor="inv-name">
                 <input id="inv-name" name="display_name" required maxLength={120} className="field" />
               </Field>
               <Field label="Role" htmlFor="inv-role">
@@ -49,7 +49,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                   ))}
                 </select>
               </Field>
-              <SubmitButton pendingLabel="Nagpapadala…">Imbitahin</SubmitButton>
+              <SubmitButton pendingLabel="Sending…">Invite</SubmitButton>
             </div>
           </ActionForm>
         </Panel>
@@ -57,15 +57,15 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
 
       <section aria-labelledby="members-heading" className="mb-8">
         <h2 id="members-heading" className="mb-3 text-[0.95rem] font-bold text-ink">
-          Mga miyembro ({members.length})
+          Members ({members.length})
         </h2>
-        <Table head={["Pangalan", "Role", "Status", "Huling login", ""]}>
+        <Table head={["Name", "Role", "Status", "Last sign-in", ""]}>
           {members.map((m) => (
             <MemberRow key={m.id} m={m} isSelf={m.id === ctx.userId} canManage={canManage} callerIsOwner={ctx.role === "owner"} roles={roles} />
           ))}
         </Table>
         <p className="mt-2 text-xs text-muted">
-          Ang pagbabago ng role o pag-deactivate ay may bisa agad sa lahat ng pahintulot sa database. Hindi mo mababago ang sarili mong role o ma-deactivate ang sarili; laging may kahit isang aktibong Owner.
+          Role changes and deactivations take effect immediately on every database permission. You cannot change your own role or deactivate yourself; there is always at least one active Owner.
         </p>
       </section>
 
@@ -84,7 +84,7 @@ function MemberRow({ m, isSelf, canManage, callerIsOwner, roles }: { m: TeamMemb
         <Link href={`/admin/team/${m.id}`} className="font-semibold text-ink hover:text-brand">
           {m.displayName}
         </Link>
-        {isSelf && <span className="ml-1.5 text-xs text-muted">(ikaw)</span>}
+        {isSelf && <span className="ml-1.5 text-xs text-muted">(you)</span>}
         <span className="block text-xs text-muted">{m.email ?? "—"}{m.title ? ` · ${m.title}` : ""}</span>
       </td>
       <td>
@@ -92,7 +92,7 @@ function MemberRow({ m, isSelf, canManage, callerIsOwner, roles }: { m: TeamMemb
           <ActionForm action={changeRole} className="flex items-center gap-2">
             <input type="hidden" name="id" value={m.id} />
             <label htmlFor={`role-${m.id}`} className="sr-only">
-              Role ni {m.displayName}
+              Role for {m.displayName}
             </label>
             <select id={`role-${m.id}`} name="role" defaultValue={m.role} className="field min-h-9 w-36 py-1 text-sm">
               {roles.map((r) => (
@@ -102,7 +102,7 @@ function MemberRow({ m, isSelf, canManage, callerIsOwner, roles }: { m: TeamMemb
               ))}
             </select>
             <SubmitButton variant="outline" pendingLabel="…" className="!min-h-9 !px-3">
-              Baguhin
+              Change
             </SubmitButton>
           </ActionForm>
         ) : (
@@ -113,23 +113,23 @@ function MemberRow({ m, isSelf, canManage, callerIsOwner, roles }: { m: TeamMemb
         {!m.isActive ? (
           <Badge tone="red">Deactivated</Badge>
         ) : pending ? (
-          <Badge tone="amber">Naimbitahan</Badge>
+          <Badge tone="amber">Invited</Badge>
         ) : (
-          <Badge tone="green">Aktibo</Badge>
+          <Badge tone="green">Active</Badge>
         )}
         {!m.isActive && m.deactivatedAt && <span className="block text-xs text-muted">{formatDateTime(m.deactivatedAt)}</span>}
       </td>
-      <td className="whitespace-nowrap text-xs text-muted">{m.lastSignInAt ? formatDateTime(m.lastSignInAt) : "Hindi pa"}</td>
+      <td className="whitespace-nowrap text-xs text-muted">{m.lastSignInAt ? formatDateTime(m.lastSignInAt) : "Never"}</td>
       <td className="text-right">
         {editable && (
           <ActionForm
             action={setMemberActive}
-            confirm={m.isActive ? `I-deactivate si ${m.displayName}? Mawawala agad ang access niya at hindi na siya makakapag-login.` : undefined}
+            confirm={m.isActive ? `Deactivate ${m.displayName}? They lose access immediately and can no longer sign in.` : undefined}
           >
             <input type="hidden" name="id" value={m.id} />
             <input type="hidden" name="active" value={m.isActive ? "false" : "true"} />
             <SubmitButton variant={m.isActive ? "ghost" : "outline"} pendingLabel="…" className={`!min-h-9 !px-3 ${m.isActive ? "text-accent-700" : ""}`}>
-              {m.isActive ? "I-deactivate" : "I-reactivate"}
+              {m.isActive ? "Deactivate" : "Reactivate"}
             </SubmitButton>
           </ActionForm>
         )}

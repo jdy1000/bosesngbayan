@@ -147,6 +147,33 @@ Hidden sidebar items are only a convenience.
 
 **ADR-014 — Studio shell follows the RapidPoll console (2026-11-06).** At the owner's request the Studio uses the same console layout as the team's RapidPoll admin: fixed navy sidebar grouped Pangkalahatan / Nilalaman / Homepage at Site / Komunidad / Administrasyon / Ikaw, a white top bar with article search, a notification bell (pending review, moderation queues) and a user menu (Aking Account, view site, logout), and rounded-2xl panels with a soft card shadow. Boses colours, logo and Filipino labels are kept. The signed-out screens (login, forgot password, new password) share `AuthShell`.
 
+**ADR-015: English Studio, Filipino/English public site, light/dark themes (2026-11-06).** The owner asked for:
+- an English Studio,
+- a public site that is Filipino by default and can switch to English,
+- light mode by default, with a black dark mode,
+- the logo as the favicon.
+
+This supersedes the Filipino Studio labels in ADR-014.
+- *Language.*
+  - `src/lib/i18n/` holds typed message catalogues per namespace. `fil` is the source, and `en` must have every key (its type enforces this).
+  - Server components call `getI18n()`. Client components use `useI18n()` from the `I18nProvider` in the site layout.
+  - The reader's choice is stored in the `bnb_lang` cookie. Without it, the site uses Site Settings → General → Language (default `fil`).
+  - The proxy tags each request as `site` or `studio`. Studio always renders `lang="en"`.
+  - Dates use `fil-PH` or `en-PH` formatting.
+- *Scope of English mode.* Interface strings switch. Editorial content (articles, pages, polls, community posts, category names) stays as written. These CMS labels can have an optional English version, which falls back to Filipino when empty:
+  - navigation items (`navigation_items.label_en`);
+  - homepage section titles and descriptions (`homepage_sections.title_en` / `description_en`), which `publish_homepage` and `restore_homepage_to_draft` copy;
+  - block links (`label_en` inside a link's settings);
+  - Site Settings text: tagline, description, copyright, header CTA, newsletter box, community guidelines and newsletter consent. `localizeSettings()` applies these.
+
+  The columns come from migration `20261106001100_english_labels.sql`.
+- *Consent wording.* The newsletter records the consent text in the language the reader saw, so the stored wording matches the wording shown.
+- *Theme.*
+  - The `bnb_theme` cookie (`light` by default, or `dark`) is shared by the site and Studio and read on the server, so the page never flashes the wrong theme.
+  - Colour roles are CSS variables, redefined under `:root[data-theme="dark"]` (docs/DESIGN_SYSTEM.md §2).
+  - The language and theme switches are plain forms that post to server actions, so they work without JavaScript.
+- *Favicon.* The default icons (`public/favicon.ico`, `public/brand/icon.svg`, `public/brand/apple-icon.png`) are drawn from the logo mark. A favicon chosen in Studio → Settings → General replaces them on the public site. If that lookup fails, the default stays.
+
 ## 6. Environment variables
 
 See `.env.example`. Public values (`NEXT_PUBLIC_*`) are validated by `src/lib/env.ts`; secrets by `src/lib/server-env.ts`, which is server-only:

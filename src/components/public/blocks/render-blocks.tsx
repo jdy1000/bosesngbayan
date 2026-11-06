@@ -1,4 +1,6 @@
 import type { HomepageBlock } from "@/lib/homepage/blocks";
+import type { Messages } from "@/lib/i18n/messages";
+import { getI18n } from "@/lib/i18n/server";
 import { HeroBlock } from "@/components/public/blocks/hero-block";
 import {
   ArticleListBlock,
@@ -13,7 +15,7 @@ import {
 import { CommunityBlock, CustomCtaBlock, NewsletterBlock, PollShowcaseBlock } from "@/components/public/blocks/engagement-blocks";
 import { NewsQuizBlock, PhotoOfDayBlock, QuoteOfDayBlock } from "@/components/public/blocks/module-blocks";
 
-function Block({ block }: { block: HomepageBlock }) {
+function Block({ block, t }: { block: HomepageBlock; t: Messages }) {
   const { title, description } = block;
   switch (block.type) {
     case "hero":
@@ -32,7 +34,7 @@ function Block({ block }: { block: HomepageBlock }) {
       return <ArticleListBlock title={title} description={description} settings={block.settings} />;
     case "editors_picks": {
       const settings = block.settings.source === "latest" ? { ...block.settings, source: "editors_picks" as const } : block.settings;
-      return <ArticleListBlock title={title ?? "Pili ng Editor"} description={description} settings={settings} layout="side" />;
+      return <ArticleListBlock title={title ?? t.blocks.editorsPicks} description={description} settings={settings} layout="side" />;
     }
     case "category_showcase":
       return <CategoryShowcaseBlock title={title} description={description} settings={block.settings} />;
@@ -57,6 +59,7 @@ function Block({ block }: { block: HomepageBlock }) {
   }
 }
 
-export function RenderBlocks({ blocks }: { blocks: HomepageBlock[] }) {
-  return blocks.map((block) => <Block key={block.id} block={block} />);
+export async function RenderBlocks({ blocks }: { blocks: HomepageBlock[] }) {
+  const { t } = await getI18n();
+  return blocks.map((block) => <Block key={block.id} block={block} t={t} />);
 }

@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/public/logo";
 import { formatDateline } from "@/lib/format";
@@ -32,12 +31,12 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="max-w-xl">
-          <p className="text-sm font-medium text-white/80">{formatDateline()} · Maynila</p>
+          <p className="text-sm font-medium text-white/80">{formatDateline()} · Manila</p>
           <p className="mt-3 text-[1.75rem] font-semibold leading-[1.08] tracking-[-0.02em] text-balance sm:text-[2.25rem] lg:text-[2.75rem]">
-            Dito nagsisimula ang bawat balita.
+            Every story starts here.
           </p>
           <p className="mt-4 hidden max-w-md text-[1.05rem] leading-relaxed text-white/85 lg:block">
-            Isulat, suriin at ilathala ang mga kwento ng Boses ng Bayan, mula sa unang draft hanggang sa homepage.
+            Write, review and publish Boses ng Bayan stories, from first draft to the homepage.
           </p>
         </div>
       </section>
@@ -47,11 +46,13 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <div className="mx-auto w-full max-w-[400px] lg:mx-0">{children}</div>
         </div>
         <div className="mx-auto mt-12 flex w-full max-w-[400px] flex-wrap items-center justify-between gap-x-6 gap-y-2 text-sm text-muted lg:mx-0">
-          <Link href="/" className="inline-flex min-h-11 items-center gap-1.5 font-medium text-ink-soft transition-colors hover:text-brand">
+          {/* Plain link: a full page load so <html lang> switches from Studio (en) to the site language. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- the root layout (and its lang) must re-render */}
+          <a href="/" className="inline-flex min-h-11 items-center gap-1.5 font-medium text-ink-soft transition-colors hover:text-brand">
             <ArrowLeft aria-hidden="true" className="size-4" />
-            Bumalik sa Boses ng Bayan
-          </Link>
-          <span>Para lamang sa newsroom</span>
+            Back to Boses ng Bayan
+          </a>
+          <span>Newsroom staff only</span>
         </div>
       </div>
     </main>

@@ -17,7 +17,7 @@ function revalidateSite() {
 
 const locationSchema = z.object({
   id: optionalUuid,
-  name: requiredText(1, 120, "Pangalan"),
+  name: requiredText(1, 120, "Name"),
   slug: slugField,
   kind: z.enum(LOCATION_KINDS),
   parent_id: optionalUuid,
@@ -30,25 +30,25 @@ export async function saveLocation(_prev: FormActionResult, fd: FormData): Promi
     const ctx = await requirePermission("taxonomy.manage");
     const { id, ...input } = locationSchema.parse(Object.fromEntries(fd));
     const expectedParent = PARENT_KIND[input.kind];
-    if (!expectedParent && input.parent_id) return { ok: false, error: "Ang island group ay walang parent." };
+    if (!expectedParent && input.parent_id) return { ok: false, error: "An island group has no parent." };
     if (expectedParent) {
-      if (!input.parent_id) return { ok: false, error: "Pumili ng parent na lokasyon." };
-      if (input.parent_id === id) return { ok: false, error: "Hindi maaaring maging parent ang sarili." };
+      if (!input.parent_id) return { ok: false, error: "Choose a parent location." };
+      if (input.parent_id === id) return { ok: false, error: "A location cannot be its own parent." };
       const parent = must(await ctx.supabase.from("locations").select("kind").eq("id", input.parent_id).single());
-      if (parent.kind !== expectedParent) return { ok: false, error: "Hindi tugma ang uri ng parent (island group → region → province → city)." };
+      if (parent.kind !== expectedParent) return { ok: false, error: "The parent type doesn't match (island group → region → province → city)." };
     }
     if (id) {
       const current = must(await ctx.supabase.from("locations").select("kind").eq("id", id).single());
       if (current.kind !== input.kind) {
         const { count } = await ctx.supabase.from("locations").select("id", { count: "exact", head: true }).eq("parent_id", id);
-        if (count) return { ok: false, error: "Hindi mababago ang uri habang may mga sakop na lokasyon." };
+        if (count) return { ok: false, error: "The type can't be changed while it has child locations." };
       }
     }
     const row = { ...input, slug: input.slug || slugify(input.name, 120) };
     if (id) must(await ctx.supabase.from("locations").update(row).eq("id", id).select("id").single());
     else unwrap(await ctx.supabase.from("locations").insert(row));
     revalidateSite();
-    return { ok: true, message: id ? "Na-save ang lokasyon." : "Nagawa ang lokasyon." };
+    return { ok: true, message: id ? "Location saved." : "Location created." };
   } catch (e) {
     return toActionError(e);
   }
@@ -62,12 +62,12 @@ export async function deleteLocation(_prev: FormActionResult, fd: FormData): Pro
       ctx.supabase.from("locations").select("id", { count: "exact", head: true }).eq("parent_id", id),
       ctx.supabase.from("articles").select("id", { count: "exact", head: true }).eq("location_id", id),
     ]);
-    if (children.count) return { ok: false, error: `Hindi mabubura: may ${children.count} sakop na lokasyon.` };
+    if (children.count) return { ok: false, error: `Can't delete: it has ${children.count} child ${children.count === 1 ? "location" : "locations"}.` };
     // articles.location_id is ON DELETE SET NULL; block anyway so stories never silently lose their place.
-    if (articles.count) return { ok: false, error: `Hindi mabubura: ginagamit ng ${articles.count} artikulo. I-deactivate na lamang.` };
+    if (articles.count) return { ok: false, error: `Can't delete: used by ${articles.count} ${articles.count === 1 ? "article" : "articles"}. Deactivate it instead.` };
     unwrap(await ctx.supabase.from("locations").delete().eq("id", id));
     revalidateSite();
-    return { ok: true, message: "Nabura ang lokasyon." };
+    return { ok: true, message: "Location deleted." };
   } catch (e) {
     return toActionError(e);
   }
@@ -93,8 +93,8 @@ export async function saveTrending(_prev: FormActionResult, fd: FormData): Promi
       tag_id: target === "tag" ? input.tag_id : null,
       href: target === "href" ? input.href || null : null,
     };
-    if (!dest.category_id && !dest.tag_id && !dest.href) return { ok: false, error: "Pumili ng kategorya, tag o internal na link." };
-    if (dest.href && !/^\/[^/\\]/.test(dest.href)) return { ok: false, error: "Ang link ay dapat internal na path na nagsisimula sa “/” (hal. /paksa/kalusugan)." };
+    if (!dest.category_id && !dest.tag_id && !dest.href) return { ok: false, error: "Choose a category, tag or internal link." };
+    if (dest.href && !/^\/[^/\\]/.test(dest.href)) return { ok: false, error: "The link must be an internal path starting with “/” (e.g. /paksa/kalusugan)." };
     const row = { label: input.label, is_active: input.is_active, ...dest };
     if (id) {
       must(await ctx.supabase.from("trending_topics").update(row).eq("id", id).select("id").single());
@@ -103,7 +103,7 @@ export async function saveTrending(_prev: FormActionResult, fd: FormData): Promi
       unwrap(await ctx.supabase.from("trending_topics").insert({ ...row, position: (last[0]?.position ?? -10) + 10 }));
     }
     revalidateSite();
-    return { ok: true, message: id ? "Na-save ang trending topic." : "Naidagdag ang trending topic." };
+    return { ok: true, message: id ? "Trending topic saved." : "Trending topic added." };
   } catch (e) {
     return toActionError(e);
   }
@@ -127,7 +127,7 @@ export async function trendingOp(_prev: FormActionResult, fd: FormData): Promise
       }
     }
     revalidateSite();
-    return { ok: true, message: op === "delete" ? "Inalis ang trending topic." : "Na-update." };
+    return { ok: true, message: op === "delete" ? "Trending topic removed." : "Updated." };
   } catch (e) {
     return toActionError(e);
   }

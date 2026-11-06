@@ -7,7 +7,7 @@ import { formatDateTime } from "@/lib/format";
 import { getArticleHistory } from "@/lib/studio/articles";
 import { restoreArticleRevision } from "../../actions";
 
-export const metadata: Metadata = { title: "Kasaysayan ng artikulo" };
+export const metadata: Metadata = { title: "Article history" };
 
 export default async function ArticleHistoryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,21 +23,21 @@ export default async function ArticleHistoryPage({ params }: { params: Promise<{
   return (
     <>
       <PageHeader
-        title="Kasaysayan"
+        title="History"
         description={article.title}
         breadcrumb={[
-          { label: "Mga Artikulo", href: "/admin/articles" },
+          { label: "Articles", href: "/admin/articles" },
           { label: "Editor", href: `/admin/articles/${id}` },
         ]}
         actions={<StatusBadge status={article.status} />}
       />
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel
-          title="Mga rebisyon"
-          description="Nagagawa sa bawat manwal na pag-save, pagsumite, pag-publish at pag-iskedyul. Ang pag-restore ay nagbabalik ng nilalaman, SEO at tag — hindi ang status."
+          title="Revisions"
+          description="Created on every manual save, submission, publish and schedule. Restoring brings back content, SEO and tags — not the status."
         >
           {revisions.length === 0 ? (
-            <Empty title="Wala pang rebisyon." />
+            <Empty title="No revisions yet." />
           ) : (
             <ol className="divide-y divide-line">
               {revisions.map((r) => (
@@ -47,15 +47,15 @@ export default async function ArticleHistoryPage({ params }: { params: Promise<{
                       #{r.revision_number} · {r.title}
                     </p>
                     <p className="text-xs text-muted">
-                      {formatDateTime(r.created_at)} · {r.author?.display_name ?? "Sistema"}
+                      {formatDateTime(r.created_at)} · {r.author?.display_name ?? "System"}
                       {r.note && ` · ${r.note}`}
                     </p>
                   </div>
                   {canEdit && (
-                    <ActionForm action={restoreArticleRevision} confirm={`Ibalik ang rebisyon #${r.revision_number}? Ise-save muna ang kasalukuyang bersyon bilang rebisyon.`}>
+                    <ActionForm action={restoreArticleRevision} confirm={`Restore revision #${r.revision_number}? The current version will be saved as a revision first.`}>
                       <input type="hidden" name="revision_id" value={r.id} />
-                      <SubmitButton variant="outline" pendingLabel="Ibinabalik…">
-                        I-restore
+                      <SubmitButton variant="outline" pendingLabel="Restoring…">
+                        Restore
                       </SubmitButton>
                     </ActionForm>
                   )}
@@ -65,15 +65,15 @@ export default async function ArticleHistoryPage({ params }: { params: Promise<{
           )}
         </Panel>
 
-        <Panel title="Aktibidad sa workflow" description="Mga pagbabago ng status, sino ang gumawa, at mga tala ng reviewer.">
+        <Panel title="Workflow activity" description="Status changes, who made them, and reviewer notes.">
           {activity.length === 0 ? (
-            <Empty title="Wala pang aktibidad." />
+            <Empty title="No activity yet." />
           ) : (
             <ol className="divide-y divide-line">
               {activity.map((a) => (
                 <li key={a.id} className="py-3 text-sm">
                   <p className="text-ink">
-                    <strong className="font-semibold">{a.actor?.display_name ?? (a.action === "scheduler" ? "Scheduler" : "Sistema")}</strong>{" "}
+                    <strong className="font-semibold">{a.actor?.display_name ?? (a.action === "scheduler" ? "Scheduler" : "System")}</strong>{" "}
                     {a.from_status && a.to_status
                       ? `${ARTICLE_STATUS[a.from_status]?.label ?? a.from_status} → ${ARTICLE_STATUS[a.to_status]?.label ?? a.to_status}`
                       : a.action}

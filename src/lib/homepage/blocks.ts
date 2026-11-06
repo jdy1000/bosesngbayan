@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Locale } from "@/lib/i18n/config";
 
 /**
  * Typed homepage block schema. homepage_sections.settings is JSON in the database; this module is
@@ -29,7 +30,7 @@ export const BLOCK_TYPES = [
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
-  hero: "Hero (botohan)",
+  hero: "Hero (poll)",
   top_stories: "Top stories",
   trending_topics: "Trending topics",
   breaking_news: "Breaking news",
@@ -55,12 +56,13 @@ export const safeHref = z
   .trim()
   .max(500)
   .refine((v) => /^\/(?!\/)/.test(v) || v === "/" || /^https:\/\/[^\s]+$/.test(v), {
-    message: "Gumamit ng path na nagsisimula sa / o https:// URL.",
+    message: "Use a path starting with / or an https:// URL.",
   });
 
 const uuid = z.uuid();
 const optionalUuid = uuid.nullable().default(null);
-const linkSchema = z.object({ label: z.string().trim().min(1).max(60), href: safeHref });
+// label_en is the optional English label shown when a reader switches the site to English (ADR-015).
+const linkSchema = z.object({ label: z.string().trim().min(1).max(60), label_en: z.string().trim().max(60).default(""), href: safeHref });
 const optionalLink = linkSchema.nullable().default(null);
 const limit = (max: number, def: number) => z.number().int().min(1).max(max).default(def);
 
@@ -160,7 +162,7 @@ const quoteOfDaySettings = z.object({
     .string()
     .trim()
     .max(500)
-    .refine((v) => v === "" || /^https:\/\//.test(v), { message: "https:// URL lamang." })
+    .refine((v) => v === "" || /^https:\/\//.test(v), { message: "Use an https:// URL." })
     .default(""),
 });
 
@@ -176,7 +178,7 @@ const quizSettings = z.object({
           explanation: z.string().trim().max(500).default(""),
           article_slug: z.string().trim().max(160).default(""),
         })
-        .refine((q) => q.correct_index < q.options.length, { message: "Wala sa listahan ang tamang sagot." }),
+        .refine((q) => q.correct_index < q.options.length, { message: "The correct answer must be one of the options." }),
     )
     .min(1)
     .max(10),
@@ -224,11 +226,24 @@ export interface RawSection {
   block_type: string;
   title: string | null;
   description: string | null;
+  /** Optional English labels shown when the reader chose English (empty → Filipino). */
+  title_en?: string | null;
+  description_en?: string | null;
   settings: unknown;
 }
 
 /** Parse a stored section. Returns null (and the issues) for unknown or invalid configuration. */
-export function parseSection(raw: RawSection): { block: HomepageBlock | null; issues: string[] } {
+/** Swaps every link's label for its filled-in English label (links can sit at any depth of a block's settings). */
+function englishLinkLabels<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(englishLinkLabels) as T;
+  if (value === null || typeof value !== "object") return value;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value)) out[k] = englishLinkLabels(v);
+  if (typeof out.label === "string" && typeof out.label_en === "string" && out.label_en) out.label = out.label_en;
+  return out as T;
+}
+
+export function parseSection(raw: RawSection, locale: Locale = "fil"): { block: HomepageBlock | null; issues: string[] } {
   if (!isBlockType(raw.block_type)) return { block: null, issues: [`Unknown block type ${raw.block_type}`] };
   const schema = BLOCK_SETTINGS_SCHEMAS[raw.block_type];
   const parsed = schema.safeParse(raw.settings ?? {});
@@ -239,9 +254,9 @@ export function parseSection(raw: RawSection): { block: HomepageBlock | null; is
     block: {
       id: raw.id,
       type: raw.block_type,
-      title: raw.title,
-      description: raw.description,
-      settings: parsed.data,
+      title: locale === "en" && raw.title_en ? raw.title_en : raw.title,
+      description: locale === "en" && raw.description_en ? raw.description_en : raw.description,
+      settings: locale === "en" ? englishLinkLabels(parsed.data) : parsed.data,
     } as HomepageBlock,
     issues: [],
   };

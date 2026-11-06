@@ -4,30 +4,34 @@ import { jsonError, jsonOk, readJson } from "@/lib/security/request";
 import { networkHash } from "@/lib/security/hash";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { getSiteSettings } from "@/lib/cms/site";
+import { getMessages } from "@/lib/i18n/server";
+import type { Messages } from "@/lib/i18n/messages";
 import { logServerError } from "@/lib/log";
 
-const bodySchema = z
-  .object({
-    articleId: z.uuid().nullable().default(null),
-    postId: z.uuid().nullable().default(null),
-    parentId: z.uuid().nullable().default(null),
-    authorName: z.string().trim().min(2, "Ilagay ang iyong pangalan.").max(80),
-    authorEmail: z.union([z.literal(""), z.string().trim().toLowerCase().max(254).pipe(z.email("Hindi wastong email."))]).default(""),
-    body: z.string().trim().min(2, "Masyadong maikli ang komento.").max(2000),
-    website: z.string().max(0).optional(),
-  })
-  .refine((d) => (d.articleId === null) !== (d.postId === null), { message: "Hindi wastong target." });
+const bodySchema = (m: Messages["article"]["comments"]) =>
+  z
+    .object({
+      articleId: z.uuid().nullable().default(null),
+      postId: z.uuid().nullable().default(null),
+      parentId: z.uuid().nullable().default(null),
+      authorName: z.string().trim().min(2, m.nameRequired).max(80),
+      authorEmail: z.union([z.literal(""), z.string().trim().toLowerCase().max(254).pipe(z.email(m.invalidEmail))]).default(""),
+      body: z.string().trim().min(2, m.tooShort).max(2000),
+      website: z.string().max(0).optional(),
+    })
+    .refine((d) => (d.articleId === null) !== (d.postId === null), { message: m.invalidTarget });
 
 export async function POST(request: Request) {
-  const parsed = await readJson(request, bodySchema);
+  const m = (await getMessages()).article.comments;
+  const parsed = await readJson(request, bodySchema(m));
   if (parsed.response) return parsed.response;
   if (parsed.data.website) return jsonOk({ status: "pending" });
 
   const settings = await getSiteSettings();
-  if (!settings.publication.comments_enabled) return jsonError("Sarado ang mga komento.", 403);
+  if (!settings.publication.comments_enabled) return jsonError(m.disabled, 403);
 
   const net = networkHash(request.headers);
-  if (!(await checkRateLimit("comment", net))) return jsonError("Masyadong maraming komento. Subukan muli mamaya.", 429);
+  if (!(await checkRateLimit("comment", net))) return jsonError(m.rateLimited, 429);
 
   try {
     const d = parsed.data;
@@ -42,7 +46,7 @@ export async function POST(request: Request) {
     });
     if (error) {
       if (error.message === "comments_closed" || error.message === "parent_not_found") {
-        return jsonError("Hindi na tumatanggap ng komento dito.", 409);
+        return jsonError(m.notAccepting, 409);
       }
       throw error;
     }
@@ -50,12 +54,12 @@ export async function POST(request: Request) {
     return jsonOk(
       {
         status,
-        message: status === "approved" ? "Nailathala ang iyong komento." : "Salamat! Lalabas ang komento kapag naaprubahan ng moderator.",
+        message: status === "approved" ? m.published : m.pending,
       },
       { status: 201 },
     );
   } catch (error) {
     logServerError("comment_submit_failed", error);
-    return jsonError("Hindi naisumite ang komento.", 500);
+    return jsonError(m.submitFailed, 500);
   }
 }
