@@ -22,7 +22,7 @@ pnpm dev                      # http://localhost:3000  ·  Studio: /admin
 
 - `seed:demo` refuses any non-local Supabase URL.
 - Demo staff use `@bosesngbayan.test` addresses and one shared password, which the script prints.
-- Local Auth emails (invites, password resets) appear in Inbucket at http://127.0.0.1:54324.
+- Local Auth emails (invites, password resets) appear in Inbucket at http://127.0.0.1:56324.
 
 Checks:
 
