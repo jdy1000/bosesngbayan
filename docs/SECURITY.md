@@ -62,8 +62,8 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
 These are the poll vote, newsletter subscribe and unsubscribe, comments, community posts, reports and page-view tracking. Each one:
 
 1. Requires a same-origin `Origin` or `Referer`. This is the CSRF defence for JSON POSTs.
-2. Rejects bodies that fail Zod validation. The hidden honeypot field (`website`) must be empty, so naive form-filling bots fail validation and nothing is written.
-3. Applies a DB-backed fixed-window rate limit keyed by `HMAC(network)`. It **fails closed**.
+2. Rejects bodies that fail Zod validation. The free-text forms (newsletter, comments, community posts) also carry a hidden honeypot field (`website`) that must be empty, so naive form-filling bots get a normal-looking reply and nothing is written.
+3. Applies a DB-backed fixed-window rate limit keyed by `HMAC(network)` (limits in `src/lib/security/rate-limit.ts`). It **fails closed**. Page-view tracking drops over-limit views silently and still answers 204, so readers never see an error.
 4. Writes through a service-only RPC that re-validates state: poll open, option belongs to the poll, duplicate voter hash, moderation status.
 5. Returns uniform envelopes. Errors never echo internals; details go to the server log through `logServerError`, without tokens or personal data.
 

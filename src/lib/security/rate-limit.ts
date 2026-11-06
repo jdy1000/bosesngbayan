@@ -10,6 +10,9 @@ export const RATE_LIMITS = {
   report: { max: 10, windowSeconds: 3600 },
   search: { max: 60, windowSeconds: 60 },
   login: { max: 10, windowSeconds: 900 },
+  // Page-view beacon, per network. Generous because Philippine mobile carriers put many readers behind
+  // one carrier-grade NAT address; it only caps scripted floods of page_view_events.
+  track: { max: 600, windowSeconds: 600 },
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/server";
 import { isSameOrigin } from "@/lib/security/request";
-import { isLikelyBot, visitorHash } from "@/lib/security/hash";
+import { isLikelyBot, networkHash, visitorHash } from "@/lib/security/hash";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import { logServerError } from "@/lib/log";
 
 const bodySchema = z.object({
@@ -22,7 +23,8 @@ function referrerHost(referrer: string, ownHost: string): string | null {
 
 /**
  * Page-view beacon. Always answers 204 so tracking never affects readers. Respects Do-Not-Track
- * and Global Privacy Control; filters obvious bots; dedupes in the database (30-minute window).
+ * and Global Privacy Control; filters obvious bots; caps each network (RATE_LIMITS.track); dedupes in the
+ * database (30-minute window).
  */
 export async function POST(request: Request) {
   const noContent = new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
@@ -40,6 +42,8 @@ export async function POST(request: Request) {
   }
   const parsed = bodySchema.safeParse(body);
   if (!parsed.success) return noContent;
+  // Over the limit, the view is dropped silently (still 204): tracking never affects readers.
+  if (!(await checkRateLimit("track", networkHash(request.headers)))) return noContent;
 
   try {
     const { error } = await createServiceClient().rpc("record_page_view", {

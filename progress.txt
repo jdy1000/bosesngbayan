@@ -213,3 +213,10 @@ Code review follow-up (independent reviewer, same day):
 - readJson loads messages only when rejecting a request: same-origin/type/size checks run before any settings read.
 - Left as a known limit: in English mode <html lang="en"> also covers Filipino editorial content (articles, posts). Fixing that needs a per-content language field.
 Checks after fixes: tsc, lint clean, vitest 96/96, build OK, e2e 12/12.
+
+## 2026-11-06 — Rate limit on the page-view beacon
+Gap found in a hardening pass: /api/public/v1/track had no rate limit, so a script could fill page_view_events with made-up paths. SECURITY.md §5 already claimed every public write endpoint was limited, which was untrue for /track.
+- Added RATE_LIMITS.track (600 per 10 minutes per network hash). It is generous on purpose: Philippine mobile carriers put many readers behind one CGNAT address. Over the limit, or if the limiter fails, the view is dropped and the endpoint still answers 204, so readers never see an error (fail closed).
+- SECURITY.md §5 corrected: the honeypot field exists only on the free-text forms (newsletter, comments, community posts), not on every endpoint. Also noted the silent drop for /track.
+Verified: tsc and lint clean; build OK; a POST to /track returned 204, stored one page_view_events row (test row deleted) and created a track:<hash> rate_limits row; e2e 12/12.
+Not verified: the over-limit drop itself (it would need 600 requests). It uses the same checkRateLimit path as the other endpoints.
