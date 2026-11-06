@@ -157,3 +157,8 @@ Not run: Playwright e2e suite, Lighthouse after this change.
 - Failure: reset/email links would have landed on :3000 because supabase/config.toml only allowed http://localhost:3000/admin/auth/callback while the local server runs on :3210 (NEXT_PUBLIC_SITE_URL). Fix: added the :3210 callback to additional_redirect_urls; restarted Supabase.
 Checks: tsc clean, lint clean, vitest 95/95, build OK. Browser run (Playwright, local stack + Mailpit): forgot password -> email -> link -> new password -> /admin OK; wrong current password refused; password change OK; email change sent to both addresses, pending notice shown, both confirmed, re-login with new email OK (writer email then restored via admin API). Screenshots: login 1440/768/390, Studio dashboard/articles/account/moderation 1440/390, bell, user menu, drawer.
 Not run: Playwright e2e suite, Lighthouse.
+
+[2026-11-06] Owner requests: align homepage lead story; Studio sidebar without scroller, collapsible groups
+- Lead story (top_stories feature card): photo stretched to the text column height (md:h-full, object-cover) and columns rebalanced 1.1fr/1fr with a 2rem headline. Measured at 1440/1280: text block and photo both 206-545px (before: photo ended 143px above the text).
+- Studio sidebar: every group header is a button (aria-expanded/aria-controls) that hides/shows its links; choice persists per browser (localStorage, useSyncExternalStore, safe when storage is blocked). Scrollbar hidden; spacing tightened so the owner's full nav fits a 900px-tall screen (measured scrollHeight 900 = clientHeight 900).
+Checks: tsc clean, lint clean, vitest 95/95, build OK; Playwright: collapse persists after reload, keyboard Enter toggles, no visible scrollbar.

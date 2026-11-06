@@ -149,10 +149,10 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
   if (variant === "feature") {
     return (
       <article className="group">
-        <Link href={href} className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-8">
+        <Link href={href} className="grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-8">
           <div className="order-2 flex flex-col gap-4 md:order-1">
             <Labels article={article} />
-            <h2 className={`text-[1.75rem] font-semibold leading-[1.15] tracking-[-0.015em] md:text-[2rem] xl:text-[2.25rem] ${headline}`}>
+            <h2 className={`text-[1.75rem] font-semibold leading-[1.15] tracking-[-0.015em] md:text-[2rem] ${headline}`}>
               {article.title}
             </h2>
             {article.excerpt && <p className="text-[1rem] leading-relaxed text-ink-soft">{article.excerpt}</p>}
@@ -164,7 +164,7 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
             article={article}
             priority={priority}
             sizes="(min-width: 1024px) 560px, (min-width: 768px) 50vw, 100vw"
-            className="order-1 aspect-[4/3] w-full rounded md:order-2"
+            className="order-1 aspect-[4/3] w-full rounded md:order-2 md:aspect-auto md:h-full md:min-h-[300px]"
           />
         </Link>
       </article>
