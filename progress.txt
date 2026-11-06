@@ -162,3 +162,9 @@ Not run: Playwright e2e suite, Lighthouse.
 - Lead story (top_stories feature card): photo stretched to the text column height (md:h-full, object-cover) and columns rebalanced 1.1fr/1fr with a 2rem headline. Measured at 1440/1280: text block and photo both 206-545px (before: photo ended 143px above the text).
 - Studio sidebar: every group header is a button (aria-expanded/aria-controls) that hides/shows its links; choice persists per browser (localStorage, useSyncExternalStore, safe when storage is blocked). Scrollbar hidden; spacing tightened so the owner's full nav fits a 900px-tall screen (measured scrollHeight 900 = clientHeight 900).
 Checks: tsc clean, lint clean, vitest 95/95, build OK; Playwright: collapse persists after reload, keyboard Enter toggles, no visible scrollbar.
+
+[2026-11-06] E2E suite run after the news-first homepage and Studio changes
+- Failure 1: homepage had no <h1> (desktop + mobile). Root cause: the top_stories layout replaced the poll hero, which carried the only h1. Fix: src/app/(site)/page.tsx renders a visually hidden h1 (site name + tagline from site settings) when the published homepage has no hero block; a hero block keeps its own visible h1, so there is never more than one.
+- Failure 2: poll vote test timed out on radio.check(). Root cause: test defect; the radio is sr-only and a decorative span covers it, readers click the option <label>. Fix: test clicks the first option label and asserts the radio is checked.
+- Failure 3 (seen once the h1 check passed): mobile nav check found no visible navigation. Root cause: test defect; below lg the category nav is behind the menu button by design. Fix: test opens the menu on small screens and expects "Mobile navigation"; on desktop it expects "Pangunahing navigation".
+Checks: tsc clean, lint clean, vitest 95/95, build OK, Playwright e2e 10/10 (desktop + mobile) against http://localhost:3210. Note: the vote test records a real vote in the local DB each run.

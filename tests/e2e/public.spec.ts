@@ -1,9 +1,17 @@
 import { expect, test } from "@playwright/test";
 
-test("homepage renders CMS hero, navigation and no horizontal overflow", async ({ page }) => {
+test("homepage renders a page title, navigation and no horizontal overflow", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1").first()).toBeVisible();
-  await expect(page.getByRole("navigation").first()).toBeVisible();
+  // The news layout's h1 is visually hidden (the masthead is the logo); it must still exist once.
+  await expect(page.locator("h1")).toHaveCount(1);
+  // Below lg the category navigation lives behind the menu button.
+  const menu = page.getByRole("button", { name: "Buksan ang menu" });
+  if (await menu.isVisible()) {
+    await menu.click();
+    await expect(page.getByRole("navigation", { name: "Mobile navigation" })).toBeVisible();
+  } else {
+    await expect(page.getByRole("navigation", { name: "Pangunahing navigation" })).toBeVisible();
+  }
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });
@@ -22,7 +30,9 @@ test("a reader can vote once on the featured poll", async ({ page }) => {
   await page.goto("/botohan/pinakamahalagang-isyu");
   const first = page.getByRole("radio").first();
   test.skip((await first.count()) === 0, "Preview poll not seeded (run pnpm seed:demo).");
-  await first.check();
+  // Readers click the whole option row (a <label>); the radio itself is visually hidden.
+  await page.locator("label:has(input[type=radio])").first().click();
+  await expect(first).toBeChecked();
   await page.getByRole("button", { name: /bumoto/i }).click();
   await expect(page.getByText(/salamat/i).first()).toBeVisible();
   await page.reload();
