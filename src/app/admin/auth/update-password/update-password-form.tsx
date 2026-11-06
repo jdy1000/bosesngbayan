@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { LoaderCircle } from "lucide-react";
+import { PasswordInput } from "@/components/studio/password-input";
 import { updatePassword, type PasswordState } from "@/app/admin/auth/update-password/actions";
 
 export function UpdatePasswordForm({ email, rules }: { email: string; rules: string }) {
@@ -10,11 +11,13 @@ export function UpdatePasswordForm({ email, rules }: { email: string; rules: str
     <form action={action} className="mt-8 flex flex-col gap-5">
       {/* Lets password managers save the new password against the right account. */}
       <input type="text" name="username" autoComplete="username" value={email} readOnly hidden />
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink">Bagong password</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <label htmlFor="new-password" className="text-sm font-semibold text-ink">
+          Bagong password
+        </label>
+        <PasswordInput
+          id="new-password"
           name="password"
-          type="password"
           required
           minLength={12}
           autoComplete="new-password"
@@ -24,11 +27,13 @@ export function UpdatePasswordForm({ email, rules }: { email: string; rules: str
         <span id="new-password-rules" className="text-sm text-muted">
           {rules}
         </span>
-      </label>
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-semibold text-ink">Ulitin ang password</span>
-        <input name="confirm" type="password" required minLength={12} autoComplete="new-password" className="field h-12 text-base" />
-      </label>
+      </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="confirm-password" className="text-sm font-semibold text-ink">
+          Ulitin ang password
+        </label>
+        <PasswordInput id="confirm-password" name="confirm" required minLength={12} autoComplete="new-password" className="field h-12 text-base" />
+      </div>
       {state.error && (
         <p role="alert" className="rounded bg-accent/8 px-3.5 py-3 text-sm text-accent-700">
           {state.error}

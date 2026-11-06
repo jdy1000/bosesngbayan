@@ -4,6 +4,7 @@ import { ROLE_LABELS } from "@/lib/auth/permissions";
 import { PASSWORD_RULES } from "@/lib/auth/password";
 import { formatDateTime } from "@/lib/format";
 import { ActionForm, SubmitButton } from "@/components/studio/action-form";
+import { PasswordInput } from "@/components/studio/password-input";
 import { Field, Notice, PageHeader, Panel } from "@/components/studio/ui";
 import { changeEmail, changePassword } from "./actions";
 
@@ -44,21 +45,13 @@ export default async function AccountPage() {
               {/* Lets password managers attach the new password to the right account. */}
               <input type="text" name="username" autoComplete="username" value={ctx.email ?? ""} readOnly hidden />
               <Field label="Kasalukuyang password" htmlFor="account-current">
-                <input id="account-current" name="current" type="password" required autoComplete="current-password" className="field" />
+                <PasswordInput id="account-current" name="current" required autoComplete="current-password" />
               </Field>
               <Field label="Bagong password" htmlFor="account-password" hint={PASSWORD_RULES}>
-                <input
-                  id="account-password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={12}
-                  autoComplete="new-password"
-                  className="field"
-                />
+                <PasswordInput id="account-password" name="password" required minLength={12} autoComplete="new-password" />
               </Field>
               <Field label="Ulitin ang bagong password" htmlFor="account-confirm">
-                <input id="account-confirm" name="confirm" type="password" required minLength={12} autoComplete="new-password" className="field" />
+                <PasswordInput id="account-confirm" name="confirm" required minLength={12} autoComplete="new-password" />
               </Field>
               <SubmitButton pendingLabel="Sine-save…">I-save ang password</SubmitButton>
             </ActionForm>

@@ -172,3 +172,8 @@ Checks: tsc clean, lint clean, vitest 95/95, build OK, Playwright e2e 10/10 (des
 [2026-11-06] Perf #5: skip exact row counts nobody reads
 - listPublicArticles / listApprovedPosts gained withTotal (default true). Homepage blocks, RSS, related/curated lists and the Usap Bayan featured strip pass withTotal: false, so PostgREST skips the count scan. Paginated archives (/balita, /paksa, /rehiyon, /tag, /usap-bayan list) and the public API keep exact totals.
 Checks: tsc, lint, vitest 95/95, build OK, e2e 10/10; /api/public/v1/articles still reports total 13 / 7 pages at pageSize 2. Lighthouse (local): / 88, /balita 89, article 90, /botohan 99, /usap-bayan 99; TTFB 36-97 ms. The local DB is tiny, so the count saving is not measurable here; it matters as the article table grows.
+
+[2026-11-06] Owner request: password show/hide on every password field
+- New src/components/studio/password-input.tsx (eye button, aria-pressed, type="button" so it never submits). Used by login, the reset "new password" page (both fields) and Aking Account (current, new, confirm). Login's inline toggle replaced by the shared component; update-password labels now use htmlFor instead of wrapping.
+Checks: tsc, lint clean, build OK; Playwright: login and all three account fields switch password -> text -> password, typed value kept, form not submitted; screenshot reviewed. e2e 10/10.
+Not browser-checked: the reset "new password" page (needs a recovery session); it uses the same component.

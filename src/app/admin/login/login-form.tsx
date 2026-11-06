@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState, type ReactNode } from "react";
-import { ArrowLeft, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { PasswordInput } from "@/components/studio/password-input";
 import { requestPasswordReset, signIn, type LoginState } from "@/app/admin/login/actions";
 
 const fieldClass = "field h-12 text-base";
@@ -30,7 +31,6 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
   // Focus moves to the email field only after the reader switches mode, never on first load.
   const [switched, setSwitched] = useState(false);
   const [email, setEmail] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loginState, loginAction, loginPending] = useActionState<LoginState, FormData>(signIn, {});
   const [resetState, resetAction, resetPending] = useActionState<LoginState, FormData>(requestPasswordReset, {});
 
@@ -101,25 +101,7 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
               Nakalimutan?
             </button>
           </div>
-          <div className="relative">
-            <input
-              id="login-password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              required
-              autoComplete="current-password"
-              className={`${fieldClass} pr-12`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-label={showPassword ? "Itago ang password" : "Ipakita ang password"}
-              aria-pressed={showPassword}
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r text-muted transition-colors hover:text-ink"
-            >
-              {showPassword ? <EyeOff aria-hidden="true" className="size-[18px]" /> : <Eye aria-hidden="true" className="size-[18px]" />}
-            </button>
-          </div>
+          <PasswordInput id="login-password" name="password" required autoComplete="current-password" className={fieldClass} />
         </div>
         {loginState.error && <Notice tone="error">{loginState.error}</Notice>}
         <SubmitButton pending={loginPending} idle="Mag-login" busy="Nagla-login…" />
