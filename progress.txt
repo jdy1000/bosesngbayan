@@ -168,3 +168,7 @@ Checks: tsc clean, lint clean, vitest 95/95, build OK; Playwright: collapse pers
 - Failure 2: poll vote test timed out on radio.check(). Root cause: test defect; the radio is sr-only and a decorative span covers it, readers click the option <label>. Fix: test clicks the first option label and asserts the radio is checked.
 - Failure 3 (seen once the h1 check passed): mobile nav check found no visible navigation. Root cause: test defect; below lg the category nav is behind the menu button by design. Fix: test opens the menu on small screens and expects "Mobile navigation"; on desktop it expects "Pangunahing navigation".
 Checks: tsc clean, lint clean, vitest 95/95, build OK, Playwright e2e 10/10 (desktop + mobile) against http://localhost:3210. Note: the vote test records a real vote in the local DB each run.
+
+[2026-11-06] Perf #5: skip exact row counts nobody reads
+- listPublicArticles / listApprovedPosts gained withTotal (default true). Homepage blocks, RSS, related/curated lists and the Usap Bayan featured strip pass withTotal: false, so PostgREST skips the count scan. Paginated archives (/balita, /paksa, /rehiyon, /tag, /usap-bayan list) and the public API keep exact totals.
+Checks: tsc, lint, vitest 95/95, build OK, e2e 10/10; /api/public/v1/articles still reports total 13 / 7 pages at pageSize 2. Lighthouse (local): / 88, /balita 89, article 90, /botohan 99, /usap-bayan 99; TTFB 36-97 ms. The local DB is tiny, so the count saving is not measurable here; it matters as the article table grows.

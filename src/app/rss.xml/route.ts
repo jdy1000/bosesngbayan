@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const settings = await getSiteSettings();
     const slug = new URL(request.url).searchParams.get("paksa");
     const category = slug && /^[a-z0-9-]{1,120}$/.test(slug) ? await getCategoryBySlug(slug) : null;
-    const { items } = await listPublicArticles({ pageSize: 30, categoryId: category?.id ?? null });
+    const { items } = await listPublicArticles({ pageSize: 30, categoryId: category?.id ?? null, withTotal: false });
     const title = category ? `${settings.general.site_name} — ${category.name}` : settings.general.site_name;
     const channelLink = siteUrl(category ? `/paksa/${category.slug}` : "/");
     const body = `<?xml version="1.0" encoding="UTF-8"?>

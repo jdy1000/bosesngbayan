@@ -23,15 +23,15 @@ async function resolveArticles(s: ListSettings): Promise<Article[]> {
     case "most_read":
       return getMostReadArticles(7, s.limit, s.category_id);
     case "featured":
-      return (await listPublicArticles({ featured: true, pageSize: s.limit })).items;
+      return (await listPublicArticles({ featured: true, pageSize: s.limit, withTotal: false })).items;
     case "editors_picks":
-      return (await listPublicArticles({ editorsPick: true, pageSize: s.limit })).items;
+      return (await listPublicArticles({ editorsPick: true, pageSize: s.limit, withTotal: false })).items;
     case "breaking":
-      return (await listPublicArticles({ breaking: true, pageSize: s.limit })).items;
+      return (await listPublicArticles({ breaking: true, pageSize: s.limit, withTotal: false })).items;
     case "category":
-      return (await listPublicArticles({ categoryId: s.category_id, pageSize: s.limit })).items;
+      return (await listPublicArticles({ categoryId: s.category_id, pageSize: s.limit, withTotal: false })).items;
     default:
-      return (await listPublicArticles({ pageSize: s.limit })).items;
+      return (await listPublicArticles({ pageSize: s.limit, withTotal: false })).items;
   }
 }
 
@@ -44,9 +44,9 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
     settings.lead_source === "manual" && settings.lead_article_id
       ? getPublicArticlesByIds([settings.lead_article_id]).then((r) => r[0])
       : settings.lead_source === "featured"
-        ? listPublicArticles({ featured: true, pageSize: 1 }).then((r) => r.items[0])
+        ? listPublicArticles({ featured: true, pageSize: 1, withTotal: false }).then((r) => r.items[0])
         : Promise.resolve(undefined),
-    listPublicArticles({ pageSize: want + 1 }).then((r) => r.items),
+    listPublicArticles({ pageSize: want + 1, withTotal: false }).then((r) => r.items),
   ]);
   const lead = leadPick ?? latest[0];
   if (!lead) {
@@ -188,7 +188,7 @@ export async function ArticleListBlock({
     resolveArticles(settings),
     sidebarWanted ? getMostReadArticles(7, 5) : Promise.resolve([] as Article[]),
     sidebarWanted ? listCategories() : Promise.resolve([] as CategorySummary[]),
-    sidebarWanted ? listApprovedPosts({ pageSize: 3 }).then((r) => r.items) : Promise.resolve([] as Post[]),
+    sidebarWanted ? listApprovedPosts({ pageSize: 3, withTotal: false }).then((r) => r.items) : Promise.resolve([] as Post[]),
   ]);
   if (articles.length === 0 && layout !== "list") return null; // Secondary lists hide when empty.
   // Ranking needs real page-view data and is never invented; until it exists the sidebar shows the section index.
@@ -248,8 +248,8 @@ export async function ArticleListBlock({
 export async function FeaturedStoryBlock({ title, settings }: { title: string | null; settings: BlockSettings<"featured_story"> }) {
   let article: Article | undefined;
   if (settings.source === "manual" && settings.article_id) article = (await getPublicArticlesByIds([settings.article_id]))[0];
-  else if (settings.source === "featured") article = (await listPublicArticles({ featured: true, pageSize: 1 })).items[0];
-  if (!article) article = (await listPublicArticles({ pageSize: 1 })).items[0];
+  else if (settings.source === "featured") article = (await listPublicArticles({ featured: true, pageSize: 1, withTotal: false })).items[0];
+  if (!article) article = (await listPublicArticles({ pageSize: 1, withTotal: false })).items[0];
   if (!article) return null;
   return (
     <section className={section}>
@@ -262,7 +262,7 @@ export async function FeaturedStoryBlock({ title, settings }: { title: string | 
 }
 
 export async function BreakingNewsBlock({ settings }: { settings: BlockSettings<"breaking_news"> }) {
-  const { items } = await listPublicArticles({ breaking: true, pageSize: settings.limit });
+  const { items } = await listPublicArticles({ breaking: true, pageSize: settings.limit, withTotal: false });
   if (items.length === 0) return null; // No breaking news → no alarm bar.
   return (
     <section aria-label="Breaking news" className="bg-accent text-white">
@@ -340,7 +340,7 @@ export async function CategoryShowcaseBlock({ title, description, settings }: { 
     ? settings.category_ids.map((id) => all.find((c) => c.id === id)).filter((c) => c !== undefined)
     : all.filter((c) => c.is_featured);
   const groups = await Promise.all(
-    chosen.map(async (c) => ({ category: c, items: (await listPublicArticles({ categoryId: c.id, pageSize: settings.per_category })).items })),
+    chosen.map(async (c) => ({ category: c, items: (await listPublicArticles({ categoryId: c.id, pageSize: settings.per_category, withTotal: false })).items })),
   );
   // Default selection: the first three featured sections that actually have stories.
   const nonEmpty = groups.filter((g) => g.items.length > 0);
@@ -403,7 +403,7 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
       const ids = [loc.id];
       for (let i = 0; i < ids.length; i++) for (const c of locations) if (c.parent_id === ids[i]) ids.push(c.id);
       const children = locations.filter((c) => c.parent_id === loc.id);
-      return { loc, children, items: (await listPublicArticles({ locationIds: ids, pageSize: settings.per_location })).items };
+      return { loc, children, items: (await listPublicArticles({ locationIds: ids, pageSize: settings.per_location, withTotal: false })).items };
     }),
   );
   if (groups.length === 0) return null;

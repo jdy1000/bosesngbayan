@@ -54,6 +54,8 @@ export interface ArticleListOptions {
   featured?: boolean;
   editorsPick?: boolean;
   breaking?: boolean;
+  /** false skips the exact row count (one fewer scan) for callers that only read `items`; `total` is then the page length. */
+  withTotal?: boolean;
 }
 
 export interface Paginated<T> {
@@ -83,7 +85,7 @@ export async function listPublicArticles(opts: ArticleListOptions = {}): Promise
 
   let query = supabase
     .from("articles")
-    .select(ARTICLE_CARD_SELECT, { count: "exact" })
+    .select(ARTICLE_CARD_SELECT, opts.withTotal === false ? undefined : { count: "exact" })
     .in("status", ["published", "scheduled"])
     .lte("published_at", nowIso())
     .order("published_at", { ascending: false })
@@ -101,7 +103,7 @@ export async function listPublicArticles(opts: ArticleListOptions = {}): Promise
   const from = (page - 1) * pageSize;
   const { data, error, count } = await query.range(from, from + pageSize - 1);
   if (error) throw error;
-  const total = count ?? 0;
+  const total = count ?? data?.length ?? 0;
   return {
     items: (data ?? []) as unknown as ArticleCard[],
     total,
@@ -114,7 +116,7 @@ export async function listPublicArticles(opts: ArticleListOptions = {}): Promise
 /** Keep the caller's ordering for manually curated lists. */
 export async function getPublicArticlesByIds(ids: string[]): Promise<ArticleCard[]> {
   if (ids.length === 0) return [];
-  const { items } = await listPublicArticles({ ids, pageSize: Math.min(ids.length, 48) });
+  const { items } = await listPublicArticles({ ids, pageSize: Math.min(ids.length, 48), withTotal: false });
   const byId = new Map(items.map((a) => [a.id, a]));
   return ids.map((id) => byId.get(id)).filter((a): a is ArticleCard => Boolean(a));
 }
@@ -193,6 +195,7 @@ export async function getRelatedArticles(article: ArticleDetail, limit = 3): Pro
     categoryId: article.category.id,
     excludeIds: [article.id, ...chosen.map((c) => c.id)],
     pageSize: limit - chosen.length,
+    withTotal: false,
   });
   return [...chosen, ...items];
 }

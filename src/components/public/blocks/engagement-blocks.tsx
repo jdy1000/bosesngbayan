@@ -102,7 +102,7 @@ export async function PollShowcaseBlock({ title, description, settings }: { titl
 }
 
 export async function CommunityBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"community"> }) {
-  const { items } = await listApprovedPosts({ featuredOnly: settings.featured_only, pageSize: settings.limit });
+  const { items } = await listApprovedPosts({ featuredOnly: settings.featured_only, pageSize: settings.limit, withTotal: false });
   return (
     <section className="py-14 md:py-18">
       <div className="container-site">

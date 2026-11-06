@@ -20,7 +20,7 @@ export default async function CommunityPage({ searchParams }: Props) {
   const [settings, categories, featured, list] = await Promise.all([
     getSiteSettings(),
     listCategories(),
-    page === 1 && !kind ? listApprovedPosts({ featuredOnly: true, pageSize: 2 }) : Promise.resolve(null),
+    page === 1 && !kind ? listApprovedPosts({ featuredOnly: true, pageSize: 2, withTotal: false }) : Promise.resolve(null),
     listApprovedPosts({ kind, page, pageSize: 12 }),
   ]);
   const featuredIds = new Set(featured?.items.map((p) => p.id));
