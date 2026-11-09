@@ -1,3 +1,4 @@
+import { AdSlot } from "@/components/public/ad-slot";
 import { RenderBlocks } from "@/components/public/blocks/render-blocks";
 import { EmptyState } from "@/components/public/article-card";
 import { getHomepage } from "@/lib/cms/homepage";
@@ -26,10 +27,14 @@ export default async function HomePage() {
   }
   // A hero block carries its own visible h1; only add the hidden one when it is absent.
   const hasHero = homepage.blocks.some((b) => b.type === "hero");
+  // News first: the ad goes below the lead stories, or after the first block when there are none.
+  const adAfter = homepage.blocks.findIndex((b) => b.type === "top_stories") + 1 || 1;
   return (
     <>
       {!hasHero && title}
-      <RenderBlocks blocks={homepage.blocks} />
+      <RenderBlocks blocks={homepage.blocks.slice(0, adAfter)} />
+      <AdSlot placement="home" className="container-site py-6" />
+      <RenderBlocks blocks={homepage.blocks.slice(adAfter)} />
     </>
   );
 }

@@ -42,8 +42,8 @@ export default async function NewsletterPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader
-        title="Newsletter"
-        description="Subscribers, their consent records, and unsubscribe/suppression management."
+        title="Audience"
+        description="Manage newsletter subscribers, their consent records and unsubscribes."
         actions={
           canManage && (
             <a href={withParams("/admin/newsletter/export", { status })} className="btn btn-outline min-h-10 px-4 text-sm">

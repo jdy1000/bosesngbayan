@@ -34,7 +34,7 @@ export default async function ModerationPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title="Moderation" description="Review community submissions, comments and reports before or after they appear publicly." />
+      <PageHeader eyebrow="Trust and corrections" title="Report inbox" description="Review reader reports, submissions and comments, and record each resolution." />
       <nav aria-label="Queues" className="mb-5 flex flex-wrap gap-2">
         {TABS.map((t) => (
           <Link

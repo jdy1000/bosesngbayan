@@ -2,13 +2,14 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, History, Save } from "lucide-react";
 import { RichTextEditor } from "@/components/studio/rich-text-editor";
 import { MediaPicker, type PickedMedia } from "@/components/studio/media-picker";
 import { Field, Notice, Panel, StatusBadge } from "@/components/studio/ui";
 import { formatDateTime, slugify } from "@/lib/format";
 import type { ArticleForEdit, EditorOptions, PickedImage } from "@/lib/studio/articles";
-import { saveArticle } from "../actions";
+import { createArticleFromEditor, saveArticle } from "../actions";
 import { SaveIndicator, useAutosave } from "./use-autosave";
 import { ContributorsPicker, RelatedPicker, TagPicker } from "./relation-pickers";
 import { WorkflowPanel } from "./workflow-panel";
@@ -21,20 +22,32 @@ export function ArticleEditor({
   options,
   perms,
   userId,
+  isNew = false,
 }: {
   data: ArticleForEdit;
   options: EditorOptions;
   perms: WorkflowPerms & { taxonomy: boolean };
   userId: string;
+  /** Unsaved article: nothing is written (and autosave stays off) until the first explicit save or action. */
+  isNew?: boolean;
 }) {
   const { article } = data;
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const createdId = useRef<string | null>(null);
   const disabled = !data.canEdit;
   const { status, message, field, savedAt, markDirty, saveNow, isDirty } = useAutosave({
     formRef,
     initialUpdatedAt: article.updated_at,
-    save: (expected, fd, rev) => saveArticle(article.id, expected, fd, rev),
-    enabled: !disabled,
+    save: async (expected, fd, rev) => {
+      if (isNew && !createdId.current) {
+        const res = await createArticleFromEditor(fd);
+        if (res.id) createdId.current = res.id;
+        return res;
+      }
+      return saveArticle(createdId.current ?? article.id, expected, fd, rev);
+    },
+    enabled: !disabled && !isNew,
   });
 
   const [title, setTitle] = useState(article.title);
@@ -45,8 +58,18 @@ export function ArticleEditor({
   const actions = availableActions(article.status, perms, isAuthor);
   const err = (name: string) => (field === name ? message ?? undefined : undefined);
 
-  async function beforeTransition() {
-    return disabled || !isDirty() ? true : saveNow(false);
+  /** Saves pending edits (creating a new article first) and returns the id to act on, or null if saving failed. */
+  async function prepare(): Promise<string | null> {
+    if (isNew) {
+      if (!createdId.current && !(await saveNow(true))) return createdId.current;
+      return createdId.current;
+    }
+    return disabled || !isDirty() || (await saveNow(false)) ? article.id : null;
+  }
+
+  function openSaved(id: string) {
+    if (isNew) router.replace(`/admin/articles/${id}`);
+    else router.refresh();
   }
 
   return (
@@ -55,14 +78,22 @@ export function ArticleEditor({
       onInput={(e) => (e.target as HTMLInputElement).name && markDirty()}
       onSubmit={(e) => {
         e.preventDefault();
-        void saveNow(true);
+        void saveNow(true).then(() => {
+          if (isNew && createdId.current) router.replace(`/admin/articles/${createdId.current}`);
+        });
       }}
       className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
     >
       <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-3 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 xl:col-span-2">
         <StatusBadge status={article.status} />
-        {disabled ? <span className="text-sm text-muted">Read only</span> : <SaveIndicator status={status} message={message} savedAt={savedAt} />}
-        <div className="ml-auto flex flex-wrap gap-2">
+        {disabled ? (
+          <span className="text-sm text-muted">Read only</span>
+        ) : isNew && status === "saved" ? (
+          <span className="text-sm text-muted">Not saved yet</span>
+        ) : (
+          <SaveIndicator status={status} message={message} savedAt={savedAt} />
+        )}
+        <div className={`ml-auto flex flex-wrap gap-2 ${isNew ? "hidden" : ""}`}>
           <Link href={`/admin/preview/articles/${article.id}`} target="_blank" onClick={(e) => previewAfterSave(e, isDirty() && !disabled, saveNow)} className="btn btn-outline min-h-9 px-3 text-sm">
             <Eye className="h-4 w-4" aria-hidden="true" /> Preview
           </Link>
@@ -170,12 +201,20 @@ export function ArticleEditor({
       </fieldset>
 
       <aside className="min-w-0 space-y-5">
-        <Panel title="Workflow" description={workflowSummary(article)}>
-          <WorkflowPanel articleId={article.id} actions={actions} beforeTransition={beforeTransition} />
+        <Panel title="Publishing" description={isNew ? undefined : workflowSummary(article)}>
+          <WorkflowPanel
+            status={article.status}
+            isNew={isNew}
+            canSave={!disabled}
+            saving={status === "saving"}
+            actions={actions}
+            prepare={prepare}
+            onDone={openSaved}
+          />
         </Panel>
 
         <fieldset disabled={disabled} className="min-w-0 space-y-5">
-          <Panel title="Publishing">
+          <Panel title="Story settings">
             <div className="space-y-4">
               <Field label="Category" htmlFor="category_id" hint="Required before submitting or publishing.">
                 <select id="category_id" name="category_id" className="field" defaultValue={article.category_id ?? ""}>
@@ -302,7 +341,7 @@ function ImageMeta({ image }: { image: PickedImage | PickedMedia | null }) {
           <span className="font-semibold text-ink">Alt text:</span> {image.alt_text}
         </p>
       ) : (
-        <p className="font-semibold text-amber-800">This image has no alt text — add it in the Media Library before publishing.</p>
+        <p className="font-semibold text-amber-800">This image has no alt text. Upload it again with alt text, or choose another image.</p>
       )}
       {caption && (
         <p>
@@ -314,13 +353,7 @@ function ImageMeta({ image }: { image: PickedImage | PickedMedia | null }) {
           <span className="font-semibold text-ink">Credit:</span> {credit}
         </p>
       )}
-      <p className="text-muted">
-        Alt text, caption and credit are stored in the{" "}
-        <Link href="/admin/media" className="font-semibold text-brand hover:underline">
-          Media Library
-        </Link>
-        .
-      </p>
+      <p className="text-muted">Alt text, caption and credit are set when the image is uploaded.</p>
     </div>
   );
 }

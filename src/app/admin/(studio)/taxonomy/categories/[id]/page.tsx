@@ -32,7 +32,7 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
     <>
       <PageHeader
         title={category.name}
-        breadcrumb={[{ label: "Categories & tags", href: "/admin/taxonomy" }]}
+        breadcrumb={[{ label: "Site categories", href: "/admin/taxonomy" }]}
         actions={
           category.is_active && (
             <Link href={`/paksa/${category.slug}`} target="_blank" className="text-sm font-semibold text-brand hover:underline">

@@ -8,7 +8,7 @@ Tokens live in `src/app/globals.css` (`:root` + Tailwind v4 `@theme inline`). Br
 
 **2026-11-06 redesign (ADR-012).** The owner asked for a news site that looks like the Morning template (https://morning-template.webflow.io) and Istorya (https://istorya.news), instead of the original poll-led landing reference. Morning supplies the visual language: a white editorial grid, ruled section heads, square controls and small-caps category labels. Istorya supplies the structure: dateline with trending chips, regional discovery and daily modules. Brand colours are unchanged.
 
-Starter homepage, top to bottom (all CMS blocks, reorderable in Studio):
+Starter homepage, top to bottom (all CMS blocks; since ADR-017 the order can no longer be changed from Studio):
 
 | Section | Implementation |
 | --- | --- |
@@ -56,7 +56,7 @@ All of these pass AA for body text. The placeholder grey `#8a94ad` is 3.03:1, so
 
 ### Dark mode
 
-Light is the default. A reader, or a staff member in Studio, can switch to dark with the sun/moon button. The choice is stored in the `bnb_theme` cookie, and the server writes `<html data-theme>` so the first paint already uses the right theme. The neutral roles are CSS variables on `:root`, redefined under `:root[data-theme="dark"]`:
+Light is the default. A reader can switch to dark with the sun/moon button on the public site. The Studio has no toggle of its own (ADR-016) and follows the same choice. The choice is stored in the `bnb_theme` cookie, and the server writes `<html data-theme>` so the first paint already uses the right theme. The neutral roles are CSS variables on `:root`, redefined under `:root[data-theme="dark"]`:
 
 | Role | Dark value | Contrast |
 | --- | --- | --- |
@@ -70,7 +70,7 @@ Light is the default. A reader, or a staff member in Studio, can switch to dark 
 
 Rules:
 - Use the role tokens (`bg-paper`, `text-ink`, `border-line` and so on). `bg-white` is kept only where the surface stays white in both themes: the Breaking label on the red strip, the pressed FIL/EN pill on navy, and `.btn-light` on navy.
-- The navy header, footer and Studio sidebar stay navy in both themes as brand chrome.
+- The navy public header and footer stay navy in both themes as brand chrome. The Studio sidebar is `bg-paper`, so it follows the theme.
 - In dark mode, `text-brand`, article links, `text-navy` headings and `text-accent-700` error text switch to lighter equivalents (see the end of `globals.css`), because the light-mode colours fall below 4.5:1 on black. The Tailwind status tints (`red-50`, `emerald-50/700/800`, `amber-50/700/800/900` and their `-200` borders) point to dark equivalents.
 
 **Rule:** a custom brand colour set in Studio must keep white text at ≥4.5:1. Settings validation rejects brand and accent colours that fail this against white.
@@ -107,7 +107,7 @@ Headings use `text-wrap: balance`.
 
 | Component | Spec |
 | --- | --- |
-| `.btn-primary` | Brand fill, white text, 4px radius, semibold, 44px min, hover darkens to `brand-600`, 1px press |
+| `.btn-primary` | Brand fill, white text, 4px radius, semibold, 44px min, hover darkens to `brand-600`, presses to `scale(0.97)` (not when disabled) |
 | `.btn-outline` | White fill with a brand-200 inset ring; ring turns brand on hover |
 | `.btn-light` | White on dark bands |
 | Disabled | `aria-disabled` or `disabled`, 55% opacity, not-allowed cursor, plus a visible reason next to it |
@@ -120,7 +120,21 @@ Headings use `text-wrap: balance`.
 | Poll card | Radio for single choice or checkbox for multiple; result bars appear after voting when visibility allows; "hindi kumakatawan sa buong populasyon ng Pilipinas" caveat and a methodology link |
 | Section heading | `.section-rule`: 3px ink rule above, hairline below, optional "label →" action link. Page headers still use `.section-kicker`. |
 
-**Studio** uses the same tokens and fonts in a denser layout (`components/studio/ui.tsx`): PageHeader, Panel, Table, Badge tones (neutral, info, success, warning, danger), StatusBadge for article states, Notice, Empty, Pagination and Field. There are no gradients or decorative imagery.
+**Studio** uses the same tokens and fonts in a denser layout (`components/studio/ui.tsx`): PageHeader (with an optional `eyebrow`), Panel, Table, Badge tones (neutral, info, success, warning, danger), StatusBadge for article states, Notice, Empty, Pagination and Field. There are no gradients or decorative imagery.
+
+The Studio shell follows the Newsmaker console (ADR-016):
+- *Sidebar.* `bg-paper` with a right hairline. The brand block reads "Studio / Editorial workspace". Below it is one flat list under a small uppercase "PUBLICATION" label, with no groups. The active item uses `bg-surface-2` with `text-brand-700`. Only the list scrolls. The pinned footer holds "Private workspace / Authorized editors only", "View publication" (opens the public site in a new tab) and "Sign out". Below `lg` the sidebar becomes a drawer behind a menu button; it closes on Escape and after navigation.
+- *Top bar.* A "Workspace / <page>" breadcrumb, article search with a ↵ submit button from `md` up, and an identity chip (initial, name, role) that links to My account. There is no notification bell and no theme toggle.
+- *Page header.* An optional `eyebrow`: a single small uppercase brand kicker such as "Content" or "Editorial workflow", above an h1 and a description. The kickers per page are listed in ADR-016. When a page has a breadcrumb, the breadcrumb replaces the eyebrow.
+- *List pages.* One `rounded-2xl` card holds the tabs, a filter row, a `Table plain`, and the `Pagination` footer, which reads "a–b of N items" and hides itself when the list is empty.
+- *Editor.* A form column, with a right column that starts with the Publishing card. Its full-width actions are ordered primary first, then outline.
+- *Footer.* A slim row: "Boses ng Bayan" and "Editorial workspace · <year>".
+- *Media picker* (`components/studio/media-picker.tsx`). A thumbnail with "Choose image" / "Change" and "Remove". "Choose image" opens a modal `<dialog>` with:
+  - a search field over existing images;
+  - an "Upload a new image" area on a `surface` band: file input (JPEG, PNG, WebP, GIF or AVIF, up to 4 MB), alt text (required, up to 300 characters), caption and credit (optional, up to 600 and 200), and an "Upload and use" button. Errors show inline with `role="alert"`, and the new image is selected straight away;
+  - a grid of existing images, each flagged "No alt text" when it has none.
+
+  The inputs are plain fields with a click handler rather than a form, because the picker usually sits inside another form.
 
 ## 6. States
 
@@ -144,7 +158,7 @@ Blocks that depend on data that does not exist yet are hidden rather than shown 
 | Regional | 16:11 |
 
 - Images use `next/image` with `sizes` set per slot.
-- Alt text comes from the media library and editors are warned when it is missing; credit and caption render under figures.
+- Alt text comes from the media record. New uploads require it in the picker, and the picker flags existing images without it. Credit and caption render under figures.
 - When no image exists, a brand gradient with the category name stands in. Stock "fake product" shots are never substituted.
 - Development photographs in `supabase/seed-media/` carry licences and credits in `CREDITS.json`. Every preview photo is CC0, public domain or Unsplash License (no attribution required), so no credit line is shown; a photo with `credit_required: true` would get one. Story photos (`ph-*.jpg`) are real Philippine scenes matched to each preview story; captions describe only what is in the photo and never name real places or people (ADR-013). Photos are never copied from other publishers' articles (copyright).
 - Story meta (category · author · time · reading time) wraps flush left: each item carries its separator in a clipped gutter. Phones hide reading time; grid cards show time only so rows line up.
@@ -152,4 +166,16 @@ Blocks that depend on data that does not exist yet are hidden rather than shown 
 
 ## 8. Motion
 
-Motion is limited to colour, shadow and 1px transforms (150ms). `prefers-reduced-motion` removes transitions. There are no scroll-jacking or autoplay animations.
+Motion is limited to colour, shadow, the `scale(0.97)` button press and the slow thumbnail zoom on card hover (150ms; 500ms for the zoom). `prefers-reduced-motion` removes transitions. There are no scroll-jacking or autoplay animations.
+
+## 9. Detail rules (2026-11-09 polish pass)
+
+- **Corner radii.** Controls, poll options, notices and thumbnails use 4px (`rounded`); cards, panels and prose images use 6px (`--radius-card`). An inner element is never rounder than the surface that holds it.
+- **Image edges.** Content photographs carry a 1px pure-black outline at 10% (pure white at 10% in dark mode) through `.img-frame` (card thumbnails, the article lead photo) and `.prose-bnb img`. The outline sits inside the image (`outline-offset: -1px`).
+- **Focus ring.** The 3px outline follows each element's own radius. Do not set `border-radius` on `:focus-visible`.
+- **Text wrapping.** Headings use `text-wrap: balance`; paragraphs, list items and captions use `text-wrap: pretty`.
+- **Top-ruled panels.** A panel with a heavy top rule and rounded corners draws the rule with an inset shadow (`shadow-[inset_0_3px_0_var(--color-ink)]`), not `border-top`, so the corners do not taper.
+- **Short rows.** A row that cannot fill its grid must not leave an empty column. Poll lists size their columns to the count (1, 2, 3 or more); the Usap Bayan featured banner goes full width when there is only one; related stories use one list row, two columns, or three columns.
+- **Paired cards.** Cards that share a row line their options and actions up from the bottom (`mt-auto`), so a longer question does not push one card's button lower than its neighbour's.
+- **Narrow fields.** A newsletter form stacks its field and button unless its own container is at least 24rem wide (container query), so the placeholder is never clipped in the footer column.
+- **Scrolling chip rows.** The trending row fades out at its right edge, so a chip cut off by the row reads as "more to scroll".

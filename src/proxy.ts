@@ -64,7 +64,7 @@ export async function proxy(request: NextRequest) {
   });
   const { data } = await supabase.auth.getUser();
 
-  const isPublicAdminPath = path === "/admin/login" || path.startsWith("/admin/auth/");
+  const isPublicAdminPath = path === "/admin/login" || path === "/admin/apply" || path.startsWith("/admin/auth/");
   if (!data.user && !isPublicAdminPath) {
     const login = request.nextUrl.clone();
     login.pathname = "/admin/login";

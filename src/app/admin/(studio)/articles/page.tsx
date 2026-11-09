@@ -33,8 +33,9 @@ export default async function ArticlesPage({ searchParams }: { searchParams: Sea
   return (
     <>
       <PageHeader
+        eyebrow="Content"
         title="Articles"
-        description={ctx.permissions.has("articles.view_all") ? "All articles in the newsroom." : "Your articles and the ones you contribute to."}
+        description="Manage stories through the full editorial workflow."
         actions={
           ctx.permissions.has("articles.create") && (
             <Link href="/admin/articles/new" className="btn btn-primary min-h-10 px-4 text-sm">
@@ -44,61 +45,70 @@ export default async function ArticlesPage({ searchParams }: { searchParams: Sea
         }
       />
 
-      <nav aria-label="Filter by status" className="mb-4 flex gap-1 overflow-x-auto border-b border-line">
-        {[undefined, ...ARTICLE_STATUSES].map((s) => {
-          const active = s === status;
-          return (
-            <Link
-              key={s ?? "all"}
-              href={withParams("/admin/articles", { ...params, status: s })}
-              aria-current={active ? "page" : undefined}
-              className={`shrink-0 border-b-2 px-3 py-2 text-sm font-semibold ${active ? "border-brand text-brand" : "border-transparent text-ink-soft hover:text-ink"}`}
-            >
-              {s ? ARTICLE_STATUS[s]?.label : "All"}
-            </Link>
-          );
-        })}
-      </nav>
+      <section className="rounded-2xl bg-paper shadow-card ring-1 ring-line">
+        <div className="flex flex-col gap-3 border-b border-line px-4 pt-3 lg:flex-row lg:items-end lg:justify-between">
+          <nav aria-label="Filter by status" className="-mb-px flex gap-1 overflow-x-auto">
+            {[undefined, ...ARTICLE_STATUSES].map((s) => {
+              const active = s === status;
+              return (
+                <Link
+                  key={s ?? "all"}
+                  href={withParams("/admin/articles", { ...params, status: s })}
+                  aria-current={active ? "page" : undefined}
+                  className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-semibold ${active ? "border-brand text-brand" : "border-transparent text-ink-soft hover:text-ink"}`}
+                >
+                  {s ? ARTICLE_STATUS[s]?.label : "All"}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-      <form className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto]" role="search">
-        {status && <input type="hidden" name="status" value={status} />}
-        <input type="search" name="q" defaultValue={q} placeholder="Search title or slug…" aria-label="Search" className="field" />
-        <select name="category" defaultValue={categoryId ?? ""} aria-label="Category" className="field">
-          <option value="">All categories</option>
-          {options.categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select name="author" defaultValue={authorId ?? ""} aria-label="Author" className="field">
-          <option value="">All authors</option>
-          {options.people.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.display_name}
-            </option>
-          ))}
-        </select>
-        <select name="sort" defaultValue={sort} aria-label="Sort by" className="field">
-          {Object.entries(ARTICLE_SORTS).map(([k, v]) => (
-            <option key={k} value={k}>
-              {v.label}
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="btn btn-outline min-h-10 px-4 text-sm">
-          Filter
-        </button>
-      </form>
+        <form className="grid gap-2 border-b border-line p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_auto]" role="search">
+          {status && <input type="hidden" name="status" value={status} />}
+          <input type="search" name="q" defaultValue={q} placeholder="Search title or slug…" aria-label="Search" className="field" />
+          <select name="category" defaultValue={categoryId ?? ""} aria-label="Category" className="field">
+            <option value="">All categories</option>
+            {options.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          <select name="author" defaultValue={authorId ?? ""} aria-label="Author" className="field">
+            <option value="">All authors</option>
+            {options.people.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.display_name}
+              </option>
+            ))}
+          </select>
+          <select name="sort" defaultValue={sort} aria-label="Sort by" className="field">
+            {Object.entries(ARTICLE_SORTS).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v.label}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="btn btn-primary min-h-10 px-4 text-sm">
+            Search
+          </button>
+        </form>
 
-      {list.rows.length === 0 ? (
-        <Empty title={q || categoryId || authorId || status ? "No matching articles." : "No articles yet."}>
-          {ctx.permissions.has("articles.create") && !q && "Create the first draft with “New article”."}
-        </Empty>
-      ) : (
-        <>
-          <p className="mb-2 text-sm text-muted">{formatNumber(list.total)} {list.total === 1 ? "article" : "articles"}</p>
+        {list.rows.length === 0 ? (
+          <div className="px-6 py-14 text-center">
+            <p className="font-semibold text-ink">{q || categoryId || authorId || status ? "No articles in this view." : "No articles yet."}</p>
+            <p className="mt-1 text-sm text-muted">
+              {q || categoryId || authorId || status
+                ? "Choose another status or clear the search."
+                : ctx.permissions.has("articles.create")
+                  ? "Create the first draft with “New article”."
+                  : "Articles you are credited on will appear here."}
+            </p>
+          </div>
+        ) : (
           <Table
+            plain
             head={["", "Title", "Category", "Author", "Status", "Published / Scheduled", "Last modified", ...(showViews ? ["Views"] : [])]}
           >
             {list.rows.map((a) => {
@@ -122,20 +132,29 @@ export default async function ArticlesPage({ searchParams }: { searchParams: Sea
                     <p className="truncate font-mono text-xs text-muted">{a.slug}</p>
                   </td>
                   <td>{a.category?.name ?? <span className="text-muted">—</span>}</td>
-                  <td>{a.author?.display_name ?? "—"}</td>
+                  <td className="min-w-36">{a.author?.display_name ?? "—"}</td>
                   <td>
                     <StatusBadge status={a.status} />
                   </td>
                   <td className="whitespace-nowrap text-ink-soft">{a.published_at ? formatDateTime(a.published_at) : "—"}</td>
                   <td className="whitespace-nowrap text-ink-soft">{formatDateTime(a.updated_at)}</td>
-                  {showViews && <td className="tabular-nums">{formatNumber(list.views?.get(a.id) ?? 0)}</td>}
+                  {showViews && <td className="text-right tabular-nums">{formatNumber(list.views?.get(a.id) ?? 0)}</td>}
                 </tr>
               );
             })}
           </Table>
-          <Pagination page={page} totalPages={list.totalPages} hrefFor={(p) => withParams("/admin/articles", { ...params, page: p })} />
-        </>
-      )}
+        )}
+        <div className="border-t border-line px-4 empty:hidden">
+          <Pagination
+            page={page}
+            totalPages={list.totalPages}
+            total={list.total}
+            pageSize={list.pageSize}
+            noun={list.total === 1 ? "article" : "articles"}
+            hrefFor={(p) => withParams("/admin/articles", { ...params, page: p })}
+          />
+        </div>
+      </section>
     </>
   );
 }

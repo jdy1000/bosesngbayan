@@ -31,6 +31,9 @@ const DB_MESSAGES: Record<string, string> = {
   no_draft: "There is no homepage draft.",
   only_approved_can_be_featured: "Only approved posts can be featured.",
   comments_closed: "Comments are closed for this item.",
+  application_not_found: "This application no longer exists.",
+  application_already_reviewed: "This application has already been reviewed.",
+  invalid_application_role: "Applicants can be approved only as Writer or Moderator.",
 };
 
 interface PgLikeError {

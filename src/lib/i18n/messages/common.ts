@@ -10,6 +10,7 @@ export const fil = {
   mobileNav: "Mobile navigation",
   socialMedia: "Social media",
   footerTopics: "Mga Paksa",
+  advertisement: "Anunsyo",
   language: {
     label: "Wika",
     fil: "Filipino",
@@ -110,6 +111,7 @@ export const en: typeof fil = {
   mobileNav: "Mobile navigation",
   socialMedia: "Social media",
   footerTopics: "Topics",
+  advertisement: "Advertisement",
   language: {
     label: "Language",
     fil: "Filipino",

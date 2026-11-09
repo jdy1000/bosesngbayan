@@ -55,15 +55,16 @@ export function NewsletterForm({
   const dark = tone === "dark";
   if (status === "done") {
     return (
-      <p role="status" className={`rounded-xl px-4 py-3 text-sm font-medium ${dark ? "bg-white/10 text-white" : "bg-brand-50 text-brand-800"}`}>
+      <p role="status" className={`rounded px-4 py-3 text-sm font-medium ${dark ? "bg-white/10 text-white" : "bg-brand-50 text-brand-800"}`}>
         {message}
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate={false}>
-      <div className="flex flex-col gap-2 sm:flex-row">
+    // Container query: the field and button sit side by side only when this form is wide enough (the footer column is not).
+    <form onSubmit={handleSubmit} className="@container flex flex-col gap-3" noValidate={false}>
+      <div className="flex flex-col gap-2 @sm:flex-row">
         <label htmlFor={`${id}-email`} className="sr-only">
           {m.emailLabel}
         </label>

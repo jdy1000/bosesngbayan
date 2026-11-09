@@ -1,36 +1,32 @@
 import type { Metadata } from "next";
 import { requireStaffPage } from "@/lib/auth/session";
-import { ActionForm, SubmitButton } from "@/components/studio/action-form";
-import { Field, PageHeader, Panel } from "@/components/studio/ui";
-import { createArticle } from "../actions";
+import { PageHeader } from "@/components/studio/ui";
+import { blankArticleForEdit, loadEditorOptions } from "@/lib/studio/articles";
+import { ArticleEditor } from "../_components/article-editor";
 
 export const metadata: Metadata = { title: "New article" };
 
+/** Opens the full editor straight away; the draft is only created on the first save or publishing action. */
 export default async function NewArticlePage() {
   const ctx = await requireStaffPage("articles.create");
-  const { data: categories } = await ctx.supabase.from("categories").select("id, name").eq("is_active", true).order("sort_order").order("name");
+  const options = await loadEditorOptions(ctx);
+  const has = (p: Parameters<typeof ctx.permissions.has>[0]) => ctx.permissions.has(p);
+  const perms = {
+    submit: has("articles.submit"),
+    review: has("articles.review"),
+    publish: has("articles.publish"),
+    archive: false, // nothing to archive before the article exists
+    editAny: has("articles.edit_any"),
+    taxonomy: has("taxonomy.manage"),
+  };
 
   return (
     <>
-      <PageHeader title="New article" breadcrumb={[{ label: "Articles", href: "/admin/articles" }]} description="This creates a draft with you as the author. You can change everything in the editor." />
-      <Panel className="max-w-2xl">
-        <ActionForm action={createArticle} className="space-y-4">
-          <Field label="Title" htmlFor="title">
-            <input id="title" name="title" className="field" required maxLength={300} autoFocus />
-          </Field>
-          <Field label="Category (optional)" htmlFor="category_id">
-            <select id="category_id" name="category_id" className="field" defaultValue="">
-              <option value="">— Choose later —</option>
-              {(categories ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <SubmitButton pendingLabel="Creating…">Create draft</SubmitButton>
-        </ActionForm>
-      </Panel>
+      <PageHeader
+        title="Create article"
+        description="Start a draft, add your content, and publish when it’s ready."
+      />
+      <ArticleEditor data={blankArticleForEdit(ctx.userId)} options={options} perms={perms} userId={ctx.userId} isNew />
     </>
   );
 }

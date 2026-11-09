@@ -151,7 +151,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       <Btn label="Blockquote" active={s.quote} onClick={() => c().toggleBlockquote().run()} icon={<Quote />} />
       <Btn label="Pull quote" active={s.pull} onClick={togglePull} icon={<MessageSquareQuote />} />
       <Sep />
-      <Btn label="Image from Media Library" onClick={() => setImageOpen(true)} icon={<ImagePlus />} />
+      <Btn label="Insert image" onClick={() => setImageOpen(true)} icon={<ImagePlus />} />
       <Btn label="YouTube video" onClick={addYoutube} icon={<Video />} />
       <Btn label="Table" active={s.table} onClick={() => c().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} icon={<Table />} />
       <Btn label="Horizontal rule" onClick={() => c().setHorizontalRule().run()} icon={<Minus />} />
@@ -202,7 +202,7 @@ function Sep() {
   return <span aria-hidden="true" className="mx-1 h-5 w-px bg-line" />;
 }
 
-/** Insert a Figure node (image + caption + credit) from the Media Library. */
+/** Insert a Figure node (image + caption + credit); the picker can also upload a new image. */
 function FigureDialog({ editor, onClose }: { editor: Editor; onClose: () => void }) {
   const [media, setMedia] = useState<PickedMedia | null>(null);
   const [caption, setCaption] = useState("");
@@ -231,7 +231,7 @@ function FigureDialog({ editor, onClose }: { editor: Editor; onClose: () => void
         <h2 className="text-base font-bold text-ink">Insert image</h2>
         <MediaPicker name="_figure_media" label="Image" onChange={setMedia} />
         {media && !media.alt_text && (
-          <p className="text-xs font-semibold text-amber-800">This image has no alt text. Add it in the Media Library for accessibility.</p>
+          <p className="text-xs font-semibold text-amber-800">This image has no alt text. Upload it again with alt text for accessibility.</p>
         )}
         <label className="block text-sm font-semibold text-ink">
           Caption

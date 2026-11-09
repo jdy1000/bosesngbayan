@@ -318,6 +318,8 @@ Admin capabilities:
 - Configure open/close dates and result visibility.
 - View results and export CSV.
 
+*(Owner decision 2026-11-07: the Studio poll admin (`/admin/polls`, including the CSV export) was removed at the owner's request. Existing polls stay public and voting still works, but polls can no longer be created, edited, closed or archived from Studio. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
+
 Security and integrity:
 
 - Validate votes server-side.
@@ -392,6 +394,8 @@ Routes:
 - `/admin` (dashboard)
 
 The console must function as a newsroom management system, not a set of decorative forms. Use clean, information-dense layouts, clear statuses, search/filter controls, useful tables, and strong empty/loading/error states.
+
+*(Owner decision 2026-11-07: the Studio console follows the team's Newsmaker admin (ADR-016). At the owner's request these Studio modules were removed: Pages (§4.6), Media Library (§4.4), Homepage Builder (§4.5), Navigation (§4.13), SEO & redirects (§4.14), Poll management (§4.8) and the audit-log viewer. Analytics and Settings were kept. Audit rows are still written and can be read with SQL. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
 
 ## 4.1 Admin dashboard
 
@@ -496,6 +500,8 @@ Features:
 
 Use the existing configured storage solution, preferably Supabase Storage for a new Supabase-based project. Implement file type/size checks, secure upload authorization, owner-aware storage policies, and permission-aware deletion. Optimize public delivery and responsive image sizes. Do not expose private media through public URLs unintentionally.
 
+*(Owner decision 2026-11-07: the Studio media library (`/admin/media`) was removed at the owner's request. Images are uploaded from the media picker instead, with alt text, caption and credit set at upload time (ADR-016). Existing media can no longer be edited, replaced or deleted from Studio. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
+
 ## 4.5 Homepage builder
 
 The owner/editor must manage the homepage without source-code edits.
@@ -534,11 +540,15 @@ Supported block types:
 
 Use a typed, validated block schema. JSON configuration is appropriate for flexible section settings, but do not put unrelated relational data into one giant JSON column. The public frontend renders only published homepage configuration and its permitted content.
 
+*(Owner decision 2026-11-07: the Studio homepage builder (`/admin/homepage` and its draft preview) was removed at the owner's request. The homepage layout can no longer be changed from Studio; the public site renders the stored published configuration. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
+
 ## 4.6 Pages management
 
 Support create, edit, slug change, rich content, SEO metadata, preview, publish, unpublish, archive, and revision history.
 
 Initial pages may include About, Contact, Editorial Policy, Privacy Policy, Terms of Service, and Advertise With Us.
+
+*(Owner decision 2026-11-07: the Studio pages module (`/admin/pages` and its preview) was removed at the owner's request. Pages can no longer be created, edited or published from Studio; published pages stay public. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
 
 ## 4.7 Category and tag management
 
@@ -548,6 +558,8 @@ Support create/edit/delete, slug, description, image, SEO data, featured state, 
 
 Provide a dedicated poll dashboard with poll list, create/edit, options, opening/closing dates, result visibility, publish state, featured placement, results breakdown, CSV export, and audit history.
 
+*(Owner decision 2026-11-07: the Studio poll dashboard (`/admin/polls`) was removed at the owner's request. Existing polls stay public and voting still works. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
+
 ## 4.9 Community moderation
 
 Provide moderation queues for submissions, comments, and reports. Include report reasons, status, search, filters, approve/reject/hide/remove/flag actions, moderator notes, and moderation history. Restrict actions by permission.
@@ -555,6 +567,8 @@ Provide moderation queues for submissions, comments, and reports. Include report
 ## 4.10 User and team management
 
 Support secure invitations, role assignment, permission review, account deactivation, access revocation, and activity review. Account creation must not be exposed as unrestricted public admin registration. Use secure authentication flows for recovery.
+
+*(Owner decision 2026-11-07: people can ask to join the newsroom through the public form at `/admin/apply`. An application creates no account and grants no access; only an administrator's approval sends the normal invitation. See ADR-018 in `docs/ARCHITECTURE.md`.)*
 
 ## 4.11 Newsletter management
 
@@ -581,6 +595,8 @@ Define metric calculations, event deduplication strategy, bot filtering where pr
 
 Allow authorized users to add/edit/reorder/hide/show navigation items, destinations, dropdown groups, and footer links. Public navigation must be database-driven.
 
+*(Owner decision 2026-11-07: the Studio navigation module (`/admin/navigation`) was removed at the owner's request. Header and footer navigation can no longer be edited from Studio. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
+
 ## 4.14 SEO management
 
 Support global templates and page/article/category-level:
@@ -595,6 +611,8 @@ Support global templates and page/article/category-level:
 - Redirect management.
 
 Generate safe defaults from content when custom metadata is missing. Validate redirect targets and prevent open redirects.
+
+*(Owner decision 2026-11-07: the Studio SEO & redirects module (`/admin/seo`) was removed at the owner's request. Global SEO defaults and redirects can no longer be edited from Studio. Article and category SEO fields are still edited in their own forms. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
 
 ## 4.15 Site settings
 
@@ -988,6 +1006,8 @@ At the end of every meaningful phase:
 - Newsletter subscriptions and exports work.
 - Analytics track real events and explain metric limitations.
 - Audit logs capture important sensitive operations.
+
+*(Owner decision 2026-11-07: the homepage builder, pages, navigation, poll management and the audit-log viewer were removed from Studio at the owner's request, so the items above that depend on them now hold for the stored data and the public site, not for Studio editing. Audit rows are still written. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
 
 ## Engineering and release
 

@@ -7,8 +7,11 @@ export function PageHeader({
   description,
   actions,
   breadcrumb,
+  eyebrow,
 }: {
   title: string;
+  /** Small uppercase kicker above the title (Newsmaker console style). */
+  eyebrow?: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   breadcrumb?: { label: string; href: string }[];
@@ -16,6 +19,7 @@ export function PageHeader({
   return (
     <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0">
+        {eyebrow && !breadcrumb?.length && <p className="mb-1 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-brand">{eyebrow}</p>}
         {breadcrumb && breadcrumb.length > 0 && (
           <nav aria-label="Breadcrumb" className="mb-1.5 text-sm text-muted">
             {breadcrumb.map((b, i) => (
@@ -102,9 +106,9 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "warn" | "
 }
 
 /** Plain table shell: pass <tr> rows. Scrolls horizontally on small screens instead of breaking layout. */
-export function Table({ head, children }: { head: React.ReactNode[]; children: React.ReactNode }) {
+export function Table({ head, children, plain = false }: { head: React.ReactNode[]; children: React.ReactNode; plain?: boolean }) {
   return (
-    <div className="overflow-x-auto rounded-2xl bg-paper shadow-card ring-1 ring-line">
+    <div className={plain ? "overflow-x-auto" : "overflow-x-auto rounded-2xl bg-paper shadow-card ring-1 ring-line"}>
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead className="border-b border-line bg-surface text-xs font-semibold uppercase tracking-wide text-muted">
           <tr>
@@ -121,25 +125,63 @@ export function Table({ head, children }: { head: React.ReactNode[]; children: R
   );
 }
 
-export function Pagination({ page, totalPages, hrefFor }: { page: number; totalPages: number; hrefFor: (page: number) => string }) {
-  if (totalPages <= 1) return null;
+/**
+ * List footer: "21–40 of 57 articles" and Previous · 2 / 3 · Next. Pass `total` + `pageSize` + `noun` when the
+ * count is known; without them it shows "Page x of y". Hidden for a single page unless the total is known.
+ */
+export function Pagination({
+  page,
+  totalPages,
+  hrefFor,
+  total,
+  pageSize,
+  noun = "items",
+}: {
+  page: number;
+  totalPages: number;
+  hrefFor: (page: number) => string;
+  total?: number;
+  pageSize?: number;
+  noun?: string;
+}) {
+  const pages = Math.max(1, totalPages);
+  if (total === 0 || (pages <= 1 && total === undefined)) return null;
+  const first = pageSize ? (page - 1) * pageSize + 1 : 0;
+  const summary =
+    total !== undefined && pageSize
+      ? first > total
+        ? `${total} ${noun}`
+        : `${first}–${Math.min(total, page * pageSize)} of ${total} ${noun}`
+      : `Page ${page} of ${pages}`;
+  const step = "rounded-full px-3 py-1.5 font-semibold";
   return (
-    <nav aria-label="Pagination" className="mt-4 flex items-center justify-between text-sm">
-      <span className="text-muted">
-        Page {page} of {totalPages}
-      </span>
-      <div className="flex gap-2">
-        {page > 1 && (
-          <Link href={hrefFor(page - 1)} className="rounded-full bg-paper px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
-            ← Previous
-          </Link>
-        )}
-        {page < totalPages && (
-          <Link href={hrefFor(page + 1)} className="rounded-full bg-paper px-3.5 py-1.5 font-semibold ring-1 ring-line hover:ring-brand">
-            Next →
-          </Link>
-        )}
-      </div>
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 px-1 py-3 text-sm">
+      <span className="tabular-nums text-muted">{summary}</span>
+      {pages > 1 && (
+        <div className="flex items-center gap-1">
+          {page > 1 ? (
+            <Link href={hrefFor(page - 1)} className={`${step} text-ink hover:bg-surface-2`}>
+              ← Previous
+            </Link>
+          ) : (
+            <span aria-disabled="true" className={`${step} text-muted/60`}>
+              ← Previous
+            </span>
+          )}
+          <span className="px-2 font-semibold tabular-nums text-ink">
+            {Math.min(page, pages)} / {pages}
+          </span>
+          {page < pages ? (
+            <Link href={hrefFor(page + 1)} className={`${step} text-ink hover:bg-surface-2`}>
+              Next →
+            </Link>
+          ) : (
+            <span aria-disabled="true" className={`${step} text-muted/60`}>
+              Next →
+            </span>
+          )}
+        </div>
+      )}
     </nav>
   );
 }

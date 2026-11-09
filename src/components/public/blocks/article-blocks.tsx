@@ -305,7 +305,8 @@ export async function TrendingTopicsBlock({ title, settings }: { title: string |
               <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />
               {title ?? "Trending"}
             </h2>
-            <ul className="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 [scrollbar-width:none]">
+            {/* The right edge fades out, so a chip cut off by the row reads as "more to scroll" rather than a glitch. */}
+            <ul className="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 pr-10 [-webkit-mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] [mask-image:linear-gradient(to_right,#000_calc(100%-2.5rem),transparent)] [scrollbar-width:none]">
               {topics.map((t) => (
                 <li key={t.id} className="shrink-0">
                   <Link

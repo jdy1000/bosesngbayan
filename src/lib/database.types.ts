@@ -5,6 +5,61 @@ export type Database = {
   __InternalSupabase: { PostgrestVersion: "12" };
   public: {
     Tables: {
+      ad_slots: {
+        Row: {
+          id: string;
+          name: string;
+          placement: string;
+          image_id: string;
+          alt_text: string | null;
+          destination_url: string;
+          is_active: boolean;
+          starts_at: string | null;
+          ends_at: string | null;
+          sort_order: number;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          placement: string;
+          image_id: string;
+          alt_text?: string | null;
+          destination_url: string;
+          is_active?: boolean;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          sort_order?: number;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          placement?: string;
+          image_id?: string;
+          alt_text?: string | null;
+          destination_url?: string;
+          is_active?: boolean;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          sort_order?: number;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "ad_slots_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "ad_slots_image_id_fkey"; columns: ["image_id"]; isOneToOne: false; referencedRelation: "media_assets"; referencedColumns: ["id"] },
+          { foreignKeyName: "ad_slots_updated_by_fkey"; columns: ["updated_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
       article_contributors: {
         Row: {
           article_id: string;
@@ -1152,6 +1207,66 @@ export type Database = {
         Relationships: [
         ];
       };
+      publisher_applications: {
+        Row: {
+          id: string;
+          full_name: string;
+          email: string;
+          requested_role: Database["public"]["Enums"]["app_role"];
+          organization: string | null;
+          portfolio_url: string | null;
+          message: string;
+          consent_at: string;
+          status: string;
+          review_note: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          invited_user_id: string | null;
+          network_hash: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          full_name: string;
+          email: string;
+          requested_role?: Database["public"]["Enums"]["app_role"];
+          organization?: string | null;
+          portfolio_url?: string | null;
+          message: string;
+          consent_at?: string;
+          status?: string;
+          review_note?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          invited_user_id?: string | null;
+          network_hash?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          full_name?: string;
+          email?: string;
+          requested_role?: Database["public"]["Enums"]["app_role"];
+          organization?: string | null;
+          portfolio_url?: string | null;
+          message?: string;
+          consent_at?: string;
+          status?: string;
+          review_note?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          invited_user_id?: string | null;
+          network_hash?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "publisher_applications_invited_user_id_fkey"; columns: ["invited_user_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "publisher_applications_reviewed_by_fkey"; columns: ["reviewed_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
       rate_limits: {
         Row: {
           key: string;
@@ -1385,9 +1500,11 @@ export type Database = {
       publish_due_articles: { Args: never; Returns: number };
       publish_homepage: { Args: { p_label?: string | null }; Returns: string };
       purge_old_analytics: { Args: never; Returns: number };
+      purge_old_publisher_applications: { Args: never; Returns: number };
       record_page_view: { Args: { p_path: string | null; p_article_id: string | null; p_visitor_hash: string | null; p_referrer_host: string | null }; Returns: boolean };
       resolve_report: { Args: { p_report_id: string | null; p_status: Database["public"]["Enums"]["report_status"] | null; p_note?: string | null }; Returns: undefined };
       restore_homepage_to_draft: { Args: { p_configuration_id: string | null }; Returns: undefined };
+      review_publisher_application: { Args: { p_id: string | null; p_decision: string | null; p_note?: string | null; p_role?: Database["public"]["Enums"]["app_role"] | null; p_invited_user_id?: string | null }; Returns: undefined };
       set_role_permission: { Args: { p_role: Database["public"]["Enums"]["app_role"] | null; p_permission: string | null; p_granted: boolean | null }; Returns: undefined };
       set_subscriber_status: { Args: { p_id: string | null; p_status: Database["public"]["Enums"]["subscriber_status"] | null; p_reason?: string | null }; Returns: undefined };
       set_user_active: { Args: { p_user_id: string | null; p_active: boolean | null }; Returns: undefined };
@@ -1397,6 +1514,7 @@ export type Database = {
       staff_directory: { Args: never; Returns: { user_id: string; email: string; invited_at: string; confirmed_at: string; last_sign_in_at: string }[] };
       submit_comment: { Args: { p_article_id: string | null; p_post_id: string | null; p_parent_id: string | null; p_author_name: string | null; p_author_email: string | null; p_body: string | null; p_network_hash: string | null }; Returns: Json };
       submit_community_post: { Args: { p_kind: Database["public"]["Enums"]["community_kind"] | null; p_title: string | null; p_body: string | null; p_author_name: string | null; p_author_email: string | null; p_author_location: string | null; p_category_id: string | null; p_network_hash: string | null }; Returns: Json };
+      submit_publisher_application: { Args: { p_full_name: string | null; p_email: string | null; p_requested_role: Database["public"]["Enums"]["app_role"] | null; p_organization: string | null; p_portfolio_url: string | null; p_message: string | null; p_network_hash: string | null }; Returns: undefined };
       submit_report: { Args: { p_post_id: string | null; p_comment_id: string | null; p_reason: Database["public"]["Enums"]["report_reason"] | null; p_details: string | null; p_network_hash: string | null }; Returns: string };
       subscribe_newsletter: { Args: { p_email: string | null; p_consent_text: string | null; p_source: string | null }; Returns: string };
       transition_article: { Args: { p_article_id: string | null; p_to: Database["public"]["Enums"]["article_status"] | null; p_note?: string | null; p_publish_at?: string | null }; Returns: Database["public"]["Tables"]["articles"]["Row"] };

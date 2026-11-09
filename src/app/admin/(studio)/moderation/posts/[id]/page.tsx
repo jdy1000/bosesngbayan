@@ -36,7 +36,7 @@ export default async function ModerationPostPage({ params }: { params: Promise<{
     <>
       <PageHeader
         title={post.title}
-        breadcrumb={[{ label: "Moderation", href: "/admin/moderation?tab=posts" }]}
+        breadcrumb={[{ label: "Report inbox", href: "/admin/moderation?tab=posts" }]}
         description={
           <span className="flex flex-wrap items-center gap-2">
             <StatusBadge status={post.status} map={MODERATION_STATUS} />

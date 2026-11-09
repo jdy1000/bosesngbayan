@@ -5,9 +5,8 @@ import { z } from "zod";
 import { AuthorizationError, getStaffContext, requirePermission } from "@/lib/auth/session";
 import { toActionError, unwrap } from "@/lib/actions";
 import { isPermission, ROLES } from "@/lib/auth/permissions";
-import { siteUrl } from "@/lib/env";
 import { logServerError } from "@/lib/log";
-import { createServiceClient } from "@/lib/supabase/server";
+import { authAdmin, inviteStaff } from "@/lib/studio/invite";
 import { optionalText, requiredText } from "@/lib/studio/form";
 import type { FormActionResult } from "@/components/studio/action-form";
 import { must } from "@/lib/studio/db";
@@ -15,16 +14,6 @@ import { must } from "@/lib/studio/db";
 const roleSchema = z.enum(ROLES, { message: "Choose a valid role." });
 const userId = z.uuid();
 const BAN_FOREVER = "876000h"; // ~100 years; Supabase Auth has no permanent-ban flag
-
-/** Service client for Auth admin calls only. Callers must have passed requirePermission first. */
-function authAdmin() {
-  try {
-    return createServiceClient().auth.admin;
-  } catch (e) {
-    logServerError("service_client_unavailable", e);
-    return null;
-  }
-}
 
 export async function inviteMember(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
   try {
@@ -36,33 +25,8 @@ export async function inviteMember(_prev: FormActionResult, fd: FormData): Promi
         role: roleSchema,
       })
       .parse(Object.fromEntries(fd));
-    if (input.role === "owner" && ctx.role !== "owner") return toActionError({ message: "owner_role_protected" });
-
-    const admin = authAdmin();
-    if (!admin) return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server, so invitations cannot be sent." };
-    const { data, error } = await admin.inviteUserByEmail(input.email, {
-      redirectTo: siteUrl("/admin/auth/callback?next=/admin/auth/update-password"),
-      data: { display_name: input.display_name },
-    });
-    if (error || !data.user) {
-      if (error?.code === "email_exists" || error?.status === 422) return { ok: false, error: "This email already has an account." };
-      logServerError("invite_failed", error);
-      return { ok: false, error: "The invitation could not be sent. Check the Supabase Auth SMTP configuration." };
-    }
-
-    // Role assignment runs as the inviter so every database guard applies.
-    const { error: roleError } = await ctx.supabase.rpc("set_user_role", { p_user_id: data.user.id, p_role: input.role });
-    if (roleError) {
-      const { error: rollbackError } = await admin.deleteUser(data.user.id);
-      if (rollbackError) logServerError("invite_rollback_failed", rollbackError);
-      const reason = toActionError(roleError).error;
-      return {
-        ok: false,
-        error: rollbackError
-          ? `The role could not be set (${reason}) and the invited account could not be removed. Delete it in the Supabase Auth dashboard.`
-          : `The role could not be set: ${reason} The invitation was revoked.`,
-      };
-    }
+    const result = await inviteStaff(ctx, { email: input.email, displayName: input.display_name, role: input.role });
+    if (!result.ok) return { ok: false, error: result.error };
     revalidatePath("/admin/team");
     return { ok: true, message: `Invitation sent to ${input.email}.` };
   } catch (e) {

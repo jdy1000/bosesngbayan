@@ -20,6 +20,11 @@ Conventions used below:
 | `20261106000400_storage.sql` | `media` storage bucket and `storage.objects` policies. |
 | `20261106000600_media_usage.sql` | `media_usages()` reference finder and the media in-use delete guard. |
 | `20261106000800_staff_directory.sql` | `staff_directory()` (staff emails and sign-in times from `auth.users`). |
+| `20261106000900_seo_settings_policy.sql` | `settings_write` also lets `seo.manage` holders write the `seo` key. |
+| `20261106001000_top_stories_block.sql` | Adds `top_stories` to the allowed `homepage_sections.block_type` values (ADR-012). |
+| `20261106001100_english_labels.sql` | Optional English labels: `navigation_items.label_en`, `homepage_sections.title_en`/`description_en`; `publish_homepage` and `restore_homepage_to_draft` copy them (ADR-015). |
+| `20261107000100_ad_slots.sql` | `ads.manage` permission (Owner, Administrator), the `ad_slots` table and its RLS, and `media_usages()` extended to ad creatives. |
+| `20261107000200_publisher_applications.sql` | `publisher_applications` table and RLS, `submit_publisher_application()`, `review_publisher_application()` and `purge_old_publisher_applications()` (ADR-018). |
 
 There are no down migrations. To roll back, drop the objects in reverse migration order (the header of `000100` points here for that).
 
@@ -51,7 +56,7 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 |---|---|---|
 | `profiles` | One row per auth user. `id` PK → `auth.users` **cascade**. `display_name` (1–120), `slug` unique kebab-case, `title`, `bio` (≤2000), `avatar_url`, `is_active`, `deactivated_at`. Created by the `on_auth_user_created` trigger. | S: staff, self, or anyone for profiles credited on a public article (author or contributor). U: self, or `perm(users.manage)`. `is_active`/`deactivated_at` can change only through `set_user_active()` (see `profiles_guard`). No I/D policies. |
 | `user_roles` | One role per user. `user_id` PK → profiles **cascade**; `role app_role`; `assigned_by` → profiles **set null**. Index on `role`. | S: own row or `perm(users.view)`. No write policies: changes go through `set_user_role()`. |
-| `permissions` | Permission catalogue. `key` PK matches `^[a-z_]+\.[a-z_]+$`; `group_name`, `description`. 28 keys are seeded in the migration (see `docs/ADMIN_RBAC.md`). | S: staff. |
+| `permissions` | Permission catalogue. `key` PK matches `^[a-z_]+\.[a-z_]+$`; `group_name`, `description`. 28 keys are seeded in the core migration, and `ads.manage` is added by `20261107000100` (29 in total; see `docs/ADMIN_RBAC.md`). | S: staff. |
 | `role_permissions` | Role → permission matrix. PK `(role, permission)`; `permission` → permissions **cascade**. The migration seeds it: owner gets all, administrator gets all except `roles.manage`, plus fixed sets for editor, writer, moderator and analyst. | S: staff. Writes go through `set_role_permission()`. |
 
 ### 3.2 Content
@@ -72,17 +77,19 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 
 ### 3.3 Homepage
 
+Since ADR-017 there is no Studio homepage builder. These tables are unchanged and the public site reads the published configuration.
+
 | Table | Purpose and key columns | RLS |
 |---|---|---|
 | `homepage_configurations` | Homepage versions. `status homepage_status`, `label`, `published_at`, `published_by`, `updated_by`. Partial unique indexes allow **one draft** and **one published** row. | S: published, or `perm(homepage.manage)`. I/U: `perm(homepage.manage)`, and only while status is `draft`. No D policy. |
-| `homepage_sections` | Blocks. `configuration_id` → configurations **cascade**. `block_type` is one of 17 values (hero, trending_topics, breaking_news, featured_story, latest_articles, article_grid, category_showcase, editors_picks, most_read, poll_showcase, community, regional_news, newsletter, custom_cta, photo_of_day, quote_of_day, news_quiz). Also `position`, `is_enabled`, `title`, `description`, `settings jsonb` (must be an object; validated in `src/lib/homepage/blocks.ts`). Index `(configuration_id, position)`. | S: sections of the published configuration, or `perm(homepage.manage)`. All writes: `perm(homepage.manage)` and only on the draft configuration. |
+| `homepage_sections` | Blocks. `configuration_id` → configurations **cascade**. `block_type` is one of 18 values (hero, trending_topics, breaking_news, featured_story, latest_articles, article_grid, category_showcase, editors_picks, most_read, poll_showcase, community, regional_news, newsletter, custom_cta, photo_of_day, quote_of_day, news_quiz, and `top_stories` from migration `1000`). `title_en`/`description_en` hold optional English labels. Also `position`, `is_enabled`, `title`, `description`, `settings jsonb` (must be an object; validated in `src/lib/homepage/blocks.ts`). Index `(configuration_id, position)`. | S: sections of the published configuration, or `perm(homepage.manage)`. All writes: `perm(homepage.manage)` and only on the draft configuration. |
 
 ### 3.4 Navigation and trending
 
 | Table | Purpose and key columns | RLS |
 |---|---|---|
 | `navigation_menus` | `key` unique (`^[a-z_]+$`), `name`. Seeded: `header`, `footer_main`, `footer_legal`. | S: everyone. No write policies (menus are fixed by the seed). |
-| `navigation_items` | `menu_id` → menus **cascade**, `parent_id` → items **cascade** (dropdowns). `label` (1–60), `href` (`/…` or `https://…`), `position`, `is_visible`, `open_in_new_tab`. Index `(menu_id, parent_id, position)`. | S: visible rows, or staff. All writes: `perm(navigation.manage)`. |
+| `navigation_items` | `menu_id` → menus **cascade**, `parent_id` → items **cascade** (dropdowns). `label` (1–60), optional `label_en` (1–60), `href` (`/…` or `https://…`), `position`, `is_visible`, `open_in_new_tab`. Index `(menu_id, parent_id, position)`. | S: visible rows, or staff. All writes: `perm(navigation.manage)`. |
 | `trending_topics` | Editorially curated topics. `label`, exactly one of `category_id` (**cascade**), `tag_id` (**cascade**) or `href` (relative path). `position`, `is_active`. | S: active rows, or staff. All writes: `perm(taxonomy.manage)`. |
 
 ### 3.5 Engagement
@@ -114,10 +121,17 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 
 | Table | Purpose and key columns | RLS |
 |---|---|---|
-| `site_settings` | `key` PK, one of: general, social, contact, seo, footer, publication, community, newsletter. `value jsonb` (validated in `src/lib/settings/schema.ts`), `updated_by`. Must never hold secrets. | S: everyone. All writes: `perm(settings.manage)`. |
+| `site_settings` | `key` PK, one of: general, social, contact, seo, footer, publication, community, newsletter. `value jsonb` (validated in `src/lib/settings/schema.ts`), `updated_by`. Must never hold secrets. Studio → Settings edits every key except `seo` (ADR-017). | S: everyone. All writes: `perm(settings.manage)`, or `perm(seo.manage)` for the `seo` key (migration `0900`). |
 | `redirects` | `source_path` unique (`/…`, no whitespace, ≤300), `destination` (`/`, `/…` or `https://…`), `status_code` (301/302/307/308), `is_active`, `hit_count`, `created_by`. Check: source ≠ destination. | S: active rows, or `perm(seo.manage)`. All writes: `perm(seo.manage)`. |
-| `audit_logs` | Append-only. `actor_id` **set null**, `action`, `entity_type`, `entity_id text`, `details jsonb`. Indexes `created_at desc`, `(entity_type, entity_id)`. | S: `perm(audit.view)`. Written only by triggers and definer RPCs. |
+| `audit_logs` | Append-only. `actor_id` **set null**, `action`, `entity_type`, `entity_id text`, `details jsonb`. Indexes `created_at desc`, `(entity_type, entity_id)`. There is no Studio viewer since ADR-017: read it with SQL. The team member page shows that member's last 20 rows. | S: `perm(audit.view)`. Written only by triggers and definer RPCs. |
 | `content_activity_logs` | Editorial and moderation history. `actor_id`, `entity_type`, `entity_id uuid`, `action`, `from_status`, `to_status`, `note`. Indexes `(entity_type, entity_id, created_at desc)`, `created_at desc`. | S: staff. Written only by definer RPCs. |
+
+### 3.9 Ads and publisher applications
+
+| Table | Purpose and key columns | Notable indexes | RLS |
+|---|---|---|---|
+| `ad_slots` | Direct-sold image ads, managed in Studio → Ad inventory (`/admin/ads`). `name` (1–120), `placement` (`home` or `article`), `image_id` → media_assets **restrict** (required), `alt_text` (≤300, optional), `destination_url` (must match `^https://`, ≤2048; a CHECK), `is_active` (default false), optional `starts_at`/`ends_at` window (end must be after start), `sort_order`, `created_by`/`updated_by` → profiles **set null**, timestamps. The public site shows at most one live ad per placement (lowest `sort_order`, then oldest): on the homepage after the top-stories block, and on article pages after the body. It is labelled "Anunsyo"/"Advertisement" and linked with `rel="sponsored noopener noreferrer"`. Impressions and clicks are not tracked. | partial `(placement, sort_order, created_at) where is_active`; `image_id` | S (anon and authenticated): live ads only (active, `starts_at ≤ now() < ends_at`, both bounds optional), or `perm(ads.manage)` for every row. All writes: `perm(ads.manage)`. Anon has no write grants. Every change is audited by `audit_row_change`. |
+| `publisher_applications` | Public requests to join the newsroom from `/admin/apply` (ADR-018). `full_name` (2–120), `email citext` (≤254), `requested_role app_role` (writer or moderator only, default writer), `organization` (≤160), `portfolio_url` (https only, ≤500), `message` (≤2000), `consent_at`, `status` (pending, approved, rejected), `review_note` (≤1000; required when rejected), `reviewed_by` → profiles **set null**, `reviewed_at` (set exactly when not pending), `invited_user_id` → profiles **set null**, `network_hash` (only the hash, never the raw IP), timestamps. Creating a row creates no account and grants no access. | partial unique `(email) where status = 'pending'` (one pending application per email); `(status, created_at desc)` | S: `perm(users.manage)` only. No insert, update or delete policy, and those privileges are revoked from `authenticated`; anon has no privileges. Nobody can update rows directly: inserts go only through `submit_publisher_application()` and decisions only through the audited `review_publisher_application()`. |
 
 ## 4. Functions and RPCs
 
@@ -158,7 +172,7 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 | `snapshot_page(id, note)` | yes | authenticated, service_role | Requires `pages.manage`. |
 | `publish_homepage(label)` | yes | authenticated, service_role | Requires `homepage.manage`. Archives the current published version, copies the draft into a new published row, and writes an audit row. |
 | `restore_homepage_to_draft(config_id)` | yes | authenticated, service_role | Requires `homepage.manage`. Replaces the draft's sections with a copy of the given configuration's sections. |
-| `media_usages(media_id)` | yes | authenticated, service_role | Every reference to an asset (article images or body, category image, page OG image or body, site settings, draft/published homepage sections). Labels are hidden where the caller cannot see the row. Returns rows only for staff or service. |
+| `media_usages(media_id)` | yes | authenticated, service_role | Every reference to an asset (article images or body, category image, page OG image or body, site settings, draft/published homepage sections, and ad creatives as `usage_kind = 'ad_slot'` since `20261107000100`). Labels are hidden where the caller cannot see the row. Returns rows only for staff or service. Because of the ad rows, an image used by an ad cannot be deleted. |
 
 ### Engagement and analytics
 
@@ -183,6 +197,14 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 | `analytics_summary(from, to)` | yes | authenticated | Requires `analytics.view`. Range must be at most 400 days. Day buckets use Asia/Manila. Returns totals, per-day series and top-10 lists. |
 | `purge_old_analytics()` | yes | **service-only** | Deletes page views older than 13 months and rate-limit rows older than one day. Returns the number of page views deleted. |
 
+### Publisher applications
+
+| Function | Definer | Grants | Internal checks / purpose |
+|---|---|---|---|
+| `submit_publisher_application(full_name, email, requested_role, organization, portfolio_url, message, network_hash)` | yes | **service-only** | Called by the `submitApplication` server action after Zod validation, the honeypot and the `application` rate limit (3 per hour per network). Trims the input and stores a pending row. A second pending application for the same email is silently ignored (`on conflict do nothing`), so the reply never reveals who has applied or who is staff. |
+| `review_publisher_application(id, decision, note, role, invited_user_id)` | yes | authenticated, service_role | Requires `users.manage`. Allows only pending → approved or rejected (`application_already_reviewed` otherwise). A rejection needs a reason (`rejection_reason_required`). An approval may record only Writer or Moderator as the granted role, or null when the applicant was already staff. Writes an `approve_application` or `reject_application` audit row with no name, email or message. The invitation itself is sent by the server action before this call. |
+| `purge_old_publisher_applications()` | yes | **service-only** | Deletes reviewed applications 180 days after the decision; pending ones stay. Called by the daily `/api/cron/retention` job. Returns the number deleted. |
+
 ## 5. Triggers
 
 | Trigger | Table / timing | Behaviour |
@@ -193,8 +215,8 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 | `polls_guard` | `polls` BEFORE UPDATE | After votes exist, `question`, `kind`, `max_choices` and `voting_policy` are frozen (`poll_locked_after_votes`). Stamps `published_at` and `closed_at`, and sets `updated_at`. |
 | `poll_options_guard` | `poll_options` BEFORE I/U/D | After votes exist, only reordering is allowed (`poll_options_locked_after_votes`). |
 | `media_assets_block_in_use` | `media_assets` BEFORE DELETE | Raises `media_in_use` (23503) if `media_usages()` returns any row. |
-| `*_touch` (`touch_updated_at`) | profiles, site_settings, media_assets, categories, tags, pages, navigation_items, homepage_configurations, homepage_sections, redirects, community_posts, newsletter_subscribers | Sets `updated_at = now()`. |
-| Audit (`audit_row_change`) | user_roles (I/U/D), role_permissions (I/D), site_settings (I/U/D), articles (D), pages (D), redirects (I/U/D), polls (I/U/D), poll_options (I/U/D), newsletter_subscribers (D) | Writes old/new JSON to `audit_logs`, without body, HTML, text or search vector. |
+| `*_touch` (`touch_updated_at`) | profiles, site_settings, media_assets, categories, tags, pages, navigation_items, homepage_configurations, homepage_sections, redirects, community_posts, newsletter_subscribers, ad_slots, publisher_applications | Sets `updated_at = now()`. |
+| Audit (`audit_row_change`) | user_roles (I/U/D), role_permissions (I/D), site_settings (I/U/D), articles (D), pages (D), redirects (I/U/D), polls (I/U/D), poll_options (I/U/D), newsletter_subscribers (D), ad_slots (I/U/D) | Writes old/new JSON to `audit_logs`, without body, HTML, text or search vector. |
 
 ## 6. Storage
 
@@ -230,11 +252,13 @@ erDiagram
   POLL_BALLOTS ||--o{ POLL_VOTES : "cascade"
   POLL_OPTIONS ||--o{ POLL_VOTES : "restrict"
   HOMEPAGE_CONFIGURATIONS ||--o{ HOMEPAGE_SECTIONS : "cascade"
+  MEDIA_ASSETS ||--o{ AD_SLOTS : "creative (restrict)"
+  PROFILES |o--o{ PUBLISHER_APPLICATIONS : "reviewed_by / invited_user_id (set null)"
 ```
 
 ## 8. Seed (`supabase/seed.sql`)
 
-The seed is structural only. Every value is editable in Studio. It is idempotent: it uses `on conflict do nothing` or `where not exists`.
+The seed is structural only. Pages, navigation, the homepage configuration and SEO settings are no longer editable in Studio (ADR-017); the rest is. It is idempotent: it uses `on conflict do nothing` or `where not exists`.
 
 | Seeded | What |
 |---|---|

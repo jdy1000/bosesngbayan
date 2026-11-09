@@ -34,7 +34,7 @@ function Thumb({
     );
   }
   return (
-    <div className={`${className} relative overflow-hidden bg-surface-2`}>
+    <div className={`${className} img-frame relative overflow-hidden bg-surface-2`}>
       <Image
         src={src}
         alt={article.image?.alt_text ?? ""}

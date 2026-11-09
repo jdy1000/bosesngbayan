@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import type { MediaPickerItem } from "@/app/admin/api/media/route";
+import { uploadImage } from "@/app/admin/(studio)/_media/actions";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/media";
 
 export interface PickedMedia {
   id: string;
@@ -13,7 +15,7 @@ export interface PickedMedia {
 
 /**
  * Image picker for Studio forms. Renders a hidden input `name` holding the media id (or "" for none)
- * so it works inside plain server-action forms. Images are uploaded in the Media Library.
+ * so it works inside plain server-action forms. New images are uploaded from the dialog (with alt text).
  */
 export function MediaPicker({
   name,
@@ -32,6 +34,12 @@ export function MediaPicker({
   const [items, setItems] = useState<MediaPickerItem[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [alt, setAlt] = useState("");
+  const [caption, setCaption] = useState("");
+  const [credit, setCredit] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     const d = dialogRef.current;
@@ -59,6 +67,34 @@ export function MediaPicker({
       controller.abort();
     };
   }, [open, q]);
+
+  // Plain inputs + click handler: the picker usually sits inside another <form>, and forms cannot nest.
+  async function upload() {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return setUploadError("Choose an image file.");
+    if (!alt.trim()) return setUploadError("Describe the image (alt text).");
+    if (file.size > MAX_UPLOAD_BYTES) return setUploadError(`The file is over ${MAX_UPLOAD_MB} MB.`);
+    setUploading(true);
+    setUploadError(null);
+    const fd = new FormData();
+    fd.set("file", file);
+    fd.set("alt_text", alt);
+    fd.set("caption", caption);
+    fd.set("credit", credit);
+    try {
+      const r = await uploadImage(fd);
+      if (!r.ok) return setUploadError(r.error);
+      setAlt("");
+      setCaption("");
+      setCredit("");
+      if (fileRef.current) fileRef.current.value = "";
+      choose(r.media);
+    } catch {
+      setUploadError("The file could not be sent. Try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function choose(m: PickedMedia | null) {
     setValue(m);
@@ -102,7 +138,7 @@ export function MediaPicker({
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search the Media Library…"
+            placeholder="Search images…"
             className="field"
             autoFocus
           />
@@ -110,11 +146,40 @@ export function MediaPicker({
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="max-h-[60vh] overflow-y-auto p-4">
+        <div className="grid gap-3 border-b border-line bg-surface p-4 sm:grid-cols-2">
+          <label className="block text-sm font-semibold text-ink">
+            Upload a new image
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" className="field mt-1 py-2" disabled={uploading} />
+          </label>
+          <label className="block text-sm font-semibold text-ink">
+            Alt text
+            <input type="text" value={alt} onChange={(e) => setAlt(e.target.value)} maxLength={300} placeholder="What the image shows" className="field mt-1" disabled={uploading} />
+          </label>
+          <label className="block text-sm font-semibold text-ink">
+            Caption <span className="font-normal text-muted">(optional)</span>
+            <input type="text" value={caption} onChange={(e) => setCaption(e.target.value)} maxLength={600} className="field mt-1" disabled={uploading} />
+          </label>
+          <label className="block text-sm font-semibold text-ink">
+            Credit <span className="font-normal text-muted">(optional)</span>
+            <input type="text" value={credit} onChange={(e) => setCredit(e.target.value)} maxLength={200} className="field mt-1" disabled={uploading} />
+          </label>
+          <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+            <button type="button" onClick={upload} disabled={uploading} className="btn btn-primary min-h-10 px-4 text-sm">
+              {uploading ? "Uploading…" : "Upload and use"}
+            </button>
+            <p className="text-xs text-muted">JPEG, PNG, WebP, GIF or AVIF · up to {MAX_UPLOAD_MB} MB.</p>
+          </div>
+          {uploadError && (
+            <p role="alert" className="text-sm font-medium text-accent-700 sm:col-span-2">
+              {uploadError}
+            </p>
+          )}
+        </div>
+        <div className="max-h-[50vh] overflow-y-auto p-4">
           {status === "error" && <p className="text-sm text-accent-700">Could not load media. Try again.</p>}
           {status !== "error" && items.length === 0 && (
             <p className="py-8 text-center text-sm text-muted">
-              {status === "loading" ? "Loading…" : "Nothing found. Upload images in the Media Library first."}
+              {status === "loading" ? "Loading…" : "No images found. Upload one above."}
             </p>
           )}
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

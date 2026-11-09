@@ -37,6 +37,7 @@ export async function ArticleView({
   return (
     <article>
       {banner}
+      {/* Stepped widths on purpose: lead photo 1040, headline and byline 860, body text 760 (comfortable line length). */}
       <div className="container-site max-w-[860px] pt-8 md:pt-12">
         <nav aria-label={m.breadcrumb} className="mb-5 text-sm text-muted">
           <ol className="flex flex-wrap items-center gap-1.5">
@@ -106,7 +107,7 @@ export async function ArticleView({
 
       {image && (
         <figure className="container-site mt-8 max-w-[1040px]">
-          <div className="relative aspect-[16/9] overflow-hidden rounded bg-surface-2">
+          <div className="img-frame relative aspect-[16/9] overflow-hidden rounded bg-surface-2">
             <Image src={image} alt={article.image?.alt_text ?? ""} fill priority sizes="(min-width: 1040px) 1040px, 100vw" className="object-cover" />
           </div>
           {(article.image?.caption || article.image?.credit) && (
@@ -143,7 +144,7 @@ export async function ArticleView({
           </ul>
         )}
         {article.author?.bio && (
-          <div className="mt-10 rounded border-t-[3px] border-ink bg-surface p-5">
+          <div className="mt-10 rounded bg-surface p-5 shadow-[inset_0_3px_0_var(--color-ink)]">
             <p className="text-sm font-bold text-ink">{fmt(m.aboutAuthor, { name: article.author.display_name })}</p>
             <p className="mt-1 text-[0.95rem] text-ink-soft">{article.author.bio}</p>
           </div>
@@ -155,9 +156,10 @@ export async function ArticleView({
         <section className="bg-surface py-14">
           <div className="container-site">
             <SectionHeading title={m.related} />
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {/* One related story is a single list row, two share the row, three or more make the usual 3-column grid. */}
+            <div className={`grid gap-6 ${related.length === 1 ? "max-w-3xl" : related.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
               {related.map((a) => (
-                <ArticleCard key={a.id} article={a} />
+                <ArticleCard key={a.id} article={a} variant={related.length === 1 ? "list" : "grid"} />
               ))}
             </div>
           </div>

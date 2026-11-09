@@ -31,7 +31,7 @@ export default async function TrendingPage() {
   return (
     <>
       <PageHeader
-        title="Categories & tags"
+        eyebrow="Publication structure" title="Site categories"
         description="The trending bar below the header. Topics are chosen editorially — not automatically from traffic."
       />
       <TaxonomyTabs current="/admin/taxonomy/trending" />

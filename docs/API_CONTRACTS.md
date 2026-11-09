@@ -48,6 +48,8 @@ Rate limits use `RATE_LIMITS` in `src/lib/security/rate-limit.ts`.
 | `report` | 10 | 3600 s | POST `/reports` |
 | `search` | 60 | 60 s | GET `/search` |
 | `login` | 10 | 900 s | `signIn` and `requestPasswordReset` server actions |
+| `application` | 3 | 3600 s | `submitApplication` server action (public `/admin/apply` form) |
+| `track` | 600 | 600 s | POST `/track`; over the limit the view is dropped and the reply is still `204` |
 
 ### Honeypot
 
@@ -116,7 +118,7 @@ All of these require the same-origin JSON guard described in section 1, except `
 | `POST /community/posts` | `kind`: `perspective` \| `question`. `title`: 5–200. `body`: 20–5000. `authorName`: 2–80. `authorEmail`: `""` or a valid email ≤254. `authorLocation`: ≤120 (default `""`). `categoryId`: UUID or null. `agree`: literal `true`. `website`. | `503` if `community.submissions_enabled` is false | `submission` | `201 {ok:true, status:"pending"\|"approved", message}` | `429`, `500` |
 | `POST /comments` | `articleId` or `postId` (UUID; exactly one). `parentId`: UUID or null. `authorName`: 2–80. `authorEmail`: as above. `body`: 2–2000. `website`. | `403` if `publication.comments_enabled` is false | `comment` | `201 {ok:true, status, message}` | `409` when the RPC raises `comments_closed` or `parent_not_found`; `429`; `500` |
 | `POST /reports` | `postId` or `commentId` (UUID; exactly one). `reason`: one of the 7 `report_reason` values. `details`: ≤1000 (default `""`). There is **no honeypot**. | — | `report` | `201 {ok:true, message}` | `404` (`target_not_found`), `429`, `500` |
-| `POST /track` | `path`: ≤500 chars, matching `^/(?!admin)[^\s]*$`; the query string is stripped. `articleId`: UUID or null. `referrer`: ≤1000 chars (default `""`). | Same-origin, but a mismatch is silent | **none** | Always `204` with `no-store`. | None. It also returns `204` for cross-origin requests, DNT or GPC, likely bots (user agent shorter than 10 chars, or matching the bot regex), bodies over 2048 chars, invalid JSON or schema, and database errors. Deduplication (30 min) happens in `record_page_view`. |
+| `POST /track` | `path`: ≤500 chars, matching `^/(?!admin)[^\s]*$`; the query string is stripped. `articleId`: UUID or null. `referrer`: ≤1000 chars (default `""`). | Same-origin, but a mismatch is silent | `track` (silent drop) | Always `204` with `no-store`. | None. It also returns `204` over the rate limit, for cross-origin requests, DNT or GPC, likely bots (user agent shorter than 10 chars, or matching the bot regex), bodies over 2048 chars, invalid JSON or schema, and database errors. Deduplication (30 min) happens in `record_page_view`. |
 
 ## 4. Cron endpoints
 
@@ -129,7 +131,7 @@ All of these require the same-origin JSON guard described in section 1, except `
 | Endpoint | Schedule (UTC) | Action | Response |
 |---|---|---|---|
 | `GET /api/cron/publish` | `5 16 * * *` (00:05 Manila) | Calls `publish_due_articles()` with the service client. Runs `revalidatePath("/", "layout")` if any article was published. | `{ok:true, published:n}` or `500 {ok:false}` |
-| `GET /api/cron/retention` | `30 19 * * *` (03:30 Manila) | Calls `purge_old_analytics()`. | `{ok:true, result:n}` (page views deleted) or `500 {ok:false}` |
+| `GET /api/cron/retention` | `30 19 * * *` (03:30 Manila) | Calls `purge_old_analytics()`, then `purge_old_publisher_applications()`. | `{ok:true, result:n, applications:m}` (page views and reviewed applications deleted) or `500 {ok:false}` |
 
 Public visibility does not wait for the publish job, because `article_is_public()` already treats past-due scheduled articles as public.
 
@@ -140,12 +142,11 @@ Studio route handlers authenticate with the Supabase session through `getStaffCo
 | Endpoint | Requirement | Query | Response |
 |---|---|---|---|
 | `GET /admin/api/media` | Any active staff member. `401` if missing. | `q`: ≤80 chars, searches title, file name and alt text | `{items: MediaPickerItem[]}`, up to 48 images: `id`, `url`, `file_name`, `title`, `alt_text`, `credit`, `width`, `height` |
-| `GET /admin/homepage/articles` (file `admin/(studio)/homepage/articles/route.ts`) | `homepage.manage`. `401` or `403`. | `q`: ≤80 chars, title `ilike` | `{items:[{id, title, published:true}]}`, up to 20 rows with `status = 'published'` |
 | `GET /admin/auth/callback` | — | `code` (PKCE), or `token_hash` + `type` (invite, recovery, magiclink, email, signup, email_change); `next` | Redirects. `next` is limited to `/admin` and `/admin/auth/update-password`. Invites are sent to update-password. Failures go to `/admin/login?error=link`. |
 
 ### CSV exports
 
-Both exports use `requirePermission`. A missing session or permission returns `403 {error}`. The CSV is produced by `toCsv`, `csvResponse`:
+The export uses `requirePermission`. A missing session or permission returns `403 {error}`. The CSV is produced by `toCsv`, `csvResponse`:
 
 - UTF-8 BOM and CRLF line endings.
 - Cells starting with `= + - @`, tab or CR are prefixed with `'`.
@@ -156,7 +157,6 @@ Rows are fetched in batches of 1000. An audit row is written with `write_audit`,
 | Endpoint | Permission | Query | Columns | Audit action |
 |---|---|---|---|---|
 | `GET /admin/newsletter/export` | `newsletter.manage` **and** `newsletter.view` | `status` = `subscribed` \| `unsubscribed` \| `suppressed` (anything else exports all) | email, status, consent_given, consent_text, consent_at_utc, source, subscribed_at_utc, unsubscribed_at_utc, suppressed_at_utc, suppression_reason. Unsubscribe tokens are never exported. | `newsletter_export` `{rows, status}` |
-| `GET /admin/polls/[id]/export` | `polls.view_results`. The RPC re-checks it. | — (`400` for a non-UUID id, `404` if the poll is not readable) | ballot_id, voted_at_utc, option_label | `poll_votes_export` `{rows}` on `polls/<id>` |
 
 ### SEO routes
 
@@ -178,29 +178,27 @@ Each action:
 
 | File (`src/app/admin/...`) | Actions → permission |
 |---|---|
-| `(studio)/articles/actions.ts` | `createArticle`, `duplicateArticle` → `articles.create`. `saveArticle`, `restoreArticleRevision`, `searchArticlesForRelated` → any of `articles.edit_own` / `articles.edit_any`. `transitionArticle` → any of submit, review, publish, archive, edit_own, edit_any; the actual rules are in `transition_article`. `deleteArticle` → `articles.delete`, requires typing the exact title, and refuses public or scheduled articles. `createTag` → `taxonomy.manage`. |
-| `(studio)/homepage/actions.ts` | `createDraft`, `addSection`, `updateSection`, `toggleSection`, `moveSection`, `deleteSection`, `publishHomepage`, `restoreConfiguration` → `homepage.manage` |
-| `(studio)/media/actions.ts` | `uploadMediaFile`, `addExternalMedia` → `media.upload`. `updateMediaMeta`, `replaceMediaFile`, `updateExternalUrl`, `deleteMedia` → any of `media.upload` / `media.manage_any`; ownership is enforced by RLS and storage policies. |
+| `(studio)/articles/actions.ts` | `createArticleFromEditor` (first save from the full New-article editor: inserts the draft as the caller, then runs `saveArticle` on it), `duplicateArticle` → `articles.create`. `saveArticle`, `restoreArticleRevision`, `searchArticlesForRelated` → any of `articles.edit_own` / `articles.edit_any`. `transitionArticle` → any of submit, review, publish, archive, edit_own, edit_any; the actual rules are in `transition_article`. `deleteArticle` → `articles.delete`, requires typing the exact title, and refuses public or scheduled articles. `createTag` → `taxonomy.manage`. |
+| `(studio)/_media/actions.ts` | `uploadImage` (from the media picker) → `media.upload`. Images only (JPEG, PNG, WebP, GIF, AVIF), bytes sniffed by `storeUpload`; alt text required (≤300), caption ≤600, credit ≤200. Removes the stored object if the `media_assets` insert fails. Returns `{ok:true, media}` or `{ok:false, error}`. |
+| `(studio)/ads/actions.ts` | `createAdSlot`, `updateAdSlot`, `toggleAdSlot`, `deleteAdSlot` → `ads.manage`. The creative must be an image asset; the destination must be `https://`. Each revalidates the whole public site. |
+| `(studio)/applications/actions.ts` | `approveApplication`, `rejectApplication` → `users.manage`. Approval sends the normal invitation through `inviteStaff` (Writer or Moderator only; no invitation or role change when the email is already staff), then calls `review_publisher_application`. Rejection requires a reason (3–1000 characters). Both redirect to `/admin/applications?done=…`. |
 | `(studio)/moderation/actions.ts` | `moderate`, `resolveReport` → `moderation.manage` |
-| `(studio)/navigation/actions.ts` | `createNavItem`, `updateNavItem`, `toggleNavItem`, `moveNavItem`, `deleteNavItem` → `navigation.manage` |
 | `(studio)/newsletter/actions.ts` | `setSubscriberStatus` → `newsletter.manage` + `newsletter.view` |
-| `(studio)/pages/actions.ts` | `createPage`, `savePage`, `setPageStatus`, `restorePageRevision` → `pages.manage` |
-| `(studio)/polls/actions.ts` | `createPoll`, `updatePoll`, `pollLifecycle` (delete is allowed only for a draft with no votes), `addOption`, `optionAction` → `polls.manage` |
-| `(studio)/seo/actions.ts` | `saveSeoSettings`, `createRedirect`, `updateRedirect`, `toggleRedirect`, `deleteRedirect` → `seo.manage`. Redirects are checked for loops. |
 | `(studio)/settings/actions.ts` | `saveSettings` → `settings.manage`. Editable keys: general, social, contact, footer, publication, community, newsletter. |
 | `(studio)/taxonomy/actions.ts` | `saveCategory`, `categoryOp`, `saveTag`, `deleteTag` → `taxonomy.manage` |
 | `(studio)/taxonomy/place-actions.ts` | `saveLocation`, `deleteLocation`, `saveTrending`, `trendingOp` → `taxonomy.manage` |
-| `(studio)/team/actions.ts` | `inviteMember` → `users.manage`; needs `SUPABASE_SERVICE_ROLE_KEY` for the invite, and the role is assigned as the inviter. `changeRole`, `setMemberActive` → `users.manage`. `updateMemberProfile` → any staff member for their own profile, `users.manage` for anyone else's. `saveRolePermissions` → `roles.manage`. |
+| `(studio)/team/actions.ts` | `inviteMember` → `users.manage`; uses `inviteStaff` (`src/lib/studio/invite.ts`), needs `SUPABASE_SERVICE_ROLE_KEY` for the invite, and the role is assigned as the inviter. `changeRole`, `setMemberActive` → `users.manage`. `updateMemberProfile` → any staff member for their own profile, `users.manage` for anyone else's. `saveRolePermissions` → `roles.manage`. |
+| `apply/actions.ts` | `submitApplication` → no permission (public, signed out). Zod validation, honeypot (`website`; a filled honeypot gets the normal reply and nothing is stored), rate limit `application`, then the service-only `submit_publisher_application`. The reply is the same for new, duplicate and existing-staff emails. |
 | `login/actions.ts` | `signIn`, `requestPasswordReset` → no permission; rate limit `login`. `signOut`. |
 | `auth/update-password/actions.ts` | `updatePassword` → needs a valid session user. The password must be at least 12 characters with lower case, upper case and a digit (zod). |
+
+Removed on 2026-11-07 with their Studio modules (ADR-017): the homepage, media, navigation, pages, polls and SEO actions, `GET /admin/homepage/articles` and `GET /admin/polls/[id]/export`.
 
 ## 7. Inconsistencies noticed (not fixed)
 
 - **Honeypot hits never get the "fake success" response.** `website: z.string().max(0)` rejects any non-empty value inside `readJson`, which returns `422` with zod's default message. The handlers' `if (parsed.data.website)` branches (newsletter, comments, community posts, vote) are therefore unreachable.
 - **`POST /newsletter` reveals suppressed addresses.** It returns `status: "subscribed"` for suppressed addresses and `"recorded"` for every other address, even though the code comment says the response is identical so membership cannot be probed.
-- **No rate limit** on `POST /track`, `GET /polls/[id]/vote`, or any public GET except `/search`.
+- **No rate limit** on `GET /polls/[id]/vote`, or any public GET except `/search`.
 - **The envelopes differ.** Reads nest the payload under `data`, while writes spread fields at the top level. The `already_voted` response is `ok:false` without an `error` field. Studio JSON routes use neither envelope.
-- **`saveSeoSettings` checks the wrong permission for its write.** It requires `seo.manage`, but upserts `site_settings`, whose RLS requires `settings.manage`. A role given `seo.manage` without `settings.manage` would fail at the database.
 - **Tag creation in the editor is stricter than RLS.** `createTag` requires `taxonomy.manage`, but RLS `tags_writer_insert` lets any `articles.create` holder insert tags.
-- **The homepage article picker misses some public articles.** It filters `status = 'published'`, so past-due `scheduled` articles, which are public, are not offered.
 - **Unknown RSS category slugs are not reported.** A `?paksa=` slug that does not exist silently falls back to the site-wide feed.

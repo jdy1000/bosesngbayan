@@ -27,7 +27,8 @@ src/
     admin/             Boses ng Bayan Studio
       login/, auth/    sign-in, password recovery, invitation callback
       (studio)/        protected console (layout calls requireStaffPage)
-      preview/         protected draft previews (articles, pages, homepage)
+      apply/           public "apply for newsroom access" form, reachable signed out (ADR-018)
+      preview/         protected draft preview (articles)
       api/             staff-only JSON helpers (media picker)
     api/public/v1/     public JSON API (reads + rate-limited writes)
     api/cron/          scheduled jobs (Bearer CRON_SECRET)
@@ -39,7 +40,7 @@ src/
     supabase/server.ts three clients (see §3)
     auth/              session + permission guards
     cms/               public read layer (published content only)
-    studio/            Studio data helpers (dashboards, ranges, CSV, reorder, redirects …)
+    studio/            Studio data helpers (dashboards, ranges, CSV, reorder, media upload, ads, applications, invitations …)
     homepage/blocks.ts typed, Zod-validated homepage block schema (17 block types)
     rich-text/         TipTap extensions, render + sanitize
     security/          hashing, rate limiting, same-origin check, cron auth
@@ -65,9 +66,9 @@ tests/
 1. **Session client** (`createSessionClient`). Used by Studio pages, server actions and previews. It runs as the signed-in user, so every query is filtered by RLS. Studio never needs the service role for content work.
 2. **Public client** (anon key, no cookies). Used by `src/lib/cms/*` for public reads. RLS only exposes published, public rows, for example through `article_is_public(status, published_at)`.
 3. **Service client** (service-role key). Used only for:
-   - narrow public-write RPCs (votes, comments, submissions, reports, newsletter, page views), called after the route handler has validated, rate-limited and checked origin;
+   - narrow public-write RPCs (votes, comments, submissions, reports, newsletter, page views, publisher applications), called after the route handler has validated, rate-limited and checked origin;
    - scheduled jobs;
-   - Supabase Auth admin calls (team invitations, deactivation).
+   - Supabase Auth admin calls (team and application invitations, deactivation).
 
    It is never imported by client components, and the key is never prefixed `NEXT_PUBLIC_`.
 
@@ -88,7 +89,7 @@ Hidden sidebar items are only a convenience.
   5. returns a uniform, safe error envelope.
 - **Studio mutation**: `"use server"` action → `requirePermission(perm)` → Zod parse → session client (RLS) or a SECURITY DEFINER RPC that checks `has_permission()` → `revalidatePath` → `FormActionResult` back to `ActionForm`.
 - **Editorial transition**: `transition_article(article_id, to, note)` RPC. It validates the state machine and permissions and records reviewer/approver/publisher and timestamps (see `EDITORIAL_WORKFLOW.md`).
-- **Preview**: `/admin/preview/*` routes. They require a staff session, read drafts through the session client, and send `noindex` and `no-store`. Public endpoints never return drafts.
+- **Preview**: `/admin/preview/articles/[id]`, the only preview route since ADR-017. It requires a staff session, reads drafts through the session client, and sends `noindex` and `no-store`. Public endpoints never return drafts.
 
 ## 5. Architecture decision records
 
@@ -113,6 +114,7 @@ Hidden sidebar items are only a convenience.
 - Replace or delete requires owning the object, or `media.manage_any`.
 - Uploads are magic-byte sniffed (`sniffMime`); SVG is rejected and size is capped at 4 MB, because uploads pass through a server action and Vercel limits request bodies to 4.5 MB. For larger files, switch to signed direct-to-storage uploads.
 - Do not upload private documents here.
+- Since ADR-017 the Studio uploads images only through the media picker (`uploadImage`, ADR-016). No Studio screen edits, replaces or deletes existing media. The storage policies above are unchanged.
 
 **ADR-008 — Scheduled publishing without minute-level cron.** An article in `scheduled` status becomes publicly visible as soon as `published_at <= now()`, through `article_is_public(status, published_at)`. Visibility therefore does not depend on a job running.
 - `/api/cron/publish` calls `publish_due_articles()` and then revalidates; it only flips the stored status to `published`.
@@ -130,14 +132,16 @@ Hidden sidebar items are only a convenience.
 **ADR-010 — Typed homepage blocks.** Homepage sections are relational rows (`homepage_sections`) with JSON `settings` validated by per-type Zod schemas in `src/lib/homepage/blocks.ts`.
 - Draft and published configurations are separate rows. `publish_homepage()` copies the draft atomically.
 - Invalid or unknown blocks are skipped at render time rather than breaking the page.
+- Since ADR-017 the homepage builder is gone from Studio. The public site still renders the stored published configuration. The tables and RPCs are unchanged.
 
-**ADR-011 — Redirects.** The `redirects` table drives `redirectOrNotFound()` on 404s, with 301/308 treated as permanent. Destinations must be same-site paths or https URLs, and loops are rejected (`lib/studio/redirects.ts`). `hit_count` exists in the schema but is not incremented yet, which would require a service write on every redirect.
+**ADR-011 — Redirects.** The `redirects` table drives `redirectOrNotFound()` on 404s, with 301/308 treated as permanent. Table CHECKs require the destination to be a same-site path or an https URL, different from the source. `hit_count` exists in the schema but is not incremented yet, which would require a service write on every redirect.
+- Since ADR-017 there is no Studio screen for redirects. Loop detection lived in `lib/studio/redirects.ts`, which was deleted with the SEO module, so a redirect added with SQL is not checked for loops.
 
 **ADR-012 — News-first homepage (2026-11-06).** At the owner's request the public site was redesigned as a news site after the Morning template (visual language) and Istorya (structure); the poll-led hero is no longer the default.
 - New block type `top_stories` (migration `20261106001000_top_stories_block.sql`, schema in `lib/homepage/blocks.ts`): lead from featured, latest or a manual pick, plus rail and below-row counts. Its lead image is the only preloaded image on the homepage.
 - `latest_articles` gained `with_sidebar`, which shows a ranked most-read list only when tracked views exist.
 - Inter is the single font family; `--font-serif` maps to it so legacy classes stay harmless.
-- The `hero` block remains available in the homepage builder.
+- The `hero` block type remains in the schema and the renderer. Since ADR-017 the homepage layout can no longer be changed from Studio.
 
 **ADR-013 — Unlabelled local preview content (2026-11-06).** The owner asked for the local site to read as a real publication, with no "[Demo]" labels, disclaimers or photo credits. The spec (section 0) asks for clearly labelled demo content, so the following safeguards replace the visible labels:
 - `pnpm seed:demo` refuses any non-local Supabase URL (`assertLocal`), so this content cannot reach production.
@@ -145,7 +149,7 @@ Hidden sidebar items are only a convenience.
 - Photos are CC0, public domain or Unsplash License only (no attribution required); provenance stays in `supabase/seed-media/CREDITS.json`. CC BY / BY-SA photos were removed because they legally require a visible credit.
 - Before launch, the newsroom replaces all preview content with real reporting (a fresh production database never runs the seed).
 
-**ADR-014 — Studio shell follows the RapidPoll console (2026-11-06).** At the owner's request the Studio uses the same console layout as the team's RapidPoll admin: fixed navy sidebar grouped Pangkalahatan / Nilalaman / Homepage at Site / Komunidad / Administrasyon / Ikaw, a white top bar with article search, a notification bell (pending review, moderation queues) and a user menu (Aking Account, view site, logout), and rounded-2xl panels with a soft card shadow. Boses colours, logo and Filipino labels are kept. The signed-out screens (login, forgot password, new password) share `AuthShell`.
+**ADR-014 — Studio shell follows the RapidPoll console (2026-11-06).** At the owner's request the Studio uses the same console layout as the team's RapidPoll admin: fixed navy sidebar grouped Pangkalahatan / Nilalaman / Homepage at Site / Komunidad / Administrasyon / Ikaw, a white top bar with article search, a notification bell (pending review, moderation queues) and a user menu (Aking Account, view site, logout), and rounded-2xl panels with a soft card shadow. Boses colours, logo and Filipino labels are kept. The signed-out screens (login, forgot password, new password) share `AuthShell`. *Superseded: the Filipino labels by ADR-015, and the sidebar, bell and user menu by ADR-016.*
 
 **ADR-015: English Studio, Filipino/English public site, light/dark themes (2026-11-06).** The owner asked for:
 - an English Studio,
@@ -166,13 +170,99 @@ This supersedes the Filipino Studio labels in ADR-014.
   - block links (`label_en` inside a link's settings);
   - Site Settings text: tagline, description, copyright, header CTA, newsletter box, community guidelines and newsletter consent. `localizeSettings()` applies these.
 
-  The columns come from migration `20261106001100_english_labels.sql`.
+  The columns come from migration `20261106001100_english_labels.sql`. Since ADR-017 the navigation and homepage labels can no longer be edited from Studio; Site Settings text still can.
 - *Consent wording.* The newsletter records the consent text in the language the reader saw, so the stored wording matches the wording shown.
 - *Theme.*
   - The `bnb_theme` cookie (`light` by default, or `dark`) is shared by the site and Studio and read on the server, so the page never flashes the wrong theme.
+  - Since 2026-11-07 (ADR-016) the Studio has no theme toggle of its own. It follows the theme chosen on the public site.
   - Colour roles are CSS variables, redefined under `:root[data-theme="dark"]` (docs/DESIGN_SYSTEM.md §2).
   - The language and theme switches are plain forms that post to server actions, so they work without JavaScript.
 - *Favicon.* The default icons (`public/favicon.ico`, `public/brand/icon.svg`, `public/brand/apple-icon.png`) are drawn from the logo mark. A favicon chosen in Studio → Settings → General replaces them on the public site. If that lookup fails, the default stays.
+
+**ADR-016 — Studio console follows Newsmaker (2026-11-07).** The owner asked the Studio to adopt the console of the team's Newsmaker admin. Adopted: the shell, the navigation, the page titles and the article workflow. Kept: Boses colours and logo, TipTap, every permission check and every URL (no route was renamed). This supersedes the navy grouped sidebar, the notification bell and the user menu of ADR-014, and the grouped light sidebar of this ADR's first draft.
+- *Sidebar* (`components/studio/sidebar.tsx`, `components/studio/nav.ts`). One flat list under a "PUBLICATION" label, in this order:
+  1. Overview (`/admin`)
+  2. Analytics (`/admin/analytics`)
+  3. Articles (`/admin/articles`)
+  4. Review queue (`/admin/review`)
+  5. Reports (`/admin/moderation`)
+  6. Ad inventory (`/admin/ads`)
+  7. Audience (`/admin/newsletter`)
+  8. Users & roles (`/admin/team`)
+  9. Applications (`/admin/applications`)
+  10. Site categories (`/admin/taxonomy`)
+  11. Settings (`/admin/settings`)
+  12. Create article (`/admin/articles/new`)
+  13. My account (`/admin/account`)
+
+  An item is shown only to users who hold one of its permissions. This is a convenience: every page and action re-checks on the server. The active item is the longest matching URL. Only the nav list scrolls. The pinned footer holds "Private workspace / Authorized editors only", "View publication" and "Sign out".
+- *Top bar* (`app/admin/(studio)/layout.tsx`, `components/studio/route-label.tsx`):
+  - a "Workspace / <page>" breadcrumb; sub-pages get their own label, such as "Edit article" and "Article history";
+  - article search with a ↵ submit button, from `md` up, for users who can see articles;
+  - an identity chip (name and role) that links to `/admin/account`.
+
+  The notification bell and the Studio theme toggle were removed, and `lib/studio/notices.ts` was deleted. The Studio still follows the `bnb_theme` cookie chosen on the public site.
+- *Footer.* "Boses ng Bayan · Editorial workspace · <year>".
+- *Page headers.* `PageHeader` gained an `eyebrow` prop, a small uppercase kicker above the title. Kickers and titles follow Newsmaker:
+
+  | Page | Kicker / title |
+  | --- | --- |
+  | `/admin` | Publishing center / Welcome, {name}, with an "Access: {role}" chip |
+  | `/admin/articles` | Content / Articles |
+  | `/admin/review` | Editorial workflow / Review queue |
+  | `/admin/moderation` | Trust and corrections / Report inbox |
+  | `/admin/ads` | Commercial inventory / Ad inventory |
+  | `/admin/newsletter` | Audience |
+  | `/admin/team` | Access control / Accounts and roles |
+  | `/admin/applications` | Publisher onboarding / Publisher applications |
+  | `/admin/taxonomy` | Publication structure / Site categories |
+  | `/admin/settings` | Publication settings / Settings |
+  | `/admin/articles/new` | Create article |
+  | `/admin/articles/[id]` | Edit article |
+- *New article* (`/admin/articles/new`) opens the full editor with nothing written yet. The first save or publishing action calls `createArticleFromEditor`. That action inserts the draft (with `articles.create` and RLS), then saves the full form through `saveArticle`, and the page moves to `/admin/articles/[id]`. Autosave starts only once the article exists. If a status change fails after the draft was created, the editor still opens the new draft and shows the error.
+- *Publishing card* (`workflow-panel.tsx`). This card lists only the transitions this role may take at the current status, plus Save draft or Save changes. Each transition first saves pending edits, and the transition itself still runs through `transition_article`.
+- *Articles list.* Tabs, filters, table and an "a–b of N" pager sit in one card.
+- *Review queue* (`/admin/review`, `articles.review`). Lists `pending_review` articles, oldest submission first. The available actions are:
+  - Approve;
+  - Approve & publish, which needs `articles.publish` and is two transitions; if publishing fails the article stays approved;
+  - Return to author, which requires a reason.
+- *Image upload in the picker.* The media picker (`components/studio/media-picker.tsx`) is used for the article featured and OG images, the rich-text "Insert image" dialog, Ad inventory, Settings and the category form. Besides searching existing images, it has an "Upload a new image" area: a file, required alt text (up to 300 characters), and an optional caption (up to 600) and credit (up to 200). It calls the server action `uploadImage` (`app/admin/(studio)/_media/actions.ts`), which:
+  - requires `media.upload`;
+  - accepts images only (JPEG, PNG, WebP, GIF, AVIF), with the bytes sniffed by `storeUpload` in `lib/studio/media.ts`;
+  - removes the stored object again if the `media_assets` insert fails.
+
+  The uploaded image is selected in the picker straight away. Metadata is set at upload time; there is no screen to edit or delete existing media (ADR-017).
+
+**ADR-017 — Studio modules removed (owner decision, 2026-11-07).** The owner asked for these Studio modules to be deleted. The owner explicitly kept Analytics and Settings.
+- *Removed routes:*
+  - Pages (`/admin/pages`) and `/admin/preview/pages`;
+  - Media Library (`/admin/media`);
+  - Homepage Builder (`/admin/homepage`), `/admin/preview/homepage` and `GET /admin/homepage/articles`;
+  - Navigation (`/admin/navigation`);
+  - SEO & redirects (`/admin/seo`);
+  - Polls admin (`/admin/polls`), including `GET /admin/polls/[id]/export`;
+  - the Audit log viewer (`/admin/audit`).
+- *Removed code:* `src/lib/studio/{homepage,pages,redirects,notices}.ts` and the redirect validation unit tests.
+- *Unchanged:* database tables, RLS, RPCs and migrations. The public site still reads published pages, the published homepage configuration, navigation, polls (voting still works), redirects and SEO settings from the database. Audit rows are still written (`audit_row_change`, `write_audit`).
+- *What the owner can no longer do from Studio:*
+  - change the homepage layout, its blocks, the hero or the featured poll, or preview a homepage draft;
+  - create, edit, publish or archive static pages (they stay as stored; in the base seed they are drafts);
+  - edit header and footer navigation, including the English labels from ADR-015;
+  - edit the SEO defaults (including `seo.allow_indexing`) or manage redirects;
+  - create, edit, open, close or archive polls, or export poll votes as CSV;
+  - browse the full audit log. Read `audit_logs` with SQL instead. The team member page (`/admin/team/[id]`) still shows that member's last 20 audit entries to `audit.view` holders;
+  - edit the metadata of existing media, replace a file, or delete media.
+
+  These changes now need SQL against the database, or the modules restored from Git history.
+- *Permissions.* `pages.manage`, `homepage.manage`, `navigation.manage`, `seo.manage`, `polls.manage`, `polls.view_results`, `media.manage_any` and `audit.view` still exist in the matrix and in RLS. No Studio screen manages those areas any more. Two small uses remain: `polls.view_results` or `polls.manage` shows the poll figures on the Overview page, and `audit.view` shows the audit panel on a team member's page.
+
+**ADR-018 — Publisher applications without self-registration (2026-11-07).** The spec forbids public admin registration (§4.10, §9). The owner wanted people to be able to ask to join the newsroom. The public form at `/admin/apply` (reachable signed out; `src/proxy.ts` lets it through) therefore stores only a request:
+- An application creates no auth account and grants no access. The row lives in `publisher_applications` (migration `20261107000200`).
+- Inserts go only through the service-role function `submit_publisher_application`. The `submitApplication` server action calls it after Zod validation, a honeypot check and a per-network rate limit (`application`, 3 per hour).
+- Each email can have only one pending application. Duplicates are silently ignored, and the reply is the same for every email, so the form cannot be used to find out who has applied or who is staff.
+- Only `users.manage` holders (Owner and Administrator by default) can read applications, in Studio → Applications (`/admin/applications`). RLS gives them SELECT only, and UPDATE is revoked from `authenticated`, so no one can update rows directly. Decisions go only through the audited `review_publisher_application`. It allows only pending → approved or rejected, requires a reason for a rejection, and writes an `approve_application` or `reject_application` audit row with no personal data.
+- Only an administrator's approval sends an invitation, and it is the normal Studio invitation (`inviteStaff` in `src/lib/studio/invite.ts`: Supabase Auth invite, then `set_user_role` run as the administrator; team invitations use the same helper). Approval can grant only Writer or Moderator. If the applicant is already staff, the application is marked approved without a new invitation or role change.
+- Only the network hash is stored, never the raw IP. Reviewed applications are deleted 180 days after the decision by `purge_old_publisher_applications`, which runs in the daily `/api/cron/retention` job.
 
 ## 6. Environment variables
 

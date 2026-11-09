@@ -4,8 +4,8 @@
 
 | Layer | Tool | Location | Needs | What it proves |
 | --- | --- | --- | --- | --- |
-| Database | Vitest + PGlite | `tests/db/*.test.ts` | Nothing (in-process Postgres) | Every migration applies cleanly. RLS allows and denies per role. Workflow transitions and guards. Vote integrity (duplicates, closed polls, options locked after votes). Rate limits. Moderation. Newsletter privacy. Homepage publish and restore. Media-in-use protection. Team invariants. |
-| Unit | Vitest | `tests/unit/*.test.ts` | Nothing | Sanitizer (XSS), TipTap render, cron auth, HMAC hashing, bot filter, same-origin check, magic-byte sniffing, block schemas and safe hrefs, slug and timezone helpers, CSV escaping (formula injection), date ranges, redirect loops, article editor logic. |
+| Database | Vitest + PGlite | `tests/db/*.test.ts` | Nothing (in-process Postgres) | Every migration applies cleanly. RLS allows and denies per role. Workflow transitions and guards. Vote integrity (duplicates, closed polls, options locked after votes). Rate limits. Moderation. Newsletter privacy. Homepage publish and restore. Media-in-use protection. Team invariants. Ad slot RLS and live window. Publisher applications (no direct updates, review rules, retention). |
+| Unit | Vitest | `tests/unit/*.test.ts` | Nothing | Sanitizer (XSS), TipTap render, cron auth, HMAC hashing, bot filter, same-origin check, magic-byte sniffing, block schemas and safe hrefs, slug and timezone helpers, CSV escaping (formula injection), date ranges, article editor logic, ad and publisher-application schemas. (The redirect-loop tests were removed with `lib/studio/redirects.ts`, ADR-017.) |
 | Types | `tsc --noEmit` | whole repo | Nothing | Typed DB contracts (`database.types.ts` generated from the migrations). |
 | Lint | ESLint (`eslint-config-next`) | whole repo | Nothing | React and Next rules, hooks correctness. |
 | Build | `next build` | — | Nothing (no DB at build time, ADR-004) | All routes compile, no server-only imports leak to the client. |

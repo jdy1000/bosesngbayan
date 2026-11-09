@@ -9,53 +9,33 @@ export interface StudioNavItem {
 }
 
 export type StudioIcon =
-  | "dashboard" | "articles" | "media" | "homepage" | "pages" | "taxonomy" | "polls" | "moderation"
-  | "newsletter" | "analytics" | "team" | "navigation" | "seo" | "settings" | "audit" | "account";
+  | "overview" | "analytics" | "articles" | "review" | "reports" | "ads" | "audience" | "users"
+  | "applications" | "categories" | "settings" | "create" | "account";
 
-export const STUDIO_NAV: { group: string; items: StudioNavItem[] }[] = [
-  {
-    group: "Overview",
-    items: [
-      { href: "/admin", label: "Dashboard", icon: "dashboard", anyOf: ["dashboard.view"] },
-      { href: "/admin/analytics", label: "Analytics", icon: "analytics", anyOf: ["analytics.view"] },
-    ],
-  },
-  {
-    group: "Content",
-    items: [
-      { href: "/admin/articles", label: "Articles", icon: "articles", anyOf: ["articles.create", "articles.view_all"] },
-      { href: "/admin/pages", label: "Pages", icon: "pages", anyOf: ["pages.manage"] },
-      { href: "/admin/media", label: "Media Library", icon: "media", anyOf: ["media.upload", "media.manage_any"] },
-      { href: "/admin/taxonomy", label: "Categories & tags", icon: "taxonomy", anyOf: ["taxonomy.manage"] },
-    ],
-  },
-  {
-    group: "Homepage & site",
-    items: [
-      { href: "/admin/homepage", label: "Homepage Builder", icon: "homepage", anyOf: ["homepage.manage"] },
-      { href: "/admin/navigation", label: "Navigation", icon: "navigation", anyOf: ["navigation.manage"] },
-      { href: "/admin/seo", label: "SEO & redirects", icon: "seo", anyOf: ["seo.manage"] },
-    ],
-  },
-  {
-    group: "Community",
-    items: [
-      { href: "/admin/polls", label: "Polls", icon: "polls", anyOf: ["polls.manage", "polls.view_results"] },
-      { href: "/admin/moderation", label: "Moderation", icon: "moderation", anyOf: ["moderation.manage"] },
-      { href: "/admin/newsletter", label: "Newsletter", icon: "newsletter", anyOf: ["newsletter.view", "newsletter.manage"] },
-    ],
-  },
-  {
-    group: "Administration",
-    items: [
-      { href: "/admin/team", label: "Team & roles", icon: "team", anyOf: ["users.view", "users.manage"] },
-      { href: "/admin/settings", label: "Site Settings", icon: "settings", anyOf: ["settings.manage"] },
-      { href: "/admin/audit", label: "Audit Log", icon: "audit", anyOf: ["audit.view"] },
-    ],
-  },
-  {
-    group: "You",
-    // Empty anyOf = every signed-in staff member (own account only; enforced in the account actions).
-    items: [{ href: "/admin/account", label: "My account", icon: "account", anyOf: [] }],
-  },
+/** Flat list in the order of the Newsmaker console (ADR-016), plus Analytics and Settings. */
+export const STUDIO_NAV: StudioNavItem[] = [
+  { href: "/admin", label: "Overview", icon: "overview", anyOf: ["dashboard.view"] },
+  { href: "/admin/analytics", label: "Analytics", icon: "analytics", anyOf: ["analytics.view"] },
+  { href: "/admin/articles", label: "Articles", icon: "articles", anyOf: ["articles.create", "articles.view_all"] },
+  { href: "/admin/review", label: "Review queue", icon: "review", anyOf: ["articles.review"] },
+  { href: "/admin/moderation", label: "Reports", icon: "reports", anyOf: ["moderation.manage"] },
+  { href: "/admin/ads", label: "Ad inventory", icon: "ads", anyOf: ["ads.manage"] },
+  { href: "/admin/newsletter", label: "Audience", icon: "audience", anyOf: ["newsletter.view", "newsletter.manage"] },
+  { href: "/admin/team", label: "Users & roles", icon: "users", anyOf: ["users.view", "users.manage"] },
+  { href: "/admin/applications", label: "Applications", icon: "applications", anyOf: ["users.manage"] },
+  { href: "/admin/taxonomy", label: "Site categories", icon: "categories", anyOf: ["taxonomy.manage"] },
+  { href: "/admin/settings", label: "Settings", icon: "settings", anyOf: ["settings.manage"] },
+  { href: "/admin/articles/new", label: "Create article", icon: "create", anyOf: ["articles.create"] },
+  // Empty anyOf = every signed-in staff member (own account only; enforced in the account actions).
+  { href: "/admin/account", label: "My account", icon: "account", anyOf: [] },
 ];
+
+/** The nav item that owns `path`: the longest matching href; `/admin` only matches itself. */
+export function findNavItem(path: string): StudioNavItem | null {
+  let best: StudioNavItem | null = null;
+  for (const item of STUDIO_NAV) {
+    const owns = item.href === "/admin" ? path === "/admin" : path === item.href || path.startsWith(`${item.href}/`);
+    if (owns && (!best || item.href.length > best.href.length)) best = item;
+  }
+  return best;
+}

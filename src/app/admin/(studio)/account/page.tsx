@@ -17,7 +17,7 @@ export default async function AccountPage() {
 
   return (
     <>
-      <PageHeader title="My account" description="Your sign-in email and password. Only you can change them." />
+      <PageHeader title="My account" description="Manage your sign-in email, password, and account security." />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-6">

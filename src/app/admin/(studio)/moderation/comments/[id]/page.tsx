@@ -38,7 +38,7 @@ export default async function ModerationCommentPage({ params }: { params: Promis
     <>
       <PageHeader
         title={`Comment by ${comment.author_name}`}
-        breadcrumb={[{ label: "Moderation", href: "/admin/moderation?tab=comments" }]}
+        breadcrumb={[{ label: "Report inbox", href: "/admin/moderation?tab=comments" }]}
         description={<StatusBadge status={comment.status} map={MODERATION_STATUS} />}
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">

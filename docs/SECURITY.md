@@ -7,7 +7,7 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
 
 | Actor | Can | Must not be able to |
 | --- | --- | --- |
-| Anonymous visitor | Read published content; vote; subscribe; submit comments, perspectives and reports | Read drafts or private data; publish; inflate votes cheaply; enumerate subscribers; inject script |
+| Anonymous visitor | Read published content; vote; subscribe; submit comments, perspectives and reports; apply for newsroom access | Read drafts or private data; publish; inflate votes cheaply; enumerate subscribers, applicants or staff; gain any Studio access by applying; inject script |
 | Signed-in staff | What their role's permissions grant (`docs/ADMIN_RBAC.md`) | Escalate their own role; act on resources their permissions exclude (for example, a Writer editing another writer's draft or publishing) |
 | Compromised staff session | Damage limited to that role's permissions; every sensitive action is audit-logged | Touch owner-level controls unless the session is an Owner's |
 | Automated abuse (bots, scripts) | Hit public endpoints | Bypass rate limits, which are DB-backed and fail closed on write paths, or the honeypot and origin checks |
@@ -15,8 +15,8 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
 ## 2. Authentication
 
 - Supabase Auth with email and password. Sessions are httpOnly cookies managed by `@supabase/ssr`.
-- `src/proxy.ts` refreshes the session on every `/admin` request and redirects signed-out users to `/admin/login`. Admin responses carry `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
-- **No public registration.** Staff join only through invitations sent by a user with `users.manage`, using the Auth admin API on the server. The callback (`/admin/auth/callback`) restricts `next` to an allowlist of internal paths, so it cannot be used as an open redirect.
+- `src/proxy.ts` refreshes the session on every `/admin` request and redirects signed-out users to `/admin/login`. The only `/admin` paths open to signed-out visitors are `/admin/login`, `/admin/auth/*` and the application form `/admin/apply`. Admin responses carry `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
+- **No public registration.** Staff join only through invitations sent by a user with `users.manage`, using the Auth admin API on the server. The public application form (`/admin/apply`, §5.1, ADR-018) only stores a request; it creates no account. The callback (`/admin/auth/callback`) restricts `next` to an allowlist of internal paths, so it cannot be used as an open redirect.
 - Sign-in is rate-limited (10 per 15 minutes per network) and returns one generic error. Password reset returns the same message whether or not the account exists.
 - Passwords need at least 12 characters with lower case, upper case and a digit. This is enforced both by Supabase Auth (`config.toml`; mirror it in the production dashboard) and by `/admin/auth/update-password` and `/admin/account` (shared schema `src/lib/auth/password.ts`).
 - Changing a password from `/admin/account` requires the current password (re-verified with Supabase before `updateUser`), so an unattended open session cannot be used to take over the account. Email changes need confirmation from both addresses (`double_confirm_changes`). The auth callback only redirects to an allowlist (`/admin`, `/admin/auth/update-password`, `/admin/account`).
@@ -50,9 +50,10 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
   - the output passes the allowlist sanitizer `sanitizeRichHtml`: no scripts or event handlers; `http`, `https` and `mailto` schemes only; iframes limited to YouTube embeds; links forced to `rel="noopener noreferrer nofollow"`;
   - only sanitized HTML is stored, and it is the only HTML rendered with `dangerouslySetInnerHTML`.
 - Article JSON-LD escapes `<`, so a `</script>` breakout is impossible.
-- Link fields (CTA, navigation, redirects, canonical) accept only same-site paths starting with `/` (not `//`) or `https://` URLs. Redirect loops are rejected.
+- The header CTA link (Settings) accepts only same-site paths starting with `/` (not `//`) or `https://` URLs. Canonical URLs, ad destinations and applicant portfolio links must be `https://`, checked in Zod and by a table CHECK. Navigation items and redirects can no longer be edited from Studio (ADR-017); their table CHECKs still allow only `/…` or `https://…`, but redirect loops are no longer checked, because that check lived in the deleted SEO module.
 - **Uploads:**
-  - server action plus a storage policy (`media.upload`); objects go under `<uid>/`;
+  - one server action, `uploadImage`, called from the Studio media picker, plus a storage policy (`media.upload`); objects go under `<uid>/`;
+  - only images are accepted (JPEG, PNG, WebP, GIF, AVIF), and alt text is required; if the database insert fails, the stored object is removed;
   - magic-byte sniffing means the declared type must match the content;
   - SVG and HTML are rejected; the limit is 4 MB per file (the Vercel body limit); the bucket itself caps objects at 10 MB.
 - Community text is plain text, rendered escaped by React; no HTML is accepted.
@@ -69,11 +70,23 @@ These are the poll vote, newsletter subscribe and unsubscribe, comments, communi
 
 Comments and community posts start as `pending` and are published only through the moderation queue when moderation is enabled.
 
+### 5.1 Publisher applications (`/admin/apply`, ADR-018)
+
+The spec forbids public admin registration (§4.10, §9). The application form is built so it cannot become one:
+
+| Threat | Control |
+| --- | --- |
+| Self-registration or privilege grant | Submitting stores a pending row in `publisher_applications` and nothing else: no auth account, no role, no access. An account exists only after a `users.manage` holder approves, which sends the normal Studio invitation (`inviteStaff`). Approval can grant only Writer or Moderator, and `review_publisher_application` re-checks this. |
+| Direct table writes | Inserts go only through the service-role function `submit_publisher_application`, called by the server action. RLS gives `users.manage` holders (Owner and Administrator by default) SELECT only. There is no insert, update or delete policy, UPDATE is revoked from `authenticated`, and anon has no privileges, so nobody can change a row directly. Every decision goes through the audited `review_publisher_application()`, which allows only pending → approved or rejected and requires a reason for a rejection. Database tests assert that direct updates are rejected for editors, writers and administrators. |
+| Probing who applied or who is staff | One pending application per email; a duplicate is silently ignored. The reply is the same for new, duplicate and existing-staff emails. If the applicant is already staff, approval marks the application approved without a new invitation or role change. |
+| Spam and floods | Zod validation, a honeypot field (`website`; a filled one gets the normal reply and nothing is stored) and a per-network rate limit (`application`, 3 per hour), which fails closed. |
+| Personal data | Name, email, optional organisation, optional https portfolio link and message, with the consent time. Only the network hash is stored, never the raw IP. The audit row (`approve_application` / `reject_application`) holds no name, email or message. Reviewed applications are deleted 180 days after the decision by `purge_old_publisher_applications` in the daily retention job; pending ones stay until someone decides. |
+
 ## 6. Privacy
 
 - Stored identifiers are HMAC-SHA256 hashes keyed by `HASH_SECRET`; raw IPs, user agents and voter tokens are never persisted.
 - Visitor hashes rotate daily (Manila day), and likely bots are dropped.
-- `purge_old_analytics()` deletes page-view events older than 13 months and stale rate-limit rows.
+- `purge_old_analytics()` deletes page-view events older than 13 months and stale rate-limit rows. `purge_old_publisher_applications()` deletes reviewed applications 180 days after the decision (§5.1).
 - Newsletter records hold only the email address, consent (`consent_at`, `consent_text`), the source and status. Unsubscribe uses an unguessable per-subscriber UUID token through a POST, so link scanners cannot unsubscribe people. Suppressed addresses are kept only to honour the opt-out.
 - Rotating `HASH_SECRET` invalidates every existing voter and visitor hash. Do this deliberately.
 - Reader preferences are two cookies: `bnb_lang` (`fil`/`en`) and `bnb_theme` (`light`/`dark`).
@@ -128,4 +141,4 @@ The article JSON-LD is a non-executable data block (`application/ld+json`) with 
 - [ ] Confirm the `media` bucket policies exist (migration `…0400_storage.sql`).
 - [ ] Check the browser console on the deployed site for CSP violations (§8). Add any new embed origins to `frame-src`.
 - [ ] Turn on Supabase point-in-time recovery or daily backups (see `DEPLOYMENT.md`).
-- [ ] Review the audit log after the first week.
+- [ ] After the first week, query `audit_logs` with SQL (there is no Studio viewer, ADR-017).

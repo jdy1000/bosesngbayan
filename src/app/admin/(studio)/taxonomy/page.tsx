@@ -18,7 +18,7 @@ export default async function CategoriesPage() {
   return (
     <>
       <PageHeader
-        title="Categories & tags"
+        eyebrow="Publication structure" title="Site categories"
         description="Categories are the main sections of the site (e.g. Pulitika, Kalusugan). Tags are more specific topics within articles."
         actions={
           <Link href="/admin/taxonomy/categories/new" className="btn btn-primary min-h-10 px-4 text-sm">

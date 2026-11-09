@@ -35,26 +35,35 @@ function randomSuffix(): string {
 // ---------------------------------------------------------------------------
 // Create / duplicate
 // ---------------------------------------------------------------------------
-const createSchema = z.object({
-  title: z.string().trim().min(1, "Enter a title.").max(300, "Title is too long."),
-  category_id: z.string().trim().transform((v) => v || null).pipe(uuid.nullable()),
-});
-
-export async function createArticle(_prev: FormActionResult, formData: FormData): Promise<FormActionResult> {
+/**
+ * First save from the full "New article" editor: insert the draft (author = caller), then run the normal
+ * save on it so every field, relation and the first revision go through the same validated path.
+ * Returns the new id; if the row exists but the follow-up save failed, the id is still returned so the
+ * caller can open the draft instead of losing it.
+ */
+export async function createArticleFromEditor(formData: FormData): Promise<(SaveResult & { id?: string })> {
   try {
     const ctx = await requirePermission("articles.create");
-    const input = createSchema.parse({ title: formData.get("title") ?? "", category_id: formData.get("category_id") ?? "" });
-    const base = slugify(input.title, 150) || `artikulo-${randomSuffix()}`;
+    const parsed = articleFormSchema.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      return { ok: false, error: issue?.message ?? "Please check the fields.", field: String(issue?.path[0] ?? "") };
+    }
+    const f = parsed.data;
     const insert = (slug: string) =>
       ctx.supabase
         .from("articles")
-        .insert({ title: input.title, slug, category_id: input.category_id, author_id: ctx.userId })
-        .select("id")
+        .insert({ title: f.title, slug, category_id: f.category_id, author_id: ctx.userId })
+        .select("id, slug, updated_at")
         .single();
-    let res = await insert(base);
-    if (res.error?.code === "23505") res = await insert(`${base}-${randomSuffix()}`);
+    let res = await insert(f.slug);
+    if (res.error?.code === "23505") res = await insert(`${f.slug.slice(0, 150)}-${randomSuffix()}`);
     const row = need(res);
-    return { ok: true, message: "Draft created.", redirectTo: `/admin/articles/${row.id}` };
+    const fd = new FormData();
+    for (const [k, v] of formData) fd.append(k, v);
+    fd.set("slug", row.slug);
+    const saved = await saveArticle(row.id, row.updated_at, fd, true);
+    return { ...saved, id: row.id };
   } catch (e) {
     return toActionError(e);
   }
@@ -330,7 +339,9 @@ export async function restoreArticleRevision(_prev: FormActionResult, formData: 
 export async function searchArticlesForRelated(q: string, excludeId: string): Promise<{ id: string; title: string; status: ArticleStatus }[]> {
   const ctx = await requireAnyPermission(...EDITORS);
   const term = z.string().max(80).parse(q).trim();
-  let query = ctx.supabase.from("articles").select("id, title, status").neq("id", uuid.parse(excludeId)).order("updated_at", { ascending: false }).limit(10);
+  let query = ctx.supabase.from("articles").select("id, title, status").order("updated_at", { ascending: false }).limit(10);
+  // An unsaved article (New article editor) has no id yet, so there is nothing to exclude.
+  if (excludeId) query = query.neq("id", uuid.parse(excludeId));
   if (term) query = query.ilike("title", safeLike(term));
   return need(await query);
 }

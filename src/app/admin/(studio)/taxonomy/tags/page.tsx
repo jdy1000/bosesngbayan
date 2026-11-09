@@ -27,7 +27,7 @@ export default async function TagsPage({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <PageHeader title="Categories & tags" description="Tags are specific topics (e.g. “jeepney modernization”) that can be attached to many articles." />
+      <PageHeader eyebrow="Publication structure" title="Site categories" description="Tags are specific topics (e.g. “jeepney modernization”) that can be attached to many articles." />
       <TaxonomyTabs current="/admin/taxonomy/tags" />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div>

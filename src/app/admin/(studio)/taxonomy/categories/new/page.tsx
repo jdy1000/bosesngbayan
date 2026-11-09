@@ -8,7 +8,7 @@ export default async function NewCategoryPage() {
   await requireStaffPage("taxonomy.manage");
   return (
     <>
-      <PageHeader title="New category" breadcrumb={[{ label: "Categories & tags", href: "/admin/taxonomy" }]} />
+      <PageHeader title="New category" breadcrumb={[{ label: "Site categories", href: "/admin/taxonomy" }]} />
       <Panel>
         <CategoryForm />
       </Panel>

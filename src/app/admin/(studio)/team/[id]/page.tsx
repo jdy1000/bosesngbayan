@@ -49,7 +49,7 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
     <>
       <PageHeader
         title={profile.display_name}
-        breadcrumb={ctx.permissions.has("users.view") ? [{ label: "Team and Roles", href: "/admin/team" }] : undefined}
+        breadcrumb={ctx.permissions.has("users.view") ? [{ label: "Users & roles", href: "/admin/team" }] : undefined}
         description={
           <span className="flex flex-wrap items-center gap-2">
             {roleRes.data && <Badge tone="blue">{ROLE_LABELS[roleRes.data.role as AppRole]}</Badge>}
@@ -131,9 +131,6 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
                 ))}
               </ul>
             )}
-            <Link href={`/admin/audit?actor=${profile.id}`} className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
-              Full audit log for this staff member →
-            </Link>
           </Panel>
         )}
       </div>

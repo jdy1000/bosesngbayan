@@ -40,7 +40,7 @@ export default async function LocationsPage() {
 
   return (
     <>
-      <PageHeader title="Categories & tags" description="Place hierarchy for regional news: island group → region → province → city/town." />
+      <PageHeader eyebrow="Publication structure" title="Site categories" description="Place hierarchy for regional news: island group → region → province → city/town." />
       <TaxonomyTabs current="/admin/taxonomy/locations" />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div>

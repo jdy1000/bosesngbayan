@@ -21,8 +21,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHeader
-        title="Team and Roles"
-        description="Boses ng Bayan Studio staff. There is no public registration: an invitation is the only way to get an account."
+        eyebrow="Access control"
+        title="Accounts and roles"
+        description="Invite newsroom accounts and manage roles and status."
       />
 
       {canManage && (

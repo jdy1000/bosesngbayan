@@ -1,3 +1,4 @@
+import { AdSlot } from "@/components/public/ad-slot";
 import { ArticleView } from "@/components/public/article-view";
 import { CommentSection } from "@/components/public/comment-section";
 import { NewsletterForm } from "@/components/public/newsletter-form";
@@ -69,6 +70,7 @@ export default async function ArticlePage({ params }: Props) {
         shareUrl={url}
         afterBody={
           <>
+            <AdSlot placement="article" className="mt-12" />
             {settings.newsletter.enabled && (
               <aside className="mt-12 rounded-md bg-brand-50 p-6 md:p-8">
                 <h2 className="text-2xl font-semibold text-ink">{settings.footer.newsletter_title}</h2>

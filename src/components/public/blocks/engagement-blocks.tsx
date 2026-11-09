@@ -28,7 +28,7 @@ async function PollSidePanel({ others }: { others: Awaited<ReturnType<typeof lis
   const { t } = await getI18n();
   return (
     <aside className="space-y-8">
-      <div className="rounded-md border-t-[3px] border-ink bg-surface p-6">
+      <div className="rounded-md bg-surface p-6 shadow-[inset_0_3px_0_var(--color-ink)]">
         <h3 className="text-lg font-semibold text-ink">{t.blocks.howVotesCount}</h3>
         <p className="mt-2 text-[0.95rem] leading-relaxed text-ink-soft">{t.blocks.howVotesCountBody}</p>
         <Link href="/botohan#metodolohiya" className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">
@@ -42,7 +42,7 @@ async function PollSidePanel({ others }: { others: Awaited<ReturnType<typeof lis
             {others.map((p) => (
               <li key={p.id}>
                 <Link href={`/botohan/${p.slug}`} className="group block py-3">
-                  <span className={`text-[0.7rem] font-bold uppercase tracking-[0.08em] ${isPollOpen(p) ? "text-accent" : "text-muted"}`}>
+                  <span className={`text-[0.7rem] font-bold uppercase tracking-[0.08em] ${isPollOpen(p) ? "text-brand" : "text-muted"}`}>
                     {isPollOpen(p) ? t.blocks.pollOpen : t.blocks.pollClosed}
                   </span>
                   <span className="mt-0.5 block text-[0.95rem] font-medium leading-snug text-ink group-hover:text-brand">{p.question}</span>

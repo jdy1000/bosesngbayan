@@ -27,7 +27,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
 
   return (
     <>
-      <PageHeader title={data.article.title} breadcrumb={[{ label: "Articles", href: "/admin/articles" }]} />
+      <PageHeader title="Edit article" description="Update your content and manage its publication settings." />
       {/* Remount after a status change / restore so the form reflects the server's latest version. */}
       <ArticleEditor key={data.article.updated_at} data={data} options={options} perms={perms} userId={ctx.userId} />
 

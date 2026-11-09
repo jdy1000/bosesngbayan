@@ -25,7 +25,8 @@ export default async function PollsPage() {
       <section aria-labelledby="active-heading">
         <h2 id="active-heading" className="mb-5 text-2xl font-semibold text-ink">{m.activeHeading}</h2>
         {active.length ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          // Columns follow the count so a short row fills the width instead of leaving an empty third column.
+          <div className={`grid gap-6 ${active.length === 1 ? "max-w-xl" : active.length === 2 ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"}`}>
             {active.map((p) => (
               <PollWidget key={p.id} poll={p} />
             ))}

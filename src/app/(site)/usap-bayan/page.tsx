@@ -42,16 +42,16 @@ export default async function CommunityPage({ searchParams }: Props) {
       </header>
 
       {featured && featured.items.length > 0 && (
-        <section aria-label={c.featuredSection} className="mb-12 grid gap-6 md:grid-cols-2">
+        <section aria-label={c.featuredSection} className={`mb-12 grid gap-6 ${featured.items.length > 1 ? "md:grid-cols-2" : ""}`}>
           {featured.items.map((p) => (
-            <article key={p.id} className="relative rounded-md bg-navy p-7 text-white">
+            <article key={p.id} className="relative rounded-md bg-navy p-7 text-white md:p-9">
               <p className="text-xs font-bold uppercase tracking-wider text-white/60">{c.featured} · {kindLabels[p.kind]}</p>
-              <h2 className="mt-2 text-2xl font-semibold leading-snug">
+              <h2 className="mt-2 max-w-3xl text-2xl font-semibold leading-snug md:text-[1.75rem]">
                 <Link href={`/usap-bayan/${p.id}`} className="after:absolute after:inset-0">
                   {p.title}
                 </Link>
               </h2>
-              <p className="mt-3 line-clamp-3 text-white/80">{truncate(p.body, 260)}</p>
+              <p className="mt-3 line-clamp-3 max-w-3xl text-white/80">{truncate(p.body, 260)}</p>
               <p className="mt-4 text-sm text-white/60">{p.author_name}</p>
             </article>
           ))}

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { fillDays, parseRange } from "@/lib/studio/range";
-import { createsLoop, redirectInputSchema } from "@/lib/studio/redirects";
 
 // 2026-11-06 02:00 Manila = 2026-11-05T18:00Z
 const now = new Date("2026-11-05T18:00:00Z");
@@ -35,23 +34,3 @@ describe("parseRange", () => {
   });
 });
 
-describe("redirect validation", () => {
-  const origin = "https://bosesngbayan.ph";
-  it("detects self, two-hop and longer loops", () => {
-    expect(createsLoop("/a", "/a", [], origin)).toBe(true);
-    expect(createsLoop("/a", "/b", [{ source_path: "/b", destination: "/a" }], origin)).toBe(true);
-    expect(createsLoop("/a", "https://bosesngbayan.ph/b", [{ source_path: "/b", destination: "/c" }, { source_path: "/c", destination: "/a" }], origin)).toBe(true);
-    expect(createsLoop("/a", "/b", [{ source_path: "/b", destination: "/c" }], origin)).toBe(false);
-    expect(createsLoop("/a", "https://example.com/a", [], origin)).toBe(false);
-  });
-
-  it("rejects reserved, malformed and unsafe paths", () => {
-    const base = { destination: "/balita", status_code: "301", is_active: true };
-    expect(redirectInputSchema.safeParse({ ...base, source_path: "/admin/x" }).success).toBe(false);
-    expect(redirectInputSchema.safeParse({ ...base, source_path: "//evil" }).success).toBe(false);
-    expect(redirectInputSchema.safeParse({ ...base, source_path: "/luma?x=1" }).success).toBe(false);
-    expect(redirectInputSchema.safeParse({ ...base, source_path: "/luma", destination: "javascript:alert(1)" }).success).toBe(false);
-    expect(redirectInputSchema.safeParse({ ...base, source_path: "/luma", status_code: "303" }).success).toBe(false);
-    expect(redirectInputSchema.safeParse({ ...base, source_path: "/luma" }).success).toBe(true);
-  });
-});

@@ -99,7 +99,7 @@ export function PollCard({
   const hero = variant === "hero";
 
   return (
-    <div className={`card ${hero ? "p-5 sm:p-6" : "p-6 sm:p-8"}`}>
+    <div className={`card flex h-full flex-col ${hero ? "p-5 sm:p-6" : "p-6 sm:p-8"}`}>
       <div className="mb-4 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.08em] text-brand">
           <span className={`h-2 w-2 rounded-full ${results.is_open ? "bg-accent" : "bg-muted"}`} aria-hidden="true" />
@@ -113,7 +113,8 @@ export function PollCard({
       {multiple && canVote && <p className="mt-1 text-sm text-muted">{fmt(m.pickUpTo, { n: poll.max_choices })}</p>}
 
       {canVote ? (
-        <form onSubmit={handleSubmit} className="mt-5 space-y-2.5" aria-labelledby={`${id}-q`}>
+        // mt-auto: when cards share a row, the options and the vote button line up across them.
+        <form onSubmit={handleSubmit} className="mt-auto space-y-2.5 pt-5" aria-labelledby={`${id}-q`}>
           <fieldset className="space-y-2.5">
             <legend className="sr-only">{poll.question}</legend>
             {poll.options.map((o) => {
@@ -121,7 +122,7 @@ export function PollCard({
               return (
                 <label
                   key={o.id}
-                  className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-4 py-2.5 text-[0.95rem] font-medium transition-[box-shadow,background-color] duration-150 ${
+                  className={`flex min-h-12 cursor-pointer items-center gap-3 rounded px-4 py-2.5 text-[0.95rem] font-medium transition-[box-shadow,background-color] duration-150 ${
                     checked ? "bg-brand-50 text-ink shadow-[inset_0_0_0_2px_var(--color-brand)]" : "bg-paper shadow-[inset_0_0_0_1px_var(--color-line)] hover:shadow-[inset_0_0_0_1px_var(--color-brand-200)]"
                   }`}
                 >
@@ -152,7 +153,7 @@ export function PollCard({
           </button>
         </form>
       ) : (
-        <div className="mt-5 space-y-3">
+        <div className="mt-auto space-y-3 pt-5">
           {showResults ? (
             poll.options.map((o) => {
               const p = pct(votesFor(o.id), total);
@@ -169,7 +170,7 @@ export function PollCard({
               );
             })
           ) : (
-            <p className="rounded-xl bg-surface px-4 py-3 text-sm text-ink-soft">
+            <p className="rounded bg-surface px-4 py-3 text-sm text-ink-soft">
               {results.has_voted ? m.thanksPrefix : ""}
               {hiddenNote(m, poll.results_visibility) || m.notAvailable}
             </p>

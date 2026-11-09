@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { PasswordInput } from "@/components/studio/password-input";
 import { requestPasswordReset, signIn, type LoginState } from "@/app/admin/login/actions";
@@ -108,7 +109,10 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
       </form>
 
       <p className="mt-6 text-sm leading-relaxed text-muted">
-        No account? Accounts are by invitation only, from a site editor or administrator.
+        No account? Accounts are by invitation only, from a site editor or administrator.{" "}
+        <Link href="/admin/apply" className="font-semibold text-brand transition-colors hover:text-brand-700">
+          Apply for newsroom access
+        </Link>
       </p>
     </div>
   );

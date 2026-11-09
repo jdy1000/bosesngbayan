@@ -29,6 +29,7 @@ export const PERMISSIONS = [
   "users.manage",
   "settings.manage",
   "seo.manage",
+  "ads.manage",
   "audit.view",
   "roles.manage",
 ] as const;

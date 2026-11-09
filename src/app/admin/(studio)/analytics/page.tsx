@@ -26,6 +26,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
   return (
     <>
       <PageHeader
+        eyebrow="Performance"
         title="Analytics"
         description="First-party metrics for reading, polls and newsletter. Aggregated each time this page opens; not real-time."
       />
@@ -83,11 +84,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
             rows={s.top_polls.map((p) => ({
               key: p.poll_id,
               value: p.ballots,
-              label: (
-                <Link href={`/admin/polls/${p.poll_id}`} className="hover:text-brand">
-                  {p.question}
-                </Link>
-              ),
+              label: p.question,
             }))}
           />
         </Panel>

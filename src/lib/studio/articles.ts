@@ -81,7 +81,7 @@ export async function listStudioArticles(ctx: StaffContext, f: ArticleListFilter
     views = new Map((v ?? []).map((r) => [r.article_id, Number(r.views)]));
   }
   const total = count ?? 0;
-  return { rows, views, total, totalPages: Math.ceil(total / PAGE_SIZE) };
+  return { rows, views, total, pageSize: PAGE_SIZE, totalPages: Math.ceil(total / PAGE_SIZE) };
 }
 
 export async function loadEditorOptions(ctx: StaffContext) {
@@ -156,6 +156,62 @@ export async function getArticleForEdit(ctx: StaffContext, id: string) {
   };
 }
 export type ArticleForEdit = NonNullable<Awaited<ReturnType<typeof getArticleForEdit>>>;
+
+/** Unsaved article for the "New article" editor. Mirrors the column defaults; nothing is written until the first save. */
+export function blankArticleForEdit(authorId: string): ArticleForEdit {
+  const now = new Date().toISOString();
+  return {
+    article: {
+      id: "",
+      slug: "",
+      title: "",
+      subtitle: null,
+      excerpt: null,
+      body: { type: "doc", content: [{ type: "paragraph" }] },
+      body_html: "",
+      body_text: "",
+      status: "draft",
+      category_id: null,
+      location_id: null,
+      author_id: authorId,
+      featured_image_id: null,
+      og_image_id: null,
+      is_featured: false,
+      is_breaking: false,
+      is_editors_pick: false,
+      allow_comments: true,
+      seo_title: null,
+      seo_description: null,
+      canonical_url: null,
+      source_attribution: null,
+      correction_note: null,
+      reading_minutes: 1,
+      published_at: null,
+      first_published_at: null,
+      content_updated_at: null,
+      submitted_at: null,
+      reviewed_at: null,
+      reviewed_by: null,
+      approved_at: null,
+      approved_by: null,
+      published_by: null,
+      review_note: null,
+      rejection_reason: null,
+      archived_at: null,
+      created_by: authorId,
+      created_at: now,
+      updated_at: now,
+      search_vector: null,
+    },
+    categorySlug: null,
+    canEdit: true,
+    image: null,
+    og: null,
+    tagIds: [],
+    contributors: [],
+    related: [],
+  };
+}
 
 export async function getArticleHistory(ctx: StaffContext, id: string) {
   const [revs, acts] = await Promise.all([

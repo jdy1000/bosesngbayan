@@ -30,12 +30,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader
-        title="Site Settings"
-        description={
-          <>
-            Public site settings. Global SEO lives in <Link href="/admin/seo" className="font-semibold text-brand hover:underline">SEO and Redirects</Link>.
-          </>
-        }
+        eyebrow="Publication settings"
+        title="Settings"
+        description="Site name, branding, contact, footer and publication defaults."
       />
       <div className="mb-5">
         <Notice>

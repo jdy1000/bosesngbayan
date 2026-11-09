@@ -1,3 +1,4 @@
+import { ROLE_LABELS } from "@/lib/auth/permissions";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireStaffPage } from "@/lib/auth/session";
@@ -20,7 +21,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   if (!ctx.permissions.has("dashboard.view")) {
     return (
       <>
-        <PageHeader title={`Good day, ${ctx.displayName}`} />
+        <PageHeader eyebrow="Publishing center" title={`Welcome, ${ctx.displayName}`} />
         <Notice tone={sp.denied === "1" ? "warn" : "info"}>
           {sp.denied === "1" && "You do not have permission to open that page. "}
           Your role does not include dashboard access. Use the menu to open the modules you are allowed to use.
@@ -36,15 +37,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   return (
     <>
       <PageHeader
-        title={`Good day, ${ctx.displayName}`}
-        description="Newsroom summary from actual database records. No estimated numbers."
-        actions={
-          ctx.permissions.has("articles.create") && (
-            <Link href="/admin/articles/new" className="btn btn-primary min-h-10 px-4 text-sm">
-              New article
-            </Link>
-          )
-        }
+        eyebrow="Publishing center"
+        title={`Welcome, ${ctx.displayName}`}
+        description="Editorial, audience, and publishing operations, from stored records."
+        actions={<span className="rounded-full bg-paper px-3 py-1.5 text-sm font-semibold text-ink-soft ring-1 ring-line">Access: {ROLE_LABELS[ctx.role]}</span>}
       />
       {sp.denied === "1" && (
         <div className="mb-4">
@@ -144,7 +140,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       <Panel
         title="Recent editorial activity"
         description="Status and moderation changes in range."
-        actions={ctx.permissions.has("audit.view") && <Link href="/admin/audit" className="text-sm font-semibold text-brand hover:underline">Audit log →</Link>}
         className="mb-6"
       >
         {data.activity.length === 0 ? (

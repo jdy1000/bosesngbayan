@@ -40,9 +40,20 @@ Permissions are those in `role_permissions` (see `ADMIN_RBAC.md`). "Author" mean
 
 Anything else raises `transition_not_allowed`, as does a transition to the same state.
 
+### Where the actions appear in Studio
+
+- *New article.* `/admin/articles/new` opens the full editor. Nothing is stored until the first Save draft, Submit for review, Publish now or Schedule. That first action creates the draft owned by the writer, saves every field, and then applies the transition. If the transition fails, the draft is kept and opened with the error shown.
+- *Editor.* The Publishing card shows only the transitions in the table above that this user may take at the current status. Each one saves pending edits first.
+- *Review queue.* `/admin/review` (`articles.review`) lists `pending_review` articles, oldest submission first. The available actions are:
+  - Approve, with an optional note;
+  - Approve & publish, which needs `articles.publish`. It runs approve and then publish; if publishing fails, the article stays approved;
+  - Return to author, which requires a reason.
+
+  The queue is the "Review queue" item in the Studio sidebar.
+
 ## 3. Guards
 
-These raise errors that Studio shows as plain Filipino messages:
+These raise errors that Studio shows as plain English messages (ADR-015):
 
 - **Rejecting** requires a non-empty reason (`rejection_reason_required`).
 - **Submitting, publishing or scheduling** requires a category (`category_required`) and body text (`body_required`).

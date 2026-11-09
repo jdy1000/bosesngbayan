@@ -1,62 +1,105 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { ARTICLE_STATUS } from "@/components/studio/ui";
+import type { ArticleStatus } from "@/lib/studio/articles";
 import { transitionArticle } from "../actions";
 import type { WorkflowAction as Action } from "./workflow";
 
+const HELP: Partial<Record<ArticleStatus, string>> = {
+  draft: "Save your work privately, submit it for review, or publish when it is ready.",
+  pending_review: "Waiting for an editor. Approve it, or reject it with a reason the author will see.",
+  approved: "Approved. Publish it now or schedule it.",
+  rejected: "Returned to the author. Revise it, then resubmit.",
+  scheduled: "Goes live automatically at the scheduled time (Asia/Manila).",
+  published: "Live on the public site. Unpublishing removes it from every list.",
+  archived: "Hidden from the public site. Restore it as a draft to work on it again.",
+};
+
+/**
+ * Publishing card: status, what can happen next, and the actions this role may take.
+ * `prepare` saves pending edits (creating the article on the first save) and returns the id to act on.
+ */
 export function WorkflowPanel({
-  articleId,
+  status,
+  isNew,
+  canSave,
+  saving,
   actions,
-  beforeTransition,
+  prepare,
+  onDone,
 }: {
-  articleId: string;
+  status: ArticleStatus;
+  isNew: boolean;
+  canSave: boolean;
+  saving: boolean;
   actions: Action[];
-  beforeTransition: () => Promise<boolean>;
+  prepare: () => Promise<string | null>;
+  onDone: (id: string) => void;
 }) {
-  const router = useRouter();
   const [active, setActive] = useState<Action | null>(null);
   const [text, setText] = useState("");
   const [when, setWhen] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-
-  if (actions.length === 0) return <p className="text-sm text-muted">No workflow actions are available for your role at this status.</p>;
+  const busy = pending || saving;
 
   function run(action: Action) {
     if (action.confirm && !window.confirm(action.confirm)) return;
     setError(null);
     start(async () => {
-      if (!(await beforeTransition())) return setError("Save your changes before changing the status.");
-      const res = await transitionArticle(articleId, { to: action.to, note: text, publish_at: when });
-      if (!res.ok) return setError(res.error);
+      const id = await prepare();
+      if (!id) return setError("Save your changes before changing the status.");
+      const res = await transitionArticle(id, { to: action.to, note: text, publish_at: when });
+      if (!res.ok) {
+        setError(res.error);
+        // A new article now exists as a draft even though the transition failed: open it.
+        if (isNew) onDone(id);
+        return;
+      }
       setActive(null);
       setText("");
-      router.refresh();
+      onDone(id);
     });
   }
 
+  const button = (tone: Action["tone"]) =>
+    `btn min-h-10 w-full justify-center px-3 text-sm ${tone === "primary" ? "btn-primary" : tone === "danger" ? "bg-accent text-white hover:bg-accent-700" : "btn-outline"}`;
+
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-4">
+      <div className="space-y-1.5 text-sm">
+        <p className="text-ink">
+          Current status: <strong>{isNew ? "New draft" : (ARTICLE_STATUS[status]?.label ?? status)}</strong>
+        </p>
+        <p className="text-xs text-muted">{HELP[status]}</p>
+      </div>
+
+      <div className="grid gap-2">
         {actions.map((a) => (
           <button
             key={`${a.to}-${a.label}`}
             type="button"
-            disabled={pending}
-            onClick={() => (a.input ? setActive(a) : run(a))}
+            disabled={busy}
+            onClick={() => (a.input ? setActive(active === a ? null : a) : run(a))}
             aria-expanded={a.input ? active === a : undefined}
-            className={`btn min-h-9 px-3 text-sm ${a.tone === "primary" ? "btn-primary" : a.tone === "danger" ? "bg-accent text-white hover:bg-accent-700" : "btn-outline"}`}
+            className={button(a.tone)}
           >
             {a.label}
           </button>
         ))}
+        {canSave && (
+          <button type="submit" disabled={busy} className={button(actions.length === 0 ? "primary" : undefined)}>
+            {saving ? "Saving…" : isNew || status === "draft" || status === "rejected" ? "Save draft" : "Save changes"}
+          </button>
+        )}
       </div>
+
       {active && (
-        <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
+        <div className="space-y-2 rounded-lg bg-surface p-3 ring-1 ring-line">
           {active.input === "schedule" ? (
             <label className="block text-sm font-semibold text-ink">
-              Publish date and time (Asia/Manila)
+              Publication date and time (Asia/Manila)
               <input type="datetime-local" className="field mt-1" value={when} onChange={(e) => setWhen(e.target.value)} required />
             </label>
           ) : (
@@ -69,10 +112,10 @@ export function WorkflowPanel({
             <button
               type="button"
               className="btn btn-primary min-h-9 px-3 text-sm"
-              disabled={pending || (active.input === "reason" && !text.trim()) || (active.input === "schedule" && !when)}
+              disabled={busy || (active.input === "reason" && !text.trim()) || (active.input === "schedule" && !when)}
               onClick={() => run(active)}
             >
-              {pending ? "Processing…" : active.label}
+              {pending ? "Processing…" : active.input === "schedule" ? "Schedule publication" : active.label}
             </button>
             <button type="button" className="btn btn-outline min-h-9 px-3 text-sm" onClick={() => setActive(null)}>
               Cancel
@@ -80,6 +123,7 @@ export function WorkflowPanel({
           </div>
         </div>
       )}
+      {actions.length === 0 && !canSave && <p className="text-sm text-muted">No publishing actions are available for your role at this status.</p>}
       {pending && !active && <p className="text-sm text-muted">Processing…</p>}
       {error && (
         <p role="alert" className="text-sm font-medium text-accent-700">
