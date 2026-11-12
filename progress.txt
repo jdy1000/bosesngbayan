@@ -488,3 +488,8 @@ Verified before deploying:
 - pnpm typecheck clean; pnpm lint clean; pnpm test 15 files / 142 tests passed; pnpm build succeeded.
 - Local production build against the live database, throwaway account deleted afterwards: the missing-article address shows "Page not found" with the menu and the back link; the dashboards of moderator, analyst, writer and administrator were crawled again, every link opens, 0 problems.
 Still not exercised (unchanged): forms that write. The crawler follows links only, so the Reports form, Review queue decisions, Applications decisions, ad create and edit, category add/hide/delete, invite, role change, password change and email change have still not been submitted on the live site.
+Verified on the live domain after deploying d41238a (both production deployments Ready):
+- https://admin.bosesngbayan.com, same crawler, throwaway account deleted afterwards. Administrator: 92 Studio pages opened, no error screens, no console errors, no failed requests, no overflow. Editor (21 pages), writer (14), moderator (7) and analyst (7): every link on the dashboard opens, no problems. The moderator and analyst dashboards no longer link to the Articles list.
+- The missing-article address shows "Page not found" inside the shell with the menu and the back link.
+- The only flagged links are the Facebook and X share links described above (6 of 16 links that leave Studio; the other 10 return 200).
+Not verified on the live domain: the Owner role was not crawled (no throwaway Owner was created), and 27 further detail pages were skipped by the three-per-kind cap.
