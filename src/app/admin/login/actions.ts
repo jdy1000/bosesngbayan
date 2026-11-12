@@ -28,9 +28,27 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   }
 
   const supabase = await createSessionClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   // One generic message: never reveal whether the email exists.
-  if (error) return { error: "Incorrect email or password." };
+  if (error || !data.user) return { error: "Incorrect email or password." };
+
+  // Same rule as getStaffContext(): an active profile with a role. Without it Studio would bounce the person
+  // back here with a live session, so end the session and say why. Reached only after a correct password.
+  const [profile, role] = await Promise.all([
+    supabase.from("profiles").select("is_active").eq("id", data.user.id).maybeSingle(),
+    supabase.from("user_roles").select("role").eq("user_id", data.user.id).maybeSingle(),
+  ]);
+  const checkError = profile.error ?? role.error;
+  if (checkError || !profile.data?.is_active || !role.data) {
+    if (checkError) logServerError("login_access_check_failed", checkError);
+    const { error: signOutError } = await supabase.auth.signOut({ scope: "local" });
+    if (signOutError) logServerError("login_access_signout_failed", signOutError);
+    return {
+      error: checkError
+        ? "We could not check your access. Try again."
+        : "This account does not have newsroom access. Ask an administrator, or apply for access.",
+    };
+  }
   redirect("/admin");
 }
 
@@ -51,8 +69,9 @@ export async function requestPasswordReset(_prev: LoginState, formData: FormData
   return { message: "If this email has an account, you will receive a link to reset your password." };
 }
 
+/** Ends the session on this device only. Other devices stay signed in; "Sign out everywhere" is in My account. */
 export async function signOut(): Promise<void> {
   const supabase = await createSessionClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/admin/login");
 }

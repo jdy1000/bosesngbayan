@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requirePermission } from "@/lib/auth/session";
 import { toActionError, unwrap } from "@/lib/actions";
 import { applicationRoleSchema } from "@/lib/studio/applications";
-import { requiredText } from "@/lib/studio/form";
+import { optionalText, requiredText } from "@/lib/studio/form";
 import { inviteStaff } from "@/lib/studio/invite";
 import type { FormActionResult } from "@/components/studio/action-form";
 
@@ -22,15 +22,24 @@ function finish(outcome: Outcome): FormActionResult {
   redirect(`/admin/applications?done=${outcome.done}`);
 }
 
-/** Approve & invite: reuses the team invitation flow, then records the decision (audited in the RPC). */
-export async function approveApplication(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
-  return finish(await approve(fd));
+/**
+ * The decision form of a pending application: one form, and the pressed button names the decision.
+ * Each path checks users.manage and validates its own input before anything is sent or stored.
+ */
+export async function reviewApplication(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
+  const decision = fd.get("decision");
+  if (decision === "approved") return finish(await approve(fd));
+  if (decision === "rejected") return finish(await reject(fd));
+  return { ok: false, error: "Choose Reject or Approve & invite." };
 }
 
+/** Approve & invite: reuses the team invitation flow, then records the decision and the optional note (audited in the RPC). */
 async function approve(fd: FormData): Promise<Outcome> {
   try {
     const ctx = await requirePermission("users.manage");
-    const input = z.object({ id, role: applicationRoleSchema }).parse(Object.fromEntries(fd));
+    const input = z
+      .object({ id, role: applicationRoleSchema, note: optionalText(1000, "Review note: up to 1000 characters.") })
+      .parse(Object.fromEntries(fd));
     const app = unwrap(await ctx.supabase.from("publisher_applications").select("full_name, email, status").eq("id", input.id).maybeSingle());
     if (!app) return toActionError({ message: "application_not_found" });
     if (app.status !== "pending") return toActionError({ message: "application_already_reviewed" });
@@ -54,6 +63,7 @@ async function approve(fd: FormData): Promise<Outcome> {
     const { error } = await ctx.supabase.rpc("review_publisher_application", {
       p_id: input.id,
       p_decision: "approved",
+      p_note: input.note,
       p_role: staff ? null : input.role, // null = no role granted (already staff)
       p_invited_user_id: invitedUserId,
     });
@@ -67,14 +77,10 @@ async function approve(fd: FormData): Promise<Outcome> {
   }
 }
 
-export async function rejectApplication(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
-  return finish(await reject(fd));
-}
-
 async function reject(fd: FormData): Promise<Outcome> {
   try {
     const ctx = await requirePermission("users.manage");
-    const input = z.object({ id, note: requiredText(3, 1000, "Reason") }).parse(Object.fromEntries(fd));
+    const input = z.object({ id, note: requiredText(3, 1000, "Rejection reason") }).parse(Object.fromEntries(fd));
     unwrap(await ctx.supabase.rpc("review_publisher_application", { p_id: input.id, p_decision: "rejected", p_note: input.note }));
     return { ok: true, done: "rejected" };
   } catch (e) {

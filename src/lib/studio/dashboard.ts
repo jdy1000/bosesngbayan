@@ -42,7 +42,7 @@ export interface DashboardData {
   recent: RecentArticle[];
   /** Staff accounts (profiles with a role). Null without users.view. */
   team: { total: number; active: number } | null;
-  /** Reader reports still open. Null without moderation.manage. */
+  /** Reader reports not closed yet (open or reviewing). Null without moderation.manage. */
   openReports: number | null;
   /** Ads that are on and inside their date window. Null without ads.manage. */
   activeAds: number | null;
@@ -121,7 +121,7 @@ export async function loadDashboard(ctx: StaffContext, range: DateRange): Promis
         })
     : Promise.resolve(null);
   const reportsPromise = has("moderation.manage")
-    ? db.from("moderation_reports").select("id", head).eq("status", "open").then(count)
+    ? db.from("moderation_reports").select("id", head).in("status", ["open", "reviewing"]).then(count)
     : Promise.resolve(null);
   const adsPromise = has("ads.manage")
     ? db

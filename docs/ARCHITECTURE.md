@@ -280,6 +280,19 @@ This supersedes the Filipino Studio labels in ADR-014.
 - `CRON_SECRET` is set only on the public project, so the jobs in `vercel.json` do their work once. On the Studio project the cron routes answer 401.
 - Rejected: moving Studio into its own Next.js app in a workspace. It would rewrite working code and duplicate the shared data layer with no visible gain.
 
+**ADR-021 — Studio follows the Newsmaker console in look and page shape (2026-11-12).** The request was to reverse-engineer the Newsmaker console (`Newsmaker/apps/admin`) and apply it to Studio. ADR-016 had already copied the shell, the menu, the titles and the article workflow; this pass closes the remaining gaps found by comparing the two code bases screen by screen.
+- *Look.* The Studio UI kit (`components/studio/ui.tsx`) takes Newsmaker's measurements: 10px-radius panels with a 1px border and one soft shadow, a 10px kicker over a 28px title, one bordered strip for figures (`StatStrip`), status badges with a dot, pill tabs and search in one toolbar (`Toolbar`, `ToolbarTabs`, `ToolbarSearch`), record rows for lists (`RecordList`, `RecordRow`) and a text pager. Controls are restyled only inside `.studio` (`globals.css`): 7px corners, a neutral secondary button, an outlined danger button, visible field borders, no press-scale. Colours stay on the Boses tokens, so the dark theme still works; Newsmaker's console has no dark theme.
+- *Shell.* 232px sidebar with a tint and a 3px bar on the current page, 68px top bar, 1440px content column, tinted avatar. Sidebar rows are 40px with 4px gaps, not Newsmaker's 44px and 6px, because Boses has two more entries (Analytics, Settings) and all 13 must fit a 900px-tall screen. The mobile switch stays at 1024px and the menu button stays a fixed control at the top left (Newsmaker: 800px, inside the top bar).
+- *Overview.* One linked strip (Articles, Reads, Newsroom users, Open reports, Active ads, Subscribers; each cell only for holders of the matching permission), then "Recently updated" beside "Editorial workflow". The range filter, trends, top lists, activity log and metric definitions that the spec asks for (§4.1) stay below.
+- *Lists.* Articles, Review queue, Reports, Ad inventory, Audience, Users & roles, Applications and Site categories use the same toolbar, rows and pager. Page sizes follow Newsmaker (articles 12, review 10, reports 10, ads 12, accounts 8, applications 10, subscribers 25).
+- *Kept from Boses on purpose:* TipTap, the seven article statuses with approve and return-with-reason, the `/admin` URLs, invitation-only accounts, the permission matrix, the category, author and sort filters, CSV export, suppression of subscribers, ad date windows, and Studio loading and error screens of its own (new in this pass).
+- *Not taken from Newsmaker:*
+  - account deletion, by the person or by an administrator: `articles.author_id` refuses it for anyone with articles, and Boses deactivates instead;
+  - hard-deleting a subscriber: it would erase the consent record, so unsubscribe and suppress stay;
+  - requiring a cover image and an excerpt before publishing: the workflow rules in `transition_article` are unchanged;
+  - public registration and the block editor (already decided in ADR-016 and ADR-018);
+  - the "Enquiries" tab and staff profile photos: both need new data (a public contact form and table; a private storage bucket) and wait for a decision.
+
 ## 6. Environment variables
 
 See `.env.example`. Public values (`NEXT_PUBLIC_*`) are validated by `src/lib/env.ts`; secrets by `src/lib/server-env.ts`, which is server-only:

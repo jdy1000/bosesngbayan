@@ -2,11 +2,14 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 import { submitApplication, type ApplyState } from "@/app/admin/apply/actions";
 
-const fieldClass = "field h-12 text-base";
+// Same control metrics as the sign-in form (login-form.tsx).
+const fieldClass = "field h-[46px] text-base";
 const labelClass = "text-sm font-semibold text-ink";
+const headingClass = "text-[30px] font-semibold leading-[1.15] tracking-[-0.02em] text-ink";
+const introClass = "mt-2 text-sm leading-relaxed text-muted";
 
 function Label({ text, optional = false }: { text: string; optional?: boolean }) {
   return (
@@ -24,8 +27,8 @@ export function ApplyForm() {
   if (state.message) {
     return (
       <div>
-        <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Application received</h1>
-        <p role="status" className="mt-4 text-base leading-relaxed text-ink-soft">
+        <h1 className={headingClass}>Application received</h1>
+        <p role="status" className="mt-3 text-sm leading-relaxed text-ink-soft">
           {state.message}
         </p>
         <BackToLogin />
@@ -35,12 +38,12 @@ export function ApplyForm() {
 
   return (
     <div>
-      <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Apply for newsroom access</h1>
-      <p className="mt-3 text-base leading-relaxed text-ink-soft">
+      <h1 className={headingClass}>Apply for newsroom access</h1>
+      <p className={introClass}>
         Want to write or moderate for Boses ng Bayan? Tell us about yourself. Applying does not create an account: an administrator reviews every request first.
       </p>
 
-      <form action={action} className="mt-8 flex flex-col gap-5">
+      <form action={action} className="mt-7 flex flex-col gap-6">
         <label className="flex flex-col gap-2">
           <Label text="Full name" />
           <input name="full_name" required minLength={2} maxLength={120} autoComplete="name" defaultValue={v.full_name} className={fieldClass} />
@@ -87,9 +90,9 @@ export function ApplyForm() {
             {state.error}
           </p>
         )}
-        <button type="submit" className="btn btn-primary h-12 w-full text-[0.95rem]" disabled={pending} aria-busy={pending}>
-          {pending && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
+        <button type="submit" className="btn btn-primary h-[46px] w-full justify-between px-4 text-[0.95rem]" disabled={pending} aria-busy={pending}>
           {pending ? "Sending…" : "Submit application"}
+          {pending ? <LoaderCircle aria-hidden="true" className="size-[18px] animate-spin" /> : <ArrowRight aria-hidden="true" className="size-[18px]" />}
         </button>
       </form>
       <BackToLogin />

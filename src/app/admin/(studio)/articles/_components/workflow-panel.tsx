@@ -64,7 +64,7 @@ export function WorkflowPanel({
   }
 
   const button = (tone: Action["tone"]) =>
-    `btn min-h-10 w-full justify-center px-3 text-sm ${tone === "primary" ? "btn-primary" : tone === "danger" ? "bg-accent text-white hover:bg-accent-700" : "btn-outline"}`;
+    `btn w-full justify-center ${tone === "primary" ? "btn-primary" : tone === "danger" ? "bg-paper text-accent-700 shadow-[inset_0_0_0_1px_var(--color-red-200)] hover:bg-red-50" : "btn-outline"}`;
 
   return (
     <div className="space-y-4">
@@ -98,26 +98,26 @@ export function WorkflowPanel({
       {active && (
         <div className="space-y-2 rounded-[7px] border border-line bg-surface p-3">
           {active.input === "schedule" ? (
-            <label className="block text-sm font-semibold text-ink">
+            <label className="block text-xs font-bold text-ink-soft">
               Publication date and time (Asia/Manila)
-              <input type="datetime-local" className="field mt-1" value={when} onChange={(e) => setWhen(e.target.value)} required />
+              <input type="datetime-local" className="field mt-[7px] font-normal" value={when} onChange={(e) => setWhen(e.target.value)} required />
             </label>
           ) : (
-            <label className="block text-sm font-semibold text-ink">
+            <label className="block text-xs font-bold text-ink-soft">
               {active.input === "reason" ? "Rejection reason (required)" : "Note for the author (optional)"}
-              <textarea className="field mt-1 min-h-20" value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />
+              <textarea className="field mt-[7px] min-h-20 font-normal" value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />
             </label>
           )}
           <div className="flex gap-2">
             <button
               type="button"
-              className="btn btn-primary min-h-9 px-3 text-sm"
+              className="btn btn-primary min-h-9 px-3 text-[13px]"
               disabled={busy || (active.input === "reason" && !text.trim()) || (active.input === "schedule" && !when)}
               onClick={() => run(active)}
             >
               {pending ? "Processing…" : active.input === "schedule" ? "Schedule publication" : active.label}
             </button>
-            <button type="button" className="btn btn-outline min-h-9 px-3 text-sm" onClick={() => setActive(null)}>
+            <button type="button" className="btn btn-outline min-h-9 px-3 text-[13px]" onClick={() => setActive(null)}>
               Cancel
             </button>
           </div>
@@ -126,7 +126,7 @@ export function WorkflowPanel({
       {actions.length === 0 && !canSave && <p className="text-sm text-muted">No publishing actions are available for your role at this status.</p>}
       {pending && !active && <p className="text-sm text-muted">Processing…</p>}
       {error && (
-        <p role="alert" className="text-sm font-medium text-accent-700">
+        <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] leading-[1.5] text-accent-700">
           {error}
         </p>
       )}

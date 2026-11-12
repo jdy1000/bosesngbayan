@@ -142,7 +142,7 @@ Studio route handlers authenticate with the Supabase session through `getStaffCo
 | Endpoint | Requirement | Query | Response |
 |---|---|---|---|
 | `GET /admin/api/media` | Any active staff member. `401` if missing. | `q`: ≤80 chars, searches title, file name and alt text | `{items: MediaPickerItem[]}`, up to 48 images: `id`, `url`, `file_name`, `title`, `alt_text`, `credit`, `width`, `height` |
-| `GET /admin/auth/callback` | — | `code` (PKCE), or `token_hash` + `type` (invite, recovery, magiclink, email, signup, email_change); `next` | Redirects. `next` is limited to `/admin` and `/admin/auth/update-password`. Invites are sent to update-password. Failures go to `/admin/login?error=link`. |
+| `GET /admin/auth/callback` | — | `code` (PKCE), or `token_hash` + `type` (invite, recovery, magiclink, email, signup, email_change); `next` | Redirects. `next` is limited to `/admin`, `/admin/auth/update-password` and `/admin/account`. Invites are sent to update-password. Failures go to `/admin/login?error=link`. |
 
 ### CSV exports
 
@@ -181,16 +181,16 @@ Each action:
 | `(studio)/articles/actions.ts` | `createArticleFromEditor` (first save from the full New-article editor: inserts the draft as the caller, then runs `saveArticle` on it), `duplicateArticle` → `articles.create`. `saveArticle`, `restoreArticleRevision`, `searchArticlesForRelated` → any of `articles.edit_own` / `articles.edit_any`. `transitionArticle` → any of submit, review, publish, archive, edit_own, edit_any; the actual rules are in `transition_article`. `deleteArticle` → `articles.delete`, requires typing the exact title, and refuses public or scheduled articles. `createTag` → `taxonomy.manage`. |
 | `(studio)/_media/actions.ts` | `uploadImage` (from the media picker) → `media.upload`. Images only (JPEG, PNG, WebP, GIF, AVIF), bytes sniffed by `storeUpload`; alt text required (≤300), caption ≤600, credit ≤200. Removes the stored object if the `media_assets` insert fails. Returns `{ok:true, media}` or `{ok:false, error}`. |
 | `(studio)/ads/actions.ts` | `createAdSlot`, `updateAdSlot`, `toggleAdSlot`, `deleteAdSlot` → `ads.manage`. The creative must be an image asset; the destination must be `https://`. Each revalidates the whole public site. |
-| `(studio)/applications/actions.ts` | `approveApplication`, `rejectApplication` → `users.manage`. Approval sends the normal invitation through `inviteStaff` (Writer or Moderator only; no invitation or role change when the email is already staff), then calls `review_publisher_application`. Rejection requires a reason (3–1000 characters). Both redirect to `/admin/applications?done=…`. |
-| `(studio)/moderation/actions.ts` | `moderate`, `resolveReport` → `moderation.manage` |
+| `(studio)/applications/actions.ts` | `reviewApplication` → `users.manage`. One form with two buttons, Reject and Approve & invite. Approval sends the normal invitation through `inviteStaff` (Writer or Moderator only; no invitation or role change when the email is already staff), then calls `review_publisher_application` with the optional review note (up to 1000 characters). Rejection requires a reason (3–1000 characters). Both redirect to `/admin/applications?done=…`. |
+| `(studio)/moderation/actions.ts` | `moderate`, `resolveReport` → `moderation.manage`. `resolveReport` sets a report to open, reviewing, resolved or dismissed with an optional resolution note. |
 | `(studio)/newsletter/actions.ts` | `setSubscriberStatus` → `newsletter.manage` + `newsletter.view` |
 | `(studio)/settings/actions.ts` | `saveSettings` → `settings.manage`. Editable keys: general, social, contact, footer, publication, community, newsletter. |
-| `(studio)/taxonomy/actions.ts` | `saveCategory`, `categoryOp`, `saveTag`, `deleteTag` → `taxonomy.manage` |
+| `(studio)/taxonomy/actions.ts` | `saveCategory`, `createCategory` (the short form on the list page; same schema), `categoryOp`, `deleteCategory` (the typed value must equal the slug; refused while articles use the category), `saveTag`, `deleteTag` → `taxonomy.manage` |
 | `(studio)/taxonomy/place-actions.ts` | `saveLocation`, `deleteLocation`, `saveTrending`, `trendingOp` → `taxonomy.manage` |
 | `(studio)/team/actions.ts` | `inviteMember` → `users.manage`; uses `inviteStaff` (`src/lib/studio/invite.ts`), needs `SUPABASE_SERVICE_ROLE_KEY` for the invite, and the role is assigned as the inviter. `changeRole`, `setMemberActive` → `users.manage`. `updateMemberProfile` → any staff member for their own profile, `users.manage` for anyone else's. `saveRolePermissions` → `roles.manage`. |
 | `apply/actions.ts` | `submitApplication` → no permission (public, signed out). Zod validation, honeypot (`website`; a filled honeypot gets the normal reply and nothing is stored), rate limit `application`, then the service-only `submit_publisher_application`. The reply is the same for new, duplicate and existing-staff emails. |
-| `login/actions.ts` | `signIn`, `requestPasswordReset` → no permission; rate limit `login`. `signOut`. |
-| `auth/update-password/actions.ts` | `updatePassword` → needs a valid session user. The password must be at least 12 characters with lower case, upper case and a digit (zod). |
+| `login/actions.ts` | `signIn`, `requestPasswordReset` → no permission; rate limit `login`. After a correct password `signIn` checks for an active profile with a role and signs the session out again when there is none. `signOut` ends the session on this device only. |
+| `auth/update-password/actions.ts` | `updatePassword` → needs a session opened from an emailed link in the last 15 minutes (`isRecentLinkSession`); otherwise it redirects to `/admin/login?recovery=1&error=expired`. The password must be at least 12 characters with lower case, upper case and a digit (zod). On success it writes the audit row, ends every session and redirects to `/admin/login?notice=password-reset`. |
 
 Removed on 2026-11-07 with their Studio modules (ADR-017): the homepage, media, navigation, pages, polls and SEO actions, `GET /admin/homepage/articles` and `GET /admin/polls/[id]/export`.
 

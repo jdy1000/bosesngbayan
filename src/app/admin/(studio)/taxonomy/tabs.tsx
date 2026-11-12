@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ToolbarTabs } from "@/components/studio/ui";
 
 const TABS = [
   { href: "/admin/taxonomy", label: "Categories" },
@@ -7,19 +7,11 @@ const TABS = [
   { href: "/admin/taxonomy/trending", label: "Trending topics" },
 ] as const;
 
+/** Section tabs above every taxonomy page, in the kit's pill-tab look. */
 export function TaxonomyTabs({ current }: { current: (typeof TABS)[number]["href"] }) {
   return (
-    <nav aria-label="Taxonomy" className="mb-5 flex flex-wrap gap-2">
-      {TABS.map((t) => (
-        <Link
-          key={t.href}
-          href={t.href}
-          aria-current={t.href === current ? "page" : undefined}
-          className={`inline-flex min-h-10 items-center rounded-full px-4 text-sm font-semibold ${t.href === current ? "bg-navy text-white" : "border border-line bg-paper text-ink-soft hover:border-brand"}`}
-        >
-          {t.label}
-        </Link>
-      ))}
-    </nav>
+    <div className="mb-5">
+      <ToolbarTabs label="Taxonomy" tabs={TABS.map((t) => ({ key: t.href, label: t.label, href: t.href, current: t.href === current }))} />
+    </div>
   );
 }

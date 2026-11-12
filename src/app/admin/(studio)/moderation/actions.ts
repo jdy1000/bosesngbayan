@@ -52,13 +52,15 @@ const reportSchema = z.object({
   note: optionalText(2000),
 });
 
+/** Sets a report to open, reviewing, resolved or dismissed and saves the resolution note. */
 export async function resolveReport(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
   try {
     const ctx = await requirePermission("moderation.manage");
     const input = reportSchema.parse(Object.fromEntries(fd));
+    // resolve_report re-checks moderation.manage, stamps resolved_by/resolved_at only on a closing status and writes the activity log.
     unwrap(await ctx.supabase.rpc("resolve_report", { p_report_id: input.report_id, p_status: input.status, p_note: input.note }));
     revalidatePath("/admin/moderation", "layout");
-    return { ok: true, message: input.status === "open" ? "Report reopened." : "Report updated." };
+    return { ok: true, message: "Report updated." };
   } catch (e) {
     return toActionError(e);
   }

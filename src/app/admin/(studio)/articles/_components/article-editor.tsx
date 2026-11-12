@@ -82,9 +82,10 @@ export function ArticleEditor({
           if (isNew && createdId.current) router.replace(`/admin/articles/${createdId.current}`);
         });
       }}
-      className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]"
+      className="grid gap-6 min-[1101px]:grid-cols-[minmax(0,1fr)_320px]"
     >
-      <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-3 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 xl:col-span-2">
+      {/* Sticks under the Studio top bar (64px, 68px from lg), not under the viewport edge where the bar would cover it. */}
+      <div className="sticky top-16 z-20 -mx-5 flex flex-wrap items-center gap-3 border-b border-line bg-surface/95 px-5 py-3 backdrop-blur lg:top-[68px] lg:-mx-8 lg:px-8 min-[1101px]:col-span-2">
         <StatusBadge status={article.status} />
         {disabled ? (
           <span className="text-sm text-muted">Read only</span>
@@ -109,7 +110,7 @@ export function ArticleEditor({
       </div>
 
       {status === "conflict" && (
-        <div className="xl:col-span-2">
+        <div className="min-[1101px]:col-span-2">
           <Notice tone="error">
             {message} Autosave has stopped. Copy your changes if you need them, then{" "}
             <button type="button" className="font-semibold underline" onClick={() => window.location.reload()}>
@@ -120,7 +121,7 @@ export function ArticleEditor({
         </div>
       )}
       {disabled && (
-        <div className="xl:col-span-2">
+        <div className="min-[1101px]:col-span-2">
           <Notice tone="info">
             You cannot edit this article while its status is “{article.status}”. Writers can only edit their own drafts or rejected
             articles.
@@ -128,7 +129,7 @@ export function ArticleEditor({
         </div>
       )}
       {article.status === "rejected" && article.rejection_reason && (
-        <div className="xl:col-span-2">
+        <div className="min-[1101px]:col-span-2">
           <Notice tone="warn">
             <strong>Rejection reason:</strong> {article.rejection_reason}
           </Notice>
@@ -140,9 +141,10 @@ export function ArticleEditor({
           <input
             id="title"
             name="title"
-            className="field text-lg font-semibold"
+            className="field text-xl font-semibold"
             required
             maxLength={300}
+            placeholder="Write a headline…"
             value={title}
             onChange={(e) => {
               setTitle(e.target.value);
@@ -153,40 +155,11 @@ export function ArticleEditor({
         <Field label="Subtitle" htmlFor="subtitle" error={err("subtitle")}>
           <input id="subtitle" name="subtitle" className="field" maxLength={400} defaultValue={article.subtitle ?? ""} />
         </Field>
-        <Field
-          label="Slug"
-          htmlFor="slug"
-          error={err("slug")}
-          hint={
-            article.first_published_at
-              ? "Already published: changing the slug breaks the old link. Add a redirect in SEO if you change it."
-              : slugAuto
-                ? "Follows the title automatically until you edit it."
-                : `/balita/${slug}`
-          }
-        >
-          <input
-            id="slug"
-            name="slug"
-            className="field font-mono text-sm"
-            required
-            maxLength={160}
-            pattern="[a-z0-9]+(-[a-z0-9]+)*"
-            value={slug}
-            onChange={(e) => {
-              setSlugAuto(false);
-              setSlug(e.target.value.toLowerCase());
-            }}
-          />
-        </Field>
-        <Field label="Excerpt" htmlFor="excerpt" hint="Short summary for cards and search." error={err("excerpt")}>
-          <textarea id="excerpt" name="excerpt" className="field min-h-20" maxLength={600} defaultValue={article.excerpt ?? ""} />
-        </Field>
-        <div>
-          <p className="mb-1.5 text-sm font-semibold text-ink">Body</p>
+
+        <Panel title="Body" description="Write and format your story. The toolbar adds headings, images, quotes, tables and video.">
           <RichTextEditor name="body" initialContent={article.body} onChange={markDirty} disabled={disabled} label="Article body" />
-          <p className="mt-1 text-xs text-muted">Estimated reading time: {article.reading_minutes} min (recalculated on every save).</p>
-        </div>
+          <p className="mt-2 text-xs text-muted">Estimated reading time: {article.reading_minutes} min (recalculated on every save).</p>
+        </Panel>
 
         <Panel title="Sources and corrections">
           <div className="space-y-4">
@@ -228,9 +201,39 @@ export function ArticleEditor({
                 </select>
               </Field>
               <div>
-                <p className="mb-1.5 text-sm font-semibold text-ink">Tags</p>
+                <p className="mb-2 text-sm font-semibold text-ink">Tags</p>
                 <TagPicker tags={options.tags} initial={data.tagIds} canCreate={perms.taxonomy} disabled={disabled} onChange={markDirty} />
               </div>
+              <Field
+                label="URL slug"
+                htmlFor="slug"
+                error={err("slug")}
+                hint={
+                  article.first_published_at
+                    ? "Already published: changing the slug breaks the old link."
+                    : slugAuto
+                      ? "Generated from the title until you edit it."
+                      : `/balita/${slug}`
+                }
+              >
+                <input
+                  id="slug"
+                  name="slug"
+                  className="field font-mono text-[13px]"
+                  required
+                  maxLength={160}
+                  pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                  placeholder="your-article-title"
+                  value={slug}
+                  onChange={(e) => {
+                    setSlugAuto(false);
+                    setSlug(e.target.value.toLowerCase());
+                  }}
+                />
+              </Field>
+              <Field label="Excerpt" htmlFor="excerpt" hint="Short summary for story cards and search results." error={err("excerpt")}>
+                <textarea id="excerpt" name="excerpt" className="field min-h-24" maxLength={600} defaultValue={article.excerpt ?? ""} />
+              </Field>
               <Field label="Location" htmlFor="location_id">
                 <select id="location_id" name="location_id" className="field" defaultValue={article.location_id ?? ""}>
                   <option value="">— No location —</option>
@@ -313,6 +316,9 @@ export function ArticleEditor({
             <RelatedPicker articleId={article.id} initial={data.related} disabled={disabled} onChange={markDirty} />
           </Panel>
         </fieldset>
+        <Link href="/admin/articles" className="inline-flex min-h-10 items-center text-[13px] font-bold text-brand hover:underline">
+          <span aria-hidden="true">←</span>&nbsp;Back to articles
+        </Link>
       </aside>
     </form>
   );

@@ -1,10 +1,10 @@
 import { ActionForm, SubmitButton } from "@/components/studio/action-form";
-import { Field, Panel, StatusBadge } from "@/components/studio/ui";
+import { Field, Notice, Panel, RecordMeta, RecordTitle, StatusBadge } from "@/components/studio/ui";
 import { formatDateTime } from "@/lib/format";
 import { REPORT_REASON_LABELS, type ReportReason } from "@/lib/report-reasons";
 import type { StaffContext } from "@/lib/auth/session";
 import { moderate, resolveReport } from "./actions";
-import { ACTION_LABELS, ACTION_TARGET, MODERATION_ACTIONS, REPORT_STATUS, activityLabel, type ModerationStatus } from "./labels";
+import { ACTION_LABELS, ACTION_TARGET, MODERATION_ACTIONS, REPORT_STATUS, REPORT_STATUSES, activityLabel, type ModerationStatus } from "./labels";
 
 /** Moderation decision form. Lists every action that changes the current state; the RPC is authoritative. */
 export function ModerationPanel({
@@ -31,12 +31,12 @@ export function ModerationPanel({
         <input type="hidden" name="target_type" value={targetType} />
         <input type="hidden" name="target_id" value={targetId} />
         {currentNote && (
-          <p className="rounded-lg bg-surface px-3 py-2 text-sm text-ink-soft">
-            <span className="font-semibold text-ink">Current note:</span> {currentNote}
+          <p className="rounded-[7px] border border-line bg-surface px-3 py-2.5 text-[13px] leading-[1.5] text-ink-soft">
+            <span className="font-bold text-ink">Current note:</span> {currentNote}
           </p>
         )}
         <Field label="New moderator note" htmlFor="note" hint="Staff only. Saved to the moderation history.">
-          <textarea id="note" name="note" rows={3} maxLength={2000} className="field py-2" />
+          <textarea id="note" name="note" rows={3} maxLength={2000} className="field min-h-20" />
         </Field>
         <div className="flex flex-wrap gap-2">
           {actions.map((a) => (
@@ -66,48 +66,79 @@ export interface ReportRow {
   created_at: string;
 }
 
+/** What the reader sent: status, dates, reason and the full message. Shared by the inbox and the item pages. */
+export function ReportSummary({ report }: { report: ReportRow }) {
+  return (
+    <>
+      <RecordMeta>
+        <StatusBadge status={report.status} map={REPORT_STATUS} />
+        <span>Received {formatDateTime(report.created_at)}</span>
+        {report.resolved_at && <span>Closed {formatDateTime(report.resolved_at)}</span>}
+      </RecordMeta>
+      <RecordTitle>{REPORT_REASON_LABELS.en[report.reason as ReportReason] ?? report.reason}</RecordTitle>
+      {report.details ? (
+        <p className="whitespace-pre-wrap break-words text-[15px] leading-[1.55] text-ink-soft">{report.details}</p>
+      ) : (
+        <p className="text-[13px] text-muted">No details given.</p>
+      )}
+    </>
+  );
+}
+
+/** Status + resolution note for one report. resolve_report() is authoritative and logs the change. */
+export function ReportForm({ report, className = "" }: { report: Pick<ReportRow, "id" | "status" | "resolution_note">; className?: string }) {
+  const label = "block text-xs font-bold text-ink-soft";
+  return (
+    <ActionForm action={resolveReport} className={`w-full space-y-3 ${className}`}>
+      <input type="hidden" name="report_id" value={report.id} />
+      <label className={label}>
+        Status
+        {/* key: React resets the form after the action and ignores a later defaultValue on a mounted select, so remount it when the saved status changes. */}
+        <select key={report.status} name="status" defaultValue={report.status} className="field mt-[7px] font-normal">
+          {REPORT_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {REPORT_STATUS[s].label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className={label}>
+        Resolution note
+        <textarea name="note" rows={3} maxLength={2000} defaultValue={report.resolution_note ?? ""} placeholder="Record action taken…" className="field mt-[7px] min-h-20 font-normal" />
+      </label>
+      <div className="flex justify-end">
+        <SubmitButton pendingLabel="Updating…">Update report</SubmitButton>
+      </div>
+    </ActionForm>
+  );
+}
+
 export function ReportsPanel({ reports }: { reports: ReportRow[] }) {
   return (
     <Panel title={`Reports (${reports.length})`}>
       {reports.length === 0 ? (
         <p className="text-sm text-muted">No reports for this item.</p>
       ) : (
-        <ul className="space-y-4">
+        <ul className="divide-y divide-line">
           {reports.map((r) => (
-            <li key={r.id} className="rounded-lg border border-line p-3">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <strong>{REPORT_REASON_LABELS.en[r.reason as ReportReason] ?? r.reason}</strong>
-                <StatusBadge status={r.status} map={REPORT_STATUS} />
-                <span className="text-xs text-muted">{formatDateTime(r.created_at)}</span>
-              </div>
-              {r.details && <p className="mt-1 whitespace-pre-line text-sm text-ink-soft">{r.details}</p>}
-              {r.resolution_note && <p className="mt-1 text-xs text-muted">Note: {r.resolution_note}</p>}
-              <ActionForm action={resolveReport} className="mt-3 flex flex-wrap items-center gap-2">
-                <input type="hidden" name="report_id" value={r.id} />
-                <label htmlFor={`rn-${r.id}`} className="sr-only">
-                  Resolution note
-                </label>
-                <input id={`rn-${r.id}`} name="note" maxLength={2000} placeholder="Note (optional)" className="field min-w-48 flex-1" />
-                {r.status === "open" ? (
-                  <>
-                    <SubmitButton name="status" value="resolved" variant="outline">
-                      Resolve
-                    </SubmitButton>
-                    <SubmitButton name="status" value="dismissed" variant="ghost">
-                      Dismiss
-                    </SubmitButton>
-                  </>
-                ) : (
-                  <SubmitButton name="status" value="open" variant="ghost">
-                    Reopen
-                  </SubmitButton>
-                )}
-              </ActionForm>
+            <li key={r.id} className="py-5 first:pt-0 last:pb-0">
+              <ReportSummary report={r} />
+              <ReportForm report={r} className="mt-4 max-w-[520px]" />
             </li>
           ))}
         </ul>
       )}
     </Panel>
+  );
+}
+
+/** Label over value, for the Details panel of an item page. */
+export function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="text-[11px] font-bold uppercase tracking-[0.35px] text-muted">{label}</dt>
+      <dd className="mt-0.5 break-words text-sm text-ink">{children}</dd>
+    </div>
   );
 }
 
@@ -123,7 +154,7 @@ export async function ActivityHistory({ ctx, entityType, entityId, reportIds }: 
   if (own.error || reports.error) {
     return (
       <Panel title="Moderation history">
-        <p className="text-sm text-accent-700">Could not load the history.</p>
+        <Notice tone="error">Could not load the history.</Notice>
       </Panel>
     );
   }
@@ -133,9 +164,9 @@ export async function ActivityHistory({ ctx, entityType, entityId, reportIds }: 
       {rows.length === 0 ? (
         <p className="text-sm text-muted">No moderator actions yet.</p>
       ) : (
-        <ol className="space-y-2 text-sm">
+        <ol className="divide-y divide-line text-sm">
           {rows.map((r) => (
-            <li key={r.id} className="border-b border-line pb-2 last:border-0">
+            <li key={r.id} className="py-3 first:pt-0 last:pb-0">
               <span className="font-semibold text-ink">{activityLabel(r.action)}</span>
               {r.from_status && r.to_status && r.from_status !== r.to_status && (
                 <span className="text-ink-soft">
@@ -143,8 +174,8 @@ export async function ActivityHistory({ ctx, entityType, entityId, reportIds }: 
                   ({r.from_status} → {r.to_status})
                 </span>
               )}
-              {r.note && <p className="text-ink-soft">“{r.note}”</p>}
-              <div className="text-xs text-muted">
+              {r.note && <p className="mt-1 leading-[1.55] text-ink-soft">“{r.note}”</p>}
+              <div className="mt-1 text-xs text-muted">
                 {r.actor?.display_name ?? "System"} · {formatDateTime(r.created_at)}
               </div>
             </li>

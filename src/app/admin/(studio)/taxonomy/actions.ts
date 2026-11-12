@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requirePermission } from "@/lib/auth/session";
+import { requirePermission, type StaffContext } from "@/lib/auth/session";
 import { toActionError, unwrap } from "@/lib/actions";
 import { slugify } from "@/lib/format";
 import { must } from "@/lib/studio/db";
@@ -52,6 +52,41 @@ export async function saveCategory(_prev: FormActionResult, fd: FormData): Promi
   }
 }
 
+/**
+ * Quick add on the category list. Runs saveCategory (same permission check, schema and insert) but stays on the
+ * list instead of opening the full form.
+ */
+export async function createCategory(prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
+  fd.delete("id"); // create only: this form never updates a category
+  fd.set("is_active", "on"); // the short form has no checkboxes; a new category starts visible, as the full form defaults
+  const result = await saveCategory(prev, fd);
+  return result?.ok ? { ok: true, message: result.message } : result;
+}
+
+/** Refuses while articles use the category. Callers must have passed requirePermission("taxonomy.manage"). */
+async function removeCategory(ctx: StaffContext, id: string): Promise<FormActionResult> {
+  const { count } = await ctx.supabase.from("articles").select("id", { count: "exact", head: true }).eq("category_id", id);
+  if (count) return { ok: false, error: `Can't delete: used by ${count} ${count === 1 ? "article" : "articles"}. Move the articles first, or deactivate the category instead.` };
+  // articles.category_id is ON DELETE RESTRICT, so articles hidden from this session still block deletion (23503).
+  unwrap(await ctx.supabase.from("categories").delete().eq("id", id));
+  revalidateSite();
+  return { ok: true, message: "Category deleted.", redirectTo: "/admin/taxonomy" };
+}
+
+/** Delete from the category list: the slug must be typed out first. The edit page deletes through categoryOp. */
+export async function deleteCategory(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
+  try {
+    const ctx = await requirePermission("taxonomy.manage");
+    const id = z.uuid().parse(fd.get("id"));
+    const cat = unwrap(await ctx.supabase.from("categories").select("slug").eq("id", id).maybeSingle());
+    if (!cat) return { ok: false, error: "This category no longer exists." };
+    if (String(fd.get("confirmation") ?? "").trim() !== cat.slug) return { ok: false, error: `Type ${cat.slug} to confirm.` };
+    return await removeCategory(ctx, id);
+  } catch (e) {
+    return toActionError(e);
+  }
+}
+
 const categoryOpSchema = z.object({ id: z.uuid(), op: z.enum(["up", "down", "toggle", "delete"]) });
 
 export async function categoryOp(_prev: FormActionResult, fd: FormData): Promise<FormActionResult> {
@@ -64,14 +99,7 @@ export async function categoryOp(_prev: FormActionResult, fd: FormData): Promise
       revalidateSite();
       return { ok: true, message: cat.is_active ? "Category hidden from the public site." : "Category is now active." };
     }
-    if (op === "delete") {
-      const { count } = await ctx.supabase.from("articles").select("id", { count: "exact", head: true }).eq("category_id", id);
-      if (count) return { ok: false, error: `Can't delete: used by ${count} ${count === 1 ? "article" : "articles"}. Move the articles first, or deactivate the category instead.` };
-      // articles.category_id is ON DELETE RESTRICT, so articles hidden from this session still block deletion (23503).
-      unwrap(await ctx.supabase.from("categories").delete().eq("id", id));
-      revalidateSite();
-      return { ok: true, message: "Category deleted.", redirectTo: "/admin/taxonomy" };
-    }
+    if (op === "delete") return await removeCategory(ctx, id);
     const rows = must(await ctx.supabase.from("categories").select("id, sort_order").order("sort_order").order("name"));
     const ordered = rows.map((r) => ({ id: r.id, position: r.sort_order }));
     for (const u of positionUpdates(ordered, moveId(ordered.map((r) => r.id), id, op))) {

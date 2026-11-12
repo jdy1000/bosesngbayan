@@ -1536,7 +1536,7 @@ export type Database = {
       poll_status: "draft" | "published" | "closed" | "archived";
       poll_voting_policy: "one_per_browser" | "one_per_browser_and_network";
       report_reason: "spam" | "harassment" | "hate_speech" | "misinformation" | "violence" | "privacy" | "other";
-      report_status: "open" | "resolved" | "dismissed";
+      report_status: "open" | "reviewing" | "resolved" | "dismissed";
       subscriber_status: "subscribed" | "unsubscribed" | "suppressed";
     };
     CompositeTypes: { [_ in never]: never };

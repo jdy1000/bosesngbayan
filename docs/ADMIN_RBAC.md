@@ -72,7 +72,7 @@ Administrators hold `users.manage`, so they can invite, deactivate and assign no
 
 Each Studio page calls `requireStaffPage(permission)` on the server, and each server action calls `requirePermission(permission)` again. The sidebar (`src/components/studio/nav.ts`) only hides links the user cannot use.
 
-`/admin/account` (My account) is open to every signed-in staff member and acts only on the caller's own auth user: change email (Supabase sends a confirmation link to both the old and the new address) and change password (the current password is re-verified first). Both actions are rate-limited and audited (`account_email_change_requested`, `account_password_changed`).
+`/admin/account` (My account) is open to every signed-in staff member and acts only on the caller's own account: edit display name, job title and biography (`saveProfile`, own `profiles` row, audited as `update_profile`); change email (the current password is re-verified, then Supabase sends a confirmation link to both the old and the new address); change password (the current password is re-verified, and other sessions are ended afterwards); and sign out everywhere (`account_signed_out_everywhere`). The email and password actions are rate-limited and audited (`account_email_change_requested`, `account_password_changed`).
 
 | Route | Sidebar label | Visible with any of |
 | --- | --- | --- |

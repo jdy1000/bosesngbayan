@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Apply for newsroom access — Boses 
 export default async function ApplyPage() {
   if (await getStaffContext()) redirect("/admin");
   return (
-    <AuthShell>
+    <AuthShell variant="plain">
       <ApplyForm />
     </AuthShell>
   );

@@ -5,7 +5,7 @@ import { requireStaffPage } from "@/lib/auth/session";
 import { formatDateTime, truncate } from "@/lib/format";
 import { PageHeader, Panel, StatusBadge } from "@/components/studio/ui";
 import { MODERATION_STATUS } from "../../labels";
-import { ActivityHistory, ModerationPanel, ReportsPanel } from "../../parts";
+import { ActivityHistory, DetailRow, ModerationPanel, ReportsPanel } from "../../parts";
 
 export const metadata = { title: "Comment" };
 
@@ -41,15 +41,15 @@ export default async function ModerationCommentPage({ params }: { params: Promis
         breadcrumb={[{ label: "Report inbox", href: "/admin/moderation?tab=comments" }]}
         description={<StatusBadge status={comment.status} map={MODERATION_STATUS} />}
       />
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-6">
           <Panel title="Full comment">
             {parent && (
-              <blockquote className="mb-4 border-l-4 border-line pl-3 text-sm text-muted">
+              <blockquote className="mb-4 border-l-2 border-line pl-3 text-[13px] leading-[1.55] text-muted">
                 Reply to {parent.author_name}: “{truncate(parent.body, 200)}”
               </blockquote>
             )}
-            <p className="whitespace-pre-line break-words text-[0.95rem] leading-relaxed text-ink">{comment.body}</p>
+            <p className="whitespace-pre-line break-words text-[15px] leading-[1.55] text-ink">{comment.body}</p>
           </Panel>
           <ReportsPanel reports={reports ?? []} />
           <ActivityHistory ctx={ctx} entityType="comment" entityId={comment.id} reportIds={(reports ?? []).map((r) => r.id)} />
@@ -57,37 +57,23 @@ export default async function ModerationCommentPage({ params }: { params: Promis
         <aside className="space-y-6">
           <ModerationPanel targetType="comment" targetId={comment.id} status={comment.status} currentNote={comment.moderator_note} />
           <Panel title="Details">
-            <dl className="space-y-2 text-sm">
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">On</dt>
-                <dd>
-                  {comment.article ? (
-                    <Link href={`/balita/${comment.article.slug}`} target="_blank" className="text-brand hover:underline">
-                      {comment.article.title} ↗
-                    </Link>
-                  ) : comment.post ? (
-                    <Link href={`/admin/moderation/posts/${comment.post.id}`} className="text-brand hover:underline">
-                      {comment.post.title}
-                    </Link>
-                  ) : (
-                    "—"
-                  )}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Email (staff only)</dt>
-                <dd className="break-words">{comment.author_email ?? "Not provided"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Submitted</dt>
-                <dd>{formatDateTime(comment.created_at)}</dd>
-              </div>
-              {comment.moderated_at && (
-                <div>
-                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted">Last moderated</dt>
-                  <dd>{formatDateTime(comment.moderated_at)}</dd>
-                </div>
-              )}
+            <dl className="space-y-3.5">
+              <DetailRow label="On">
+                {comment.article ? (
+                  <Link href={`/balita/${comment.article.slug}`} target="_blank" className="font-bold text-brand hover:underline">
+                    {comment.article.title} <span aria-hidden="true">↗</span>
+                  </Link>
+                ) : comment.post ? (
+                  <Link href={`/admin/moderation/posts/${comment.post.id}`} className="font-bold text-brand hover:underline">
+                    {comment.post.title}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </DetailRow>
+              <DetailRow label="Email (staff only)">{comment.author_email ?? "Not provided"}</DetailRow>
+              <DetailRow label="Submitted">{formatDateTime(comment.created_at)}</DetailRow>
+              {comment.moderated_at && <DetailRow label="Last moderated">{formatDateTime(comment.moderated_at)}</DetailRow>}
             </dl>
           </Panel>
         </aside>

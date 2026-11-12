@@ -1,18 +1,25 @@
 "use client";
 
 import { useActionState, useState, type ReactNode } from "react";
-import Link from "next/link";
-import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, LoaderCircle } from "lucide-react";
 import { PasswordInput } from "@/components/studio/password-input";
 import { requestPasswordReset, signIn, type LoginState } from "@/app/admin/login/actions";
 
-const fieldClass = "field h-12 text-base";
+// text-base keeps the fields at 16px, so iOS does not zoom the page on focus.
+const fieldClass = "field h-[46px] text-base";
 const labelClass = "text-sm font-semibold text-ink";
+const headingClass = "text-[30px] font-semibold leading-[1.15] tracking-[-0.02em] text-ink";
+const introClass = "mt-2 text-sm leading-relaxed text-muted";
 
-function Notice({ tone, children }: { tone: "error" | "info"; children: ReactNode }) {
-  const styles = tone === "error" ? "bg-accent/8 text-accent-700" : "bg-brand-50 text-brand-700";
+const NOTICE_TONES = {
+  error: "bg-accent/8 text-accent-700",
+  info: "bg-brand-50 text-brand-700",
+  success: "bg-emerald-50 text-emerald-800",
+} as const;
+
+function Notice({ tone, children }: { tone: keyof typeof NOTICE_TONES; children: ReactNode }) {
   return (
-    <p role={tone === "error" ? "alert" : "status"} className={`rounded px-3.5 py-3 text-sm leading-snug ${styles}`}>
+    <p role={tone === "error" ? "alert" : "status"} className={`rounded px-3.5 py-3 text-sm leading-snug ${NOTICE_TONES[tone]}`}>
       {children}
     </p>
   );
@@ -20,15 +27,25 @@ function Notice({ tone, children }: { tone: "error" | "info"; children: ReactNod
 
 function SubmitButton({ pending, idle, busy }: { pending: boolean; idle: string; busy: string }) {
   return (
-    <button type="submit" className="btn btn-primary h-12 w-full text-[0.95rem]" disabled={pending} aria-busy={pending}>
-      {pending && <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />}
+    <button type="submit" className="btn btn-primary h-[46px] w-full justify-between px-4 text-[0.95rem]" disabled={pending} aria-busy={pending}>
       {pending ? busy : idle}
+      {pending ? <LoaderCircle aria-hidden="true" className="size-[18px] animate-spin" /> : <ArrowRight aria-hidden="true" className="size-[18px]" />}
     </button>
   );
 }
 
-export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
-  const [mode, setMode] = useState<"login" | "reset">("login");
+export function LoginForm({
+  initialReset = false,
+  linkExpired = false,
+  notice,
+}: {
+  /** Open on the "forgot password" panel (`?recovery=1`, or after a failed link). */
+  initialReset?: boolean;
+  linkExpired?: boolean;
+  /** Fixed text chosen by the page from `?notice=`; never the raw parameter. */
+  notice?: string;
+}) {
+  const [mode, setMode] = useState<"login" | "reset">(initialReset ? "reset" : "login");
   // Focus moves to the email field only after the reader switches mode, never on first load.
   const [switched, setSwitched] = useState(false);
   const [email, setEmail] = useState("");
@@ -59,11 +76,12 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
   if (mode === "reset") {
     return (
       <div>
-        <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Reset password</h1>
-        <p className="mt-3 text-base leading-relaxed text-ink-soft">
-          Enter your account email and we will send you a link to create a new password.
-        </p>
-        <form action={resetAction} className="mt-8 flex flex-col gap-5">
+        <h1 className={headingClass}>Reset password</h1>
+        <p className={introClass}>Enter your account email and we will send you a link to create a new password.</p>
+        <form action={resetAction} className="mt-7 flex flex-col gap-6">
+          {linkExpired && !resetState.message && (
+            <Notice tone="error">That link is invalid, expired, or has already been used. Request a new link below and open the newest email.</Notice>
+          )}
           {emailField}
           {resetState.error && <Notice tone="error">{resetState.error}</Notice>}
           {resetState.message && <Notice tone="info">{resetState.message}</Notice>}
@@ -83,11 +101,11 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
 
   return (
     <div>
-      <h1 className="text-[2rem] font-semibold leading-[1.1] tracking-[-0.02em] text-ink">Sign in to Studio</h1>
-      <p className="mt-3 text-base leading-relaxed text-ink-soft">Use the email and password of your newsroom account.</p>
+      <h1 className={headingClass}>Sign in to Studio</h1>
+      <p className={introClass}>Use the email and password of your newsroom account.</p>
 
-      <form action={loginAction} className="mt-8 flex flex-col gap-5">
-        {linkExpired && <Notice tone="error">This link has expired or is invalid. Ask for a new invitation or reset your password.</Notice>}
+      <form action={loginAction} className="mt-7 flex flex-col gap-6">
+        {notice && <Notice tone="success">{notice}</Notice>}
         {emailField}
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-4">
@@ -105,15 +123,11 @@ export function LoginForm({ linkExpired = false }: { linkExpired?: boolean }) {
           <PasswordInput id="login-password" name="password" required autoComplete="current-password" className={fieldClass} />
         </div>
         {loginState.error && <Notice tone="error">{loginState.error}</Notice>}
-        <SubmitButton pending={loginPending} idle="Sign in" busy="Signing in…" />
+        <div className="flex flex-col gap-3">
+          <SubmitButton pending={loginPending} idle="Sign in" busy="Signing in…" />
+          <p className="text-center text-[11px] text-muted">Secure access for authorized editors.</p>
+        </div>
       </form>
-
-      <p className="mt-6 text-sm leading-relaxed text-muted">
-        No account? Accounts are by invitation only, from a site editor or administrator.{" "}
-        <Link href="/admin/apply" className="font-semibold text-brand transition-colors hover:text-brand-700">
-          Apply for newsroom access
-        </Link>
-      </p>
     </div>
   );
 }

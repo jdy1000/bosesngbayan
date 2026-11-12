@@ -210,6 +210,66 @@ describe("community moderation", () => {
     expect(row.rows[0]).toMatchObject({ status: "dismissed", resolved_by: moderator });
   });
 
+  describe("report status: reviewing", () => {
+    let reportId: string;
+    const setStatus = (userId: string, status: string) =>
+      asRole(db, "authenticated", userId, (tx) => tx.query("select public.resolve_report($1, $2::public.report_status, 'Tala ng moderator')", [reportId, status]));
+    const readReport = async () =>
+      (
+        await db.query<{ status: string; resolved_by: string | null; resolved_at: Date | null }>(
+          "select status, resolved_by, resolved_at from public.moderation_reports where id = $1",
+          [reportId],
+        )
+      ).rows[0]!;
+
+    it("a moderator can mark a report as reviewing without closing it", async () => {
+      // Arrange
+      const created = await asRole(db, "service_role", null, (tx) =>
+        tx.query<{ id: string }>("select public.submit_report($1, null, 'other', 'Pakisuri po ito', $2) as id", [postId, h("s")]),
+      );
+      reportId = created.rows[0]!.id;
+
+      // Act
+      await setStatus(moderator, "reviewing");
+
+      // Assert
+      expect(await readReport()).toEqual({ status: "reviewing", resolved_by: null, resolved_at: null });
+    });
+
+    it("resolving records who closed it and when", async () => {
+      await setStatus(moderator, "resolved");
+
+      const report = await readReport();
+      expect(report).toMatchObject({ status: "resolved", resolved_by: moderator });
+      expect(report.resolved_at).not.toBeNull();
+    });
+
+    it("moving a closed report back to open or reviewing clears who closed it and when", async () => {
+      await setStatus(moderator, "open");
+      expect(await readReport()).toEqual({ status: "open", resolved_by: null, resolved_at: null });
+
+      await setStatus(moderator, "dismissed");
+      expect((await readReport()).resolved_at).not.toBeNull();
+
+      await setStatus(moderator, "reviewing");
+      expect(await readReport()).toEqual({ status: "reviewing", resolved_by: null, resolved_at: null });
+    });
+
+    it("every status change is written to the activity log", async () => {
+      const log = await db.query<{ action: string }>(
+        "select action from public.content_activity_logs where entity_type = 'report' and entity_id = $1 order by id",
+        [reportId],
+      );
+      expect(log.rows.map((r) => r.action)).toEqual(["report:reviewing", "report:resolved", "report:open", "report:dismissed", "report:reviewing"]);
+    });
+
+    it("a user without moderation.manage still cannot change a report", async () => {
+      await expect(setStatus(writer, "reviewing")).rejects.toThrow(/not_authorized/);
+      await expect(setStatus(writer, "resolved")).rejects.toThrow(/not_authorized/);
+      expect((await readReport()).status).toBe("reviewing");
+    });
+  });
+
   it("comments on unpublished articles are refused", async () => {
     const art = await asRole(db, "authenticated", writer, async (tx) =>
       (await tx.query<{ id: string }>("insert into public.articles (slug, title, author_id) values ('comment-target', 'X', $1) returning id", [writer])).rows[0]!.id,

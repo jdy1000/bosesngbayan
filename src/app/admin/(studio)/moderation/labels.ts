@@ -11,11 +11,14 @@ export const MODERATION_STATUS: Record<ModerationStatus, { label: string; tone: 
   removed: { label: "Removed", tone: "red" },
 };
 
-export const REPORT_STATUSES = ["open", "resolved", "dismissed"] as const;
-export const REPORT_STATUS: Record<(typeof REPORT_STATUSES)[number], { label: string; tone: BadgeTone }> = {
+/** public.report_status, in workflow order. Only resolved and dismissed close a report (resolve_report()). */
+export const REPORT_STATUSES = ["open", "reviewing", "resolved", "dismissed"] as const;
+export type ReportStatus = (typeof REPORT_STATUSES)[number];
+export const REPORT_STATUS: Record<ReportStatus, { label: string; tone: BadgeTone }> = {
   open: { label: "Open", tone: "amber" },
+  reviewing: { label: "Reviewing", tone: "amber" },
   resolved: { label: "Resolved", tone: "green" },
-  dismissed: { label: "Dismissed", tone: "neutral" },
+  dismissed: { label: "Dismissed", tone: "red" },
 };
 
 /** moderate_content() actions. "restore_pending" is the Studio "flag for re-review" action. */

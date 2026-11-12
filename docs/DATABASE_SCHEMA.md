@@ -25,6 +25,8 @@ Conventions used below:
 | `20261106001100_english_labels.sql` | Optional English labels: `navigation_items.label_en`, `homepage_sections.title_en`/`description_en`; `publish_homepage` and `restore_homepage_to_draft` copy them (ADR-015). |
 | `20261107000100_ad_slots.sql` | `ads.manage` permission (Owner, Administrator), the `ad_slots` table and its RLS, and `media_usages()` extended to ad creatives. |
 | `20261107000200_publisher_applications.sql` | `publisher_applications` table and RLS, `submit_publisher_application()`, `review_publisher_application()` and `purge_old_publisher_applications()` (ADR-018). |
+| `20261112000100_report_reviewing_status.sql` | Adds `reviewing` to the `report_status` enum. Alone in its file, because a new enum value cannot be used in the transaction that adds it. |
+| `20261112000200_resolve_report_reviewing.sql` | `resolve_report()` replaced: `resolved_by` and `resolved_at` are set only for resolved and dismissed, and cleared for open and reviewing. Same signature, permission check, activity log and grants. |
 
 There are no down migrations. To roll back, drop the objects in reverse migration order (the header of `000100` points here for that).
 
@@ -45,7 +47,7 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 | `community_kind` | perspective, question, discussion |
 | `moderation_status` | pending, approved, rejected, hidden, removed |
 | `report_reason` | spam, harassment, hate_speech, misinformation, violence, privacy, other |
-| `report_status` | open, resolved, dismissed |
+| `report_status` | open, reviewing, resolved, dismissed (`reviewing` added by `20261112000100`) |
 | `subscriber_status` | subscribed, unsubscribed, suppressed |
 
 ## 3. Tables
@@ -187,7 +189,7 @@ Since ADR-017 there is no Studio homepage builder. These tables are unchanged an
 | `submit_comment(...)` | yes | **service-only** | Target must be a public article with comments allowed, or an approved post with comments allowed. A parent comment must be approved and on the same target. Raises `comments_closed`, `parent_not_found` or `target_required`. |
 | `submit_report(post, comment, reason, details, hash)` | yes | **service-only** | Target must be approved, otherwise raises `target_not_found`. |
 | `moderate_content(type, id, action, note)` | yes | authenticated | Requires `moderation.manage`. Actions: approve, reject, hide, remove, feature, unfeature, restore_pending. Only approved posts can be featured. Logs to activity. |
-| `resolve_report(id, status, note)` | yes | authenticated | Requires `moderation.manage`. Logs to activity. |
+| `resolve_report(id, status, note)` | yes | authenticated | Requires `moderation.manage`. Logs to activity. Sets `resolved_by` and `resolved_at` only for resolved and dismissed, and clears them for open and reviewing (`20261112000200`). |
 | `subscribe_newsletter(email, consent_text, source)` | yes | **service-only** | Returns `subscribed`, `already_subscribed`, `resubscribed` or `suppressed`. Suppressed addresses are never resubscribed. |
 | `unsubscribe_newsletter(token)` | yes | **service-only** | Sets `unsubscribed`. Returns whether the token exists. |
 | `set_subscriber_status(id, status, reason)` | yes | authenticated | Requires `newsletter.manage`. Writes an audit row. |

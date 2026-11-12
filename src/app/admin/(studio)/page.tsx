@@ -62,7 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           <Stat label="Articles" value={formatNumber(data.totalArticles)} hint={`${formatNumber(data.statusCounts.published)} published`} href="/admin/articles" />
           {a && <Stat label={`Reads · ${range.label}`} value={formatNumber(a.page_views)} hint="Aggregated page views" href={withParams("/admin/analytics", rangeQuery)} />}
           {data.team && <Stat label="Newsroom users" value={formatNumber(data.team.total)} hint={`${formatNumber(data.team.active)} active`} href="/admin/team" />}
-          {data.openReports !== null && <Stat label="Open reports" value={formatNumber(data.openReports)} hint="Waiting for a decision" href="/admin/moderation" />}
+          {data.openReports !== null && <Stat label="Open reports" value={formatNumber(data.openReports)} hint="Open or under review" href="/admin/moderation?tab=reports" />}
           {data.activeAds !== null && <Stat label="Active ads" value={formatNumber(data.activeAds)} hint="Live placements" href="/admin/ads" />}
           {data.newsletter && <Stat label="Subscribers" value={formatNumber(data.newsletter.subscribed)} hint="Consented readers" href="/admin/newsletter" />}
         </StatStrip>
