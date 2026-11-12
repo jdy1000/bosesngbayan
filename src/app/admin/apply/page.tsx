@@ -7,7 +7,7 @@ import { ApplyForm } from "./apply-form";
 export const metadata: Metadata = { title: "Apply for newsroom access — Boses ng Bayan Studio", robots: { index: false, follow: false } };
 
 export default async function ApplyPage() {
-  if (await getStaffContext()) redirect("/admin");
+  if (await getStaffContext()) redirect("/dashboard");
   return (
     <AuthShell variant="plain">
       <ApplyForm />

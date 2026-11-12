@@ -167,6 +167,7 @@ Blocks that depend on data that does not exist yet are hidden rather than shown 
 | Regional | 16:11 |
 
 - Images use `next/image` with `sizes` set per slot. They are served as AVIF, with WebP for browsers without it. The cover and story thumbnails ask for quality 60; other images keep the default 75 (`images` in `next.config.ts`). Optimized copies are kept for 31 days, because an uploaded file never changes under the same storage path.
+- On the article page the lead photo and its caption use the body text column (760px), so their left and right edges match the text (owner request, 2026-11-12; the photo was 1040px wide before).
 - Alt text comes from the media record. New uploads require it in the picker, and the picker flags existing images without it. Credit and caption render under figures.
 - When no image exists, a brand gradient with the category name stands in. Stock "fake product" shots are never substituted.
 - Development photographs in `supabase/seed-media/` carry licences and credits in `CREDITS.json`. Every preview photo is CC0, public domain or Unsplash License (no attribution required), so no credit line is shown; a photo with `credit_required: true` would get one. Story photos (`ph-*.jpg`) are real Philippine scenes matched to each preview story; captions describe only what is in the photo and never name real places or people (ADR-013). Photos are never copied from other publishers' articles (copyright).

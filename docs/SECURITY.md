@@ -15,7 +15,7 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
 ## 2. Authentication
 
 - Supabase Auth with email and password. Sessions are httpOnly cookies managed by `@supabase/ssr`.
-- `src/proxy.ts` refreshes the session on every `/admin` request and redirects signed-out users to `/admin/login`. The only `/admin` paths open to signed-out visitors are `/admin/login`, `/admin/auth/*` and the application form `/admin/apply`. Admin responses carry `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
+- `src/proxy.ts` refreshes the session on every Studio request (`/dashboard` and `/admin/*`) and redirects signed-out users to `/admin/login`. The only `/admin` paths open to signed-out visitors are `/admin/login`, `/admin/auth/*` and the application form `/admin/apply`. Admin responses carry `Cache-Control: no-store` and `X-Robots-Tag: noindex`.
 - **No public registration.** Staff join only through invitations sent by a user with `users.manage`, using the Auth admin API on the server. The public application form (`/admin/apply`, §5.1, ADR-018) only stores a request; it creates no account. The callback (`/admin/auth/callback`) restricts `next` to an allowlist of internal paths, so it cannot be used as an open redirect.
 - Sign-in is rate-limited (10 per 15 minutes per network) and returns one generic error. Password reset returns the same message whether or not the account exists.
 - Passwords need at least 12 characters with lower case, upper case and a digit. This is enforced both by Supabase Auth (`config.toml`; mirror it in the production dashboard) and by `/admin/auth/update-password` and `/admin/account` (shared schema `src/lib/auth/password.ts`).

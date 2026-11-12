@@ -103,7 +103,7 @@ function SidebarFooter() {
 
 function Brand() {
   return (
-    <Link href="/admin" className="flex items-center gap-[11px] px-[21px]" aria-label="Boses ng Bayan Studio, dashboard">
+    <Link href="/dashboard" className="flex items-center gap-[11px] px-[21px]" aria-label="Boses ng Bayan Studio, dashboard">
       <Logo siteName="Boses ng Bayan" size="sm" />
       <span className="leading-none">
         <span className="block text-base font-bold tracking-[-0.6px] text-ink">Studio</span>

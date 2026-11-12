@@ -26,6 +26,20 @@ test("admin requires sign-in", async ({ page }) => {
   await expect(page).toHaveURL(/\/admin\/login/);
 });
 
+test("the Studio Overview at /dashboard requires sign-in, also when its path is percent-encoded", async ({ page, request }) => {
+  await page.goto("/dashboard");
+  await expect(page).toHaveURL(/\/admin\/login/);
+  const encoded = await request.get("/%64ashboard", { maxRedirects: 0 });
+  expect(encoded.status()).toBe(307);
+  expect(encoded.headers()["location"]).toMatch(/\/admin\/login$/);
+});
+
+test("/admin redirects to /dashboard and keeps its query", async ({ request }) => {
+  const res = await request.get("/admin?range=30d", { maxRedirects: 0 });
+  expect(res.status()).toBe(307);
+  expect(res.headers()["location"]).toMatch(/\/dashboard\?range=30d$/);
+});
+
 test("a reader can vote once on the featured poll", async ({ page }) => {
   await page.goto("/botohan/pinakamahalagang-isyu");
   const first = page.getByRole("radio").first();

@@ -76,7 +76,7 @@ Each Studio page calls `requireStaffPage(permission)` on the server, and each se
 
 | Route | Sidebar label | Visible with any of |
 | --- | --- | --- |
-| `/admin` | Overview | `dashboard.view` |
+| `/dashboard` | Overview | `dashboard.view` |
 | `/admin/analytics` | Analytics | `analytics.view` |
 | `/admin/articles` | Articles | `articles.create`, `articles.view_all` |
 | `/admin/review` | Review queue | `articles.review` |

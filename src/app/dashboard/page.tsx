@@ -6,9 +6,9 @@ import { loadDashboard, DASHBOARD_STATUSES } from "@/lib/studio/dashboard";
 import { manilaToday, parseRange } from "@/lib/studio/range";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { ARTICLE_STATUS, AccessChip, Empty, Notice, PageHeader, Panel, SectionHeading, Stat, StatStrip, StatusBadge, withParams } from "@/components/studio/ui";
-import { RangeFilter, RankList } from "./_overview/range-filter";
-import { TrendChart } from "./_overview/trend-chart";
-import { MetricDefinitions } from "./_overview/metric-definitions";
+import { RangeFilter, RankList } from "@/app/admin/(studio)/_overview/range-filter";
+import { TrendChart } from "@/app/admin/(studio)/_overview/trend-chart";
+import { MetricDefinitions } from "@/app/admin/(studio)/_overview/metric-definitions";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -21,9 +21,12 @@ const ROW = "flex items-center justify-between gap-5 px-[22px] py-4";
  * Overview. The top follows the Newsmaker console (ADR-021): one strip of linked figures, then what changed
  * last beside the workflow counts. The range filter, trends and activity log below it are the Boses additions
  * the spec asks for (§4.1).
+ *
+ * Address: /dashboard (owner decision, ADR-022). Every other Studio page stays under /admin, and /admin itself
+ * redirects here in the proxy. The shell comes from the Studio layout, re-exported by this folder's layout.
  */
 export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
-  // No permission argument: requireStaffPage redirects denials to /admin, which would loop here.
+  // No permission argument: requireStaffPage redirects denials to /dashboard, which would loop here.
   const ctx = await requireStaffPage();
   const sp = await searchParams;
   if (!ctx.permissions.has("dashboard.view")) {
@@ -134,7 +137,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
       <section aria-labelledby="trends-heading" className="mb-6">
         <SectionHeading kicker="Over time" title="Publishing and audience trends" id="trends-heading" />
-        <RangeFilter action="/admin" range={range} today={manilaToday()} />
+        <RangeFilter action="/dashboard" range={range} today={manilaToday()} />
         <StatStrip>
           <Stat label="Published in range" value={formatNumber(data.publishedInRange)} hint={range.label} />
           <Stat label="Published today" value={formatNumber(data.publishedToday)} hint="First publication, Manila day" />

@@ -1,17 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { crossHostRedirect } from "@/lib/host-routing";
+import { crossHostRedirect, isStudioPath, STUDIO_HOME } from "@/lib/host-routing";
 
 /**
  * Next 16 proxy (formerly middleware).
  * 0. Two-origin deployments: a Studio path on the public host, or a public path on the Studio host,
  *    is redirected to the other origin (ADR-020). A single host (local development) is untouched.
+ *    /admin itself redirects to the Overview's address, /dashboard (ADR-022).
  * 1. Every page: a per-request nonce Content-Security-Policy (Next applies the nonce to its own
  *    scripts; all pages render dynamically, see ARCHITECTURE.md ADR-004).
- * 2. /admin/*: refresh the Supabase session cookie and send signed-out visitors to the login page
- *    (a UX redirect — every Studio page, action and RPC still enforces permissions server-side).
+ * 2. Studio pages (/dashboard and /admin/*): refresh the Supabase session cookie and send signed-out
+ *    visitors to the login page (a UX redirect — every Studio page, action and RPC still enforces
+ *    permissions server-side).
  * Public pages never touch the session, so they cannot leak drafts.
  */
+
+/** A redirect target on the host the visitor used: nextUrl can carry the server's own host instead. */
+function sameHostUrl(request: NextRequest, pathname: string, search: string): URL {
+  const url = request.nextUrl.clone();
+  url.host = request.headers.get("host") ?? url.host;
+  url.pathname = pathname;
+  url.search = search;
+  return url;
+}
+
 function contentSecurityPolicy(nonce: string): string {
   const dev = process.env.NODE_ENV !== "production";
   const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : "";
@@ -36,6 +48,8 @@ function contentSecurityPolicy(nonce: string): string {
 export async function proxy(request: NextRequest) {
   const otherOrigin = crossHostRedirect(request.headers.get("host") ?? request.nextUrl.host, request.nextUrl.pathname, request.nextUrl.search);
   if (otherOrigin) return NextResponse.redirect(otherOrigin);
+  // Old bookmarks and links to /admin land on the Overview's new address, with their query (?denied=1, date range).
+  if (request.nextUrl.pathname === "/admin") return NextResponse.redirect(sameHostUrl(request, STUDIO_HOME, request.nextUrl.search));
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = contentSecurityPolicy(nonce);
@@ -47,8 +61,7 @@ export async function proxy(request: NextRequest) {
   };
 
   const path = request.nextUrl.pathname;
-  // Exact segment match, so a public slug such as /administrasyon is never treated as Studio.
-  const studio = path === "/admin" || path.startsWith("/admin/");
+  const studio = isStudioPath(path);
   // Lets the root layout pick <html lang>: Studio is English-only, the public site follows the reader's language.
   request.headers.set("x-bnb-area", studio ? "studio" : "site");
   if (!studio) return withCsp(NextResponse.next({ request }));
@@ -71,14 +84,7 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getUser();
 
   const isPublicAdminPath = path === "/admin/login" || path === "/admin/apply" || path.startsWith("/admin/auth/");
-  if (!data.user && !isPublicAdminPath) {
-    const login = request.nextUrl.clone();
-    // Stay on the host the visitor used: nextUrl can carry the server's own host instead of the Studio host.
-    login.host = request.headers.get("host") ?? login.host;
-    login.pathname = "/admin/login";
-    login.search = "";
-    return withCsp(NextResponse.redirect(login));
-  }
+  if (!data.user && !isPublicAdminPath) return withCsp(NextResponse.redirect(sameHostUrl(request, "/admin/login", "")));
   nextResponse.headers.set("Cache-Control", "private, no-store");
   nextResponse.headers.set("X-Robots-Tag", "noindex, nofollow");
   return withCsp(nextResponse);

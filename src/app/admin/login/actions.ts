@@ -49,7 +49,7 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
         : "This account does not have newsroom access. Ask an administrator, or apply for access.",
     };
   }
-  redirect("/admin");
+  redirect("/dashboard");
 }
 
 const resetSchema = z.object({ email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email.")) });

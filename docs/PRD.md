@@ -13,7 +13,7 @@ A Filipino digital newsroom and community-engagement platform.
 Two surfaces:
 
 1. **Public website**, driven entirely by published CMS data: news, categories and topics, regions, polls, Usap Bayan community, search, newsletter, static pages, RSS and sitemap.
-2. **Boses ng Bayan Studio** at `/admin`, a private newsroom console covering:
+2. **Boses ng Bayan Studio** at `/dashboard` (Overview) and `/admin/...` (every other page), a private newsroom console covering:
    - articles, the editorial workflow and the review queue, with image upload in the media picker;
    - taxonomy, moderation (reports), newsletter (audience) and ad inventory;
    - analytics, team and roles, publisher applications, and settings.

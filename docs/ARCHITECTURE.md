@@ -181,7 +181,7 @@ This supersedes the Filipino Studio labels in ADR-014.
 
 **ADR-016 — Studio console follows Newsmaker (2026-11-07).** The owner asked the Studio to adopt the console of the team's Newsmaker admin. Adopted: the shell, the navigation, the page titles and the article workflow. Kept: Boses colours and logo, TipTap, every permission check and every URL (no route was renamed). This supersedes the navy grouped sidebar, the notification bell and the user menu of ADR-014, and the grouped light sidebar of this ADR's first draft.
 - *Sidebar* (`components/studio/sidebar.tsx`, `components/studio/nav.ts`). One flat list under a "PUBLICATION" label, in this order:
-  1. Overview (`/admin`)
+  1. Overview (`/dashboard`; it was `/admin` until ADR-022)
   2. Analytics (`/admin/analytics`)
   3. Articles (`/admin/articles`)
   4. Review queue (`/admin/review`)
@@ -207,7 +207,7 @@ This supersedes the Filipino Studio labels in ADR-014.
 
   | Page | Kicker / title |
   | --- | --- |
-  | `/admin` | Publishing center / Welcome, {name}, with an "Access: {role}" chip |
+  | `/dashboard` | Publishing center / Welcome, {name}, with an "Access: {role}" chip |
   | `/admin/articles` | Content / Articles |
   | `/admin/review` | Editorial workflow / Review queue |
   | `/admin/moderation` | Trust and corrections / Report inbox |
@@ -273,7 +273,7 @@ This supersedes the Filipino Studio labels in ADR-014.
 
 **ADR-020 — Public site and Studio on separate origins, one codebase (2026-11-12).** The request was for `bosesngbayan.com` and `admin.bosesngbayan.com` as two Vercel projects from the one repository, the way the team's other publications are deployed. Both projects build the same app, and the request's host decides what is shown.
 - `NEXT_PUBLIC_SITE_URL` is the readers' origin and `NEXT_PUBLIC_ADMIN_URL` is the Studio origin. Both projects carry both values. With `NEXT_PUBLIC_ADMIN_URL` unset (local development) everything stays on one host.
-- `src/proxy.ts` calls `crossHostRedirect` (`src/lib/host-routing.ts`, unit-tested). A `/admin` path on any host other than the Studio host is redirected to the Studio origin. On the Studio host, `/` opens `/admin` and any other public path is redirected to the site origin. API routes and files with an extension are outside the proxy matcher and answer on both hosts.
+- `src/proxy.ts` calls `crossHostRedirect` (`src/lib/host-routing.ts`, unit-tested). A `/admin` path on any host other than the Studio host is redirected to the Studio origin. On the Studio host, `/` opens `/dashboard` (ADR-022) and any other public path is redirected to the site origin. API routes and files with an extension are outside the proxy matcher and answer on both hosts.
 - This is routing only. Permissions are still enforced by every Studio page, server action and RPC, and by RLS.
 - Invitation, recovery and email-change links use `adminUrl()` so they open on the Studio origin. Supabase Auth must list `<Studio origin>/admin/auth/callback` as a redirect URL.
 - Both projects read the same Supabase project and pages render per request (ADR-004), so a story published in Studio shows on the public site with no cross-project cache step.
@@ -292,6 +292,13 @@ This supersedes the Filipino Studio labels in ADR-014.
   - requiring a cover image and an excerpt before publishing: the workflow rules in `transition_article` are unchanged;
   - public registration and the block editor (already decided in ADR-016 and ADR-018);
   - the "Enquiries" tab and staff profile photos: both need new data (a public contact form and table; a private storage bucket) and wait for a decision.
+
+**ADR-022 — The Studio Overview is at `/dashboard` (2026-11-12, owner decision).** The owner asked for `https://admin.bosesngbayan.com/admin` to be `https://admin.bosesngbayan.com/dashboard`, and chose the narrow form: only the Overview moves. Every other Studio page keeps its `/admin/...` address, including sign-in and the emailed-link callback, so no Supabase Auth setting or email template changed.
+
+- *How:* the Overview page file is `src/app/dashboard/page.tsx`. `src/app/dashboard/layout.tsx` re-exports the Studio layout, so the page has the same shell and the same `requireStaffPage()` check. Its loading and error screens are re-exports too.
+- *Routing:* `STUDIO_HOME` and `isStudioPath` in `src/lib/host-routing.ts` are the one definition of what counts as Studio: `/dashboard`, anything later added under it, and everything under `/admin`. The path is percent-decoded first, as the router does, and a malformed escape counts as Studio so it gets the sign-in check. The proxy treats `/dashboard` like any `/admin` page (session refresh, signed-out redirect to sign-in, `no-store`, `noindex`) and redirects `/admin` to `/dashboard` with its query string, so old bookmarks keep working. On the Studio host `/` opens `/dashboard`; on the public host `/dashboard` goes to the Studio origin.
+- *Also changed:* the menu entry, the logo link, the redirect after sign-in, the "no access" redirect (`/dashboard?denied=1`), the callback's default destination, and `robots.txt`.
+- *Consequences:* the console has two address shapes (`/dashboard` and `/admin/...`); this supersedes the "`/admin` URLs kept" note in ADR-021 for the Overview only. A public page can no longer use the slug `dashboard`. Moving between the Overview and another Studio page re-renders the shell, because the two sit under different layouts.
 
 ## 6. Environment variables
 

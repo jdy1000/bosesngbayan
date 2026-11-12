@@ -393,6 +393,8 @@ Routes:
 - `/admin/login`
 - `/admin` (dashboard)
 
+*(Owner decision 2026-11-12: the dashboard's address is `/dashboard`; `/admin` redirects to it. Every other Studio page keeps its `/admin/...` address. See ADR-022 in `docs/ARCHITECTURE.md`.)*
+
 The console must function as a newsroom management system, not a set of decorative forms. Use clean, information-dense layouts, clear statuses, search/filter controls, useful tables, and strong empty/loading/error states.
 
 *(Owner decision 2026-11-07: the Studio console follows the team's Newsmaker admin (ADR-016). At the owner's request these Studio modules were removed: Pages (§4.6), Media Library (§4.4), Homepage Builder (§4.5), Navigation (§4.13), SEO & redirects (§4.14), Poll management (§4.8) and the audit-log viewer. Analytics and Settings were kept. Audit rows are still written and can be read with SQL. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*

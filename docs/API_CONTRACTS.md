@@ -142,7 +142,7 @@ Studio route handlers authenticate with the Supabase session through `getStaffCo
 | Endpoint | Requirement | Query | Response |
 |---|---|---|---|
 | `GET /admin/api/media` | Any active staff member. `401` if missing. | `q`: ≤80 chars, searches title, file name and alt text | `{items: MediaPickerItem[]}`, up to 48 images: `id`, `url`, `file_name`, `title`, `alt_text`, `credit`, `width`, `height` |
-| `GET /admin/auth/callback` | — | `code` (PKCE), or `token_hash` + `type` (invite, recovery, magiclink, email, signup, email_change); `next` | Redirects. `next` is limited to `/admin`, `/admin/auth/update-password` and `/admin/account`. Invites are sent to update-password. Failures go to `/admin/login?error=link`. |
+| `GET /admin/auth/callback` | — | `code` (PKCE), or `token_hash` + `type` (invite, recovery, magiclink, email, signup, email_change); `next` | Redirects. `next` is limited to `/dashboard`, `/admin/auth/update-password` and `/admin/account`; anything else, or no `next`, goes to `/dashboard`. Invites are sent to update-password. Failures go to `/admin/login?error=link`. |
 
 ### CSV exports
 
@@ -163,7 +163,7 @@ Rows are fetched in batches of 1000. An audit row is written with `write_audit`,
 | Route | Behaviour |
 |---|---|
 | `/sitemap.xml` (`sitemap.ts`, dynamic) | Empty when `seo.allow_indexing` is false. Otherwise lists `/`, `/balita`, `/botohan`, `/usap-bayan`, active categories (`/paksa/<slug>`), up to 5000 public articles (`lastModified` = `content_updated_at` or `published_at`), published pages that are not `robots_noindex`, and published or closed polls. On error it returns only `/`. |
-| `/robots.txt` (`robots.ts`, dynamic) | `Disallow: /` when indexing is off. Otherwise allows `/`, disallows `/admin`, `/api/`, `/hanap` and `/newsletter/`, and links the sitemap. |
+| `/robots.txt` (`robots.ts`, dynamic) | `Disallow: /` when indexing is off. Otherwise allows `/`, disallows `/admin`, `/dashboard`, `/api/`, `/hanap` and `/newsletter/`, and links the sitemap. |
 | `/rss.xml` (route) | RSS 2.0 feed of the latest 30 public articles. `?paksa=<slug>` gives a per-category feed. `Cache-Control: public, max-age=300`. Returns `503` text on error. |
 
 ## 6. Studio mutations: server actions, not a public API

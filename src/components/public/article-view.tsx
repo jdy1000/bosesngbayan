@@ -106,9 +106,10 @@ export async function ArticleView({
       </div>
 
       {image && (
-        <figure className="container-site mt-8 max-w-[1040px]">
+        // Same column as the body text below (760px), so the photo and its caption share the text's left and right edges.
+        <figure className="container-site mt-8 max-w-[760px]">
           <div className="img-frame relative aspect-[16/9] overflow-hidden rounded bg-surface-2">
-            <Image src={image} alt={article.image?.alt_text ?? ""} fill priority sizes="(min-width: 1040px) 1040px, 100vw" className="object-cover" />
+            <Image src={image} alt={article.image?.alt_text ?? ""} fill priority sizes="(min-width: 760px) 760px, 100vw" className="object-cover" />
           </div>
           {(article.image?.caption || article.image?.credit) && (
             <figcaption className="mt-2 text-sm text-muted">

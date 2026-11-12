@@ -56,8 +56,9 @@ export async function saveProfile(_prev: FormActionResult, formData: FormData): 
     p_entity_id: ctx.userId,
     p_details: { fields: Object.keys(parsed.data) },
   });
-  // The Studio layout shows the display name in the top bar.
+  // The Studio layout shows the display name in the top bar. The Overview has its own copy of that layout at /dashboard.
   revalidatePath("/admin", "layout");
+  revalidatePath("/dashboard", "layout");
   return { ok: true, message: "Your profile has been updated." };
 }
 

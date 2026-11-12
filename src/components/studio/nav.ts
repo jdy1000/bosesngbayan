@@ -14,7 +14,7 @@ export type StudioIcon =
 
 /** Flat list in the order of the Newsmaker console (ADR-016), plus Analytics and Settings. */
 export const STUDIO_NAV: StudioNavItem[] = [
-  { href: "/admin", label: "Overview", icon: "overview", anyOf: ["dashboard.view"] },
+  { href: "/dashboard", label: "Overview", icon: "overview", anyOf: ["dashboard.view"] },
   { href: "/admin/analytics", label: "Analytics", icon: "analytics", anyOf: ["analytics.view"] },
   { href: "/admin/articles", label: "Articles", icon: "articles", anyOf: ["articles.create", "articles.view_all"] },
   { href: "/admin/review", label: "Review queue", icon: "review", anyOf: ["articles.review"] },
@@ -30,11 +30,11 @@ export const STUDIO_NAV: StudioNavItem[] = [
   { href: "/admin/account", label: "My account", icon: "account", anyOf: [] },
 ];
 
-/** The nav item that owns `path`: the longest matching href; `/admin` only matches itself. */
+/** The nav item that owns `path`: the longest matching href. */
 export function findNavItem(path: string): StudioNavItem | null {
   let best: StudioNavItem | null = null;
   for (const item of STUDIO_NAV) {
-    const owns = item.href === "/admin" ? path === "/admin" : path === item.href || path.startsWith(`${item.href}/`);
+    const owns = path === item.href || path.startsWith(`${item.href}/`);
     if (owns && (!best || item.href.length > best.href.length)) best = item;
   }
   return best;

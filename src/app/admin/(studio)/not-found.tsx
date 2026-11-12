@@ -10,7 +10,7 @@ export default function StudioNotFound() {
       <h1 className="text-lg font-semibold text-ink">Page not found</h1>
       <p className="mx-auto mt-[7px] max-w-[450px] text-[15px] leading-[1.55] text-muted">It may have been deleted, or the link is out of date.</p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <Link href="/admin" className="btn btn-primary">
+        <Link href="/dashboard" className="btn btn-primary">
           Back to dashboard
         </Link>
       </div>

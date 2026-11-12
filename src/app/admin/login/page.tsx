@@ -17,7 +17,7 @@ const NOTICES: Record<string, string> = {
 };
 
 export default async function LoginPage({ searchParams }: { searchParams: Search }) {
-  if (await getStaffContext()) redirect("/admin");
+  if (await getStaffContext()) redirect("/dashboard");
   const sp = await searchParams;
   const error = one(sp.error);
   const noticeKey = one(sp.notice);

@@ -16,7 +16,7 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
   const isSelf = id === ctx.userId;
-  if (!isSelf && !ctx.permissions.has("users.view")) redirect("/admin?denied=1");
+  if (!isSelf && !ctx.permissions.has("users.view")) redirect("/dashboard?denied=1");
   const canEdit = isSelf || ctx.permissions.has("users.manage");
   const canAudit = ctx.permissions.has("audit.view");
 

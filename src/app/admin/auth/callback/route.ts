@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createSessionClient } from "@/lib/supabase/server";
 
-const ALLOWED_NEXT = new Set(["/admin", "/admin/auth/update-password", "/admin/account"]);
+const ALLOWED_NEXT = new Set(["/dashboard", "/admin/auth/update-password", "/admin/account"]);
 const OTP_TYPES = new Set<EmailOtpType>(["invite", "recovery", "magiclink", "email", "signup", "email_change"]);
 
 /**
@@ -11,8 +11,9 @@ const OTP_TYPES = new Set<EmailOtpType>(["invite", "recovery", "magiclink", "ema
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
-  const nextParam = searchParams.get("next") ?? "/admin";
-  const next = ALLOWED_NEXT.has(nextParam) ? nextParam : "/admin";
+  // The Overview is at /dashboard (ADR-022). An older link that still says next=/admin lands there too.
+  const nextParam = searchParams.get("next") ?? "/dashboard";
+  const next = ALLOWED_NEXT.has(nextParam) ? nextParam : "/dashboard";
   const supabase = await createSessionClient();
 
   const code = searchParams.get("code");

@@ -56,7 +56,7 @@ export const getStaffContext = cache(async (): Promise<StaffContext | null> => {
 export async function requireStaffPage(permission?: Permission): Promise<StaffContext> {
   const ctx = await getStaffContext();
   if (!ctx) redirect("/admin/login");
-  if (permission && !ctx.permissions.has(permission)) redirect("/admin?denied=1");
+  if (permission && !ctx.permissions.has(permission)) redirect("/dashboard?denied=1");
   return ctx;
 }
 
