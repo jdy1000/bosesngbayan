@@ -493,3 +493,13 @@ Verified on the live domain after deploying d41238a (both production deployments
 - The missing-article address shows "Page not found" inside the shell with the menu and the back link.
 - The only flagged links are the Facebook and X share links described above (6 of 16 links that leave Studio; the other 10 return 200).
 Not verified on the live domain: the Owner role was not crawled (no throwaway Owner was created), and 27 further detail pages were skipped by the three-per-kind cap.
+
+[2026-11-12] Reported console messages: extension port / back-forward cache, and "unload is not allowed". No site change.
+Reported: 22 x "Unchecked runtime.lastError: The page keeping the extension port is moved into back/forward cache, so the message channel is closed." and 5 x "[Violation] Permissions policy violation: unload is not allowed in this document."
+Diagnosis:
+- The first message is written by a browser extension in the reporter's Chrome when a page it is connected to is left. The site sends nothing that produces it.
+- The second appears when a script attaches an "unload" handler, which Chrome is retiring. The site attaches none: no "unload" in the built client code, and a probe that records every addEventListener call found 0 "unload" listeners over 24 page loads (7 public, 17 Studio signed in as a throwaway administrator, deleted afterwards), including back and forward moves. The site's own listeners are pagehide (the framework) and beforeunload (the article editor's unsaved-changes warning); neither is covered by that policy.
+- In the same clean browser the console had no warnings or errors on either domain. The one 404 in the run was the probe's own mistyped search address (/hanapin; the search page is /hanap and returns 200).
+- The site's Permissions-Policy header is camera=(), microphone=(), geolocation=() and does not mention unload. The Vercel toolbar (the cause on the earlier report) is not involved this time: its vercel.live message is absent.
+Decision: nothing changed. Re-allowing unload through the header would hide the second message only, for a feature Chrome is removing, and would make back/forward navigation slower for visitors.
+Not verified: which extension in the reporter's browser writes the messages (it cannot be seen from here). An Incognito window, where extensions are off, should show a clean console.
