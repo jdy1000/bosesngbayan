@@ -1,8 +1,8 @@
 /** "How we count" — how every number on the dashboard and analytics screens is computed. */
 export function MetricDefinitions({ showAnalytics }: { showAnalytics: boolean }) {
   return (
-    <section aria-labelledby="metric-defs" className="rounded-2xl bg-paper shadow-card ring-1 ring-line p-5 text-sm text-ink-soft">
-      <h2 id="metric-defs" className="mb-3 text-[0.95rem] font-bold text-ink">
+    <section aria-labelledby="metric-defs" className="rounded-[10px] border border-line bg-paper px-[22px] pb-[22px] pt-5 text-sm text-ink-soft shadow-panel">
+      <h2 id="metric-defs" className="mb-3 text-lg font-semibold text-ink">
         How we count
       </h2>
       <dl className="grid gap-x-8 gap-y-3 md:grid-cols-2">

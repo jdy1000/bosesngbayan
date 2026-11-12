@@ -13,7 +13,7 @@ export type ArticleStatus = Database["public"]["Enums"]["article_status"];
 export const ARTICLE_STATUSES: ArticleStatus[] = ["draft", "pending_review", "approved", "published", "scheduled", "archived", "rejected"];
 
 const MEDIA = "id, storage_path, external_url, alt_text, caption, credit, width, height";
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 12; // as in the Newsmaker console
 
 export const ARTICLE_SORTS = {
   updated: { column: "updated_at", label: "Last modified" },
@@ -28,6 +28,7 @@ export interface StudioArticleRow {
   slug: string;
   title: string;
   status: ArticleStatus;
+  is_featured: boolean;
   published_at: string | null;
   updated_at: string;
   category: { name: string } | null;
@@ -54,7 +55,7 @@ export async function listStudioArticles(ctx: StaffContext, f: ArticleListFilter
   let query = ctx.supabase
     .from("articles")
     .select(
-      `id, slug, title, status, published_at, updated_at,
+      `id, slug, title, status, is_featured, published_at, updated_at,
        category:categories!articles_category_id_fkey(name),
        author:profiles!articles_author_id_fkey(display_name),
        image:media_assets!articles_featured_image_id_fkey(${MEDIA})`,

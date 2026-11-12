@@ -43,7 +43,7 @@ export default async function TagsPage({ searchParams }: { searchParams: Promise
           {error ? (
             <Notice tone="error">Couldn’t load tags.</Notice>
           ) : !tags?.length ? (
-            <Empty title={q ? "No matching tags" : "No tags yet"}>Create a tag in the right panel or while editing an article.</Empty>
+            <Empty bare title={q ? "No matching tags" : "No tags yet"}>Create a tag in the right panel or while editing an article.</Empty>
           ) : (
             <>
               <Table head={["Tag", "Articles", "Actions"]}>

@@ -37,7 +37,7 @@ export default async function ArticleHistoryPage({ params }: { params: Promise<{
           description="Created on every manual save, submission, publish and schedule. Restoring brings back content, SEO and tags — not the status."
         >
           {revisions.length === 0 ? (
-            <Empty title="No revisions yet." />
+            <Empty bare title="No revisions yet." />
           ) : (
             <ol className="divide-y divide-line">
               {revisions.map((r) => (
@@ -67,7 +67,7 @@ export default async function ArticleHistoryPage({ params }: { params: Promise<{
 
         <Panel title="Workflow activity" description="Status changes, who made them, and reviewer notes.">
           {activity.length === 0 ? (
-            <Empty title="No activity yet." />
+            <Empty bare title="No activity yet." />
           ) : (
             <ol className="divide-y divide-line">
               {activity.map((a) => (

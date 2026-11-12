@@ -1,5 +1,6 @@
 import "server-only";
 import type { StaffContext } from "@/lib/auth/session";
+import { adStatus } from "@/lib/studio/ads";
 import { loadAnalyticsSummary, type AnalyticsSummary } from "@/lib/studio/analytics";
 import { fillDays, parseRange, type DateRange } from "@/lib/studio/range";
 import type { Permission } from "@/lib/auth/permissions";
@@ -26,9 +27,25 @@ export interface ActivityItem {
   note: string | null;
 }
 
+export interface RecentArticle {
+  id: string;
+  title: string;
+  status: ArticleStatus;
+  updatedAt: string;
+  category: string | null;
+}
+
 export interface DashboardData {
   /** False when RLS limits the article counts to the viewer's own work. */
   allArticles: boolean;
+  /** The six articles changed last: everyone's for holders of articles.view_all, otherwise the viewer's own. */
+  recent: RecentArticle[];
+  /** Staff accounts (profiles with a role). Null without users.view. */
+  team: { total: number; active: number } | null;
+  /** Reader reports still open. Null without moderation.manage. */
+  openReports: number | null;
+  /** Ads that are on and inside their date window. Null without ads.manage. */
+  activeAds: number | null;
   statusCounts: Record<ArticleStatus, number>;
   totalArticles: number;
   publishedToday: number;
@@ -85,7 +102,39 @@ export async function loadDashboard(ctx: StaffContext, range: DateRange): Promis
       ]).then(([a, b]) => ({ subscribed: count(a), newInRange: count(b) }))
     : Promise.resolve(null);
 
-  const [statuses, todayRes, publishedRes, writersRes, activityRes, analytics, polls, newsletter] = await Promise.all([
+  let recentQuery = db
+    .from("articles")
+    .select("id, title, status, updated_at, category:categories!articles_category_id_fkey(name)")
+    .order("updated_at", { ascending: false })
+    .limit(6);
+  // Without view_all, RLS still shows other people's published stories; "recent work" means the viewer's own.
+  if (!has("articles.view_all")) recentQuery = recentQuery.eq("author_id", ctx.userId);
+
+  const teamPromise = has("users.view")
+    ? db
+        .from("user_roles")
+        .select("user_id, profile:profiles!user_roles_user_id_fkey(is_active)")
+        .then((res) => {
+          if (res.error) throw res.error;
+          const staff = (res.data as unknown as { profile: { is_active: boolean } | null }[]).filter((r) => r.profile);
+          return { total: staff.length, active: staff.filter((r) => r.profile!.is_active).length };
+        })
+    : Promise.resolve(null);
+  const reportsPromise = has("moderation.manage")
+    ? db.from("moderation_reports").select("id", head).eq("status", "open").then(count)
+    : Promise.resolve(null);
+  const adsPromise = has("ads.manage")
+    ? db
+        .from("ad_slots")
+        .select("is_active, starts_at, ends_at")
+        .eq("is_active", true)
+        .then((res) => {
+          if (res.error) throw res.error;
+          return (res.data ?? []).filter((slot) => adStatus(slot) === "live").length;
+        })
+    : Promise.resolve(null);
+
+  const [statuses, todayRes, publishedRes, writersRes, activityRes, analytics, polls, newsletter, recentRes, team, openReports, activeAds] = await Promise.all([
     statusPromise,
     todayPromise,
     publishedPromise,
@@ -94,10 +143,15 @@ export async function loadDashboard(ctx: StaffContext, range: DateRange): Promis
     analyticsPromise,
     pollsPromise,
     newsletterPromise,
+    recentQuery,
+    teamPromise,
+    reportsPromise,
+    adsPromise,
   ]);
   if (publishedRes.error) throw publishedRes.error;
   if (writersRes.error) throw writersRes.error;
   if (activityRes.error) throw activityRes.error;
+  if (recentRes.error) throw recentRes.error;
 
   const statusCounts = Object.fromEntries(statuses) as Record<ArticleStatus, number>;
   const byDay = new Map<string, number>();
@@ -107,8 +161,13 @@ export async function loadDashboard(ctx: StaffContext, range: DateRange): Promis
     byDay.set(d, (byDay.get(d) ?? 0) + 1);
   }
 
+  type RecentRow = { id: string; title: string; status: ArticleStatus; updated_at: string; category: { name: string } | null };
   return {
     allArticles: has("articles.view_all"),
+    recent: (recentRes.data as unknown as RecentRow[]).map((r) => ({ id: r.id, title: r.title, status: r.status, updatedAt: r.updated_at, category: r.category?.name ?? null })),
+    team,
+    openReports,
+    activeAds,
     statusCounts,
     totalArticles: Object.values(statusCounts).reduce((a, b) => a + b, 0),
     publishedToday: count(todayRes),

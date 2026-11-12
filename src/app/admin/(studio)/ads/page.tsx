@@ -65,7 +65,7 @@ export default async function AdsPage() {
         </details>
 
         {rows.length === 0 ? (
-          <Empty title="No ads yet.">Create an ad with an image and an https:// destination.</Empty>
+          <Empty bare title="No ads yet.">Create an ad with an image and an https:// destination.</Empty>
         ) : (
           <Table head={["", "Name", "Placement", "Status", "Window", "Destination", ""]}>
             {rows.map((r) => (

@@ -94,7 +94,7 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
 
         <Panel title="Editorial activity" description="The last 20 status changes made by this staff member.">
           {activity.length === 0 ? (
-            <Empty title="No editorial activity yet." />
+            <Empty bare title="No editorial activity yet." />
           ) : (
             <ul className="divide-y divide-line text-sm">
               {activity.map((a) => (
@@ -119,7 +119,7 @@ export default async function MemberPage({ params }: { params: Promise<{ id: str
         {canAudit && (
           <Panel title="Audit trail" description="The last 20 sensitive actions by this staff member." className="xl:col-span-2">
             {(auditRes.data ?? []).length === 0 ? (
-              <Empty title="No audit log entries." />
+              <Empty bare title="No audit log entries." />
             ) : (
               <ul className="divide-y divide-line text-sm">
                 {(auditRes.data ?? []).map((a) => (

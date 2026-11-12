@@ -84,6 +84,7 @@
 
   --shadow-card: 0 1px 2px rgb(18 20 24 / 0.04), 0 6px 18px -10px rgb(18 20 24 / 0.14);
   --shadow-float: 0 14px 32px -16px rgb(18 20 24 / 0.28);
+  --shadow-panel: 0 1px 2px rgb(23 32 51 / 0.03); /* Studio panels: one soft layer under a 1px border */
 
   --container-site: 1240px;
 }
@@ -311,6 +312,58 @@
     color: #8a94ad;
   }
 
+  /*
+   * Studio (ADR-021). Inside `.studio` the shared controls take the Newsmaker console's shape: 7px corners,
+   * a neutral secondary button, visible field borders and no press-scale. The public site keeps its own.
+   */
+  .studio {
+    font-size: 15px;
+  }
+  .studio :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-brand) 80%, var(--color-paper));
+    outline-offset: 3px;
+  }
+  .studio .btn {
+    min-height: 42px;
+    padding: 0 1rem;
+    border-radius: 7px;
+    font-weight: 650;
+    font-size: 0.875rem;
+    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  }
+  .studio .btn:active:not([aria-disabled="true"], :disabled) {
+    transform: none;
+  }
+  .studio .btn-primary:hover {
+    background: var(--color-brand-700);
+  }
+  .studio .btn-outline {
+    color: var(--color-ink-soft);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 17%, var(--color-paper));
+  }
+  .studio .btn-outline:hover {
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 28%, var(--color-paper));
+  }
+  .studio .btn[aria-disabled="true"],
+  .studio .btn:disabled {
+    opacity: 0.6;
+  }
+  .studio .field {
+    min-height: 42px;
+    padding: 10px 11px;
+    border-radius: 7px;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 19%, var(--color-paper));
+    font-size: 0.9375rem;
+  }
+  .studio .field:hover {
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-ink) 30%, var(--color-paper));
+  }
+  .studio .field:focus {
+    box-shadow: inset 0 0 0 2px var(--color-brand);
+  }
+
   /* Rich text output (sanitized server-side). */
   .prose-bnb {
     font-size: 1.125rem;
@@ -469,5 +522,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Studio mobile menu: the drawer slides in from the left (sidebar.tsx, motion-safe only). */
+@keyframes studio-drawer-in {
+  from {
+    transform: translateX(-100%);
   }
 }

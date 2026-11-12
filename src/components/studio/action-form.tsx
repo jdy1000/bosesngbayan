@@ -51,7 +51,7 @@ export function ActionForm({
       {state && (
         <p
           role={state.ok ? "status" : "alert"}
-          className={`mt-3 text-sm font-medium ${state.ok ? "text-emerald-700" : "text-accent-700"}`}
+          className={`mt-3 rounded-md border px-3 py-2 text-sm leading-[1.5] ${state.ok ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-red-200 bg-red-50 text-accent-700"}`}
         >
           {state.ok ? state.message ?? "Saved." : state.error}
         </p>
@@ -79,7 +79,8 @@ export function SubmitButton({
   const cls = {
     primary: "btn btn-primary",
     outline: "btn btn-outline",
-    danger: "btn bg-accent text-white hover:bg-accent-700",
+    // Outlined, not filled: a destructive action should not be the loudest thing in a row of buttons.
+    danger: "btn bg-paper text-accent-700 shadow-[inset_0_0_0_1px_var(--color-red-200)] hover:bg-red-50",
     ghost: "btn text-ink-soft hover:bg-surface-2",
   }[variant];
   return (

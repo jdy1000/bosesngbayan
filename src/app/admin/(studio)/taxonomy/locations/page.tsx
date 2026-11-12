@@ -47,7 +47,7 @@ export default async function LocationsPage() {
           {error ? (
             <Notice tone="error">Couldn’t load locations.</Notice>
           ) : !tree.length ? (
-            <Empty title="No locations yet">Start with the island groups: Luzon, Visayas and Mindanao.</Empty>
+            <Empty bare title="No locations yet">Start with the island groups: Luzon, Visayas and Mindanao.</Empty>
           ) : (
             <Table head={["Location", "Type", "Status", "Actions"]}>
               {tree.map(({ loc, depth }) => (

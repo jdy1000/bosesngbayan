@@ -40,7 +40,7 @@ export default async function TrendingPage() {
           {error ? (
             <Notice tone="error">Couldn’t load trending topics.</Notice>
           ) : !topics?.length ? (
-            <Empty title="No trending topics">Add one with the panel on the right.</Empty>
+            <Empty bare title="No trending topics">Add one with the panel on the right.</Empty>
           ) : (
             <Table head={["Order", "Label", "Destination", "Status", "Actions"]}>
               {topics.map((t, i) => (

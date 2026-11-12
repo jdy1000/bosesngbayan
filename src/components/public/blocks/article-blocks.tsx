@@ -417,7 +417,7 @@ export async function MostReadBlock({ title, settings }: { title: string | null;
 
 /**
  * Island groups with their regions, then the latest stories from each (Istorya "Interactive Philippines").
- * Regions are ranked, not listed flat: those with recent stories lead as filled chips, most covered first,
+ * Regions are ranked, not listed flat: those with stories lead as filled chips, most covered first,
  * and the rest follow as quiet text links, so the eye lands where there is something to read.
  */
 export async function RegionalNewsBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"regional_news"> }) {
@@ -432,23 +432,27 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
     for (let i = 0; i < ids.length; i++) for (const c of locations) if (c.parent_id === ids[i]) ids.push(c.id);
     return ids;
   };
-  const [recent, lists] = await Promise.all([
-    listRecentStoryLocations(chosen.flatMap((loc) => withDescendants(loc.id))),
-    Promise.all(chosen.map((loc) => listPublicArticles({ locationIds: withDescendants(loc.id), pageSize: settings.per_location, withTotal: false }))),
-  ]);
-  const storiesAt = new Map<string, number>();
-  for (const id of recent) storiesAt.set(id, (storiesAt.get(id) ?? 0) + 1);
-  const groups = chosen.map((loc, index) => {
-    const regions = locations
-      .filter((c) => c.parent_id === loc.id)
-      .map((region, position) => ({ region, position, stories: withDescendants(region.id).reduce((sum, id) => sum + (storiesAt.get(id) ?? 0), 0) }));
-    return {
-      loc,
-      items: lists[index]!.items,
-      active: regions.filter((r) => r.stories > 0).sort((a, b) => b.stories - a.stories || a.position - b.position),
-      quiet: regions.filter((r) => r.stories === 0),
-    };
-  });
+  // Each island group asks for its own newest stories, so a busy group cannot push a quiet one out of the sample.
+  const groups = await Promise.all(
+    chosen.map(async (loc) => {
+      const ids = withDescendants(loc.id);
+      const [list, storyLocations] = await Promise.all([
+        listPublicArticles({ locationIds: ids, pageSize: settings.per_location, withTotal: false }),
+        listRecentStoryLocations(ids),
+      ]);
+      const storiesAt = new Map<string, number>();
+      for (const id of storyLocations) storiesAt.set(id, (storiesAt.get(id) ?? 0) + 1);
+      const regions = locations
+        .filter((c) => c.parent_id === loc.id)
+        .map((region, position) => ({ region, position, stories: withDescendants(region.id).reduce((sum, id) => sum + (storiesAt.get(id) ?? 0), 0) }));
+      return {
+        loc,
+        items: list.items,
+        active: regions.filter((r) => r.stories > 0).sort((a, b) => b.stories - a.stories || a.position - b.position),
+        quiet: regions.filter((r) => r.stories === 0),
+      };
+    }),
+  );
   return (
     <section className={`bg-surface ${section}`}>
       <div className="container-site">
@@ -467,7 +471,7 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
                           {/* The dot carries the "has stories" meaning without colour; pl is tighter so the dot reads centred in the pill's curve. */}
                           <Link
                             href={`/rehiyon/${region.slug}`}
-                            className="inline-flex min-h-8 items-center gap-2 rounded-full border border-brand-200 bg-brand-50 pl-2.5 pr-3 text-[0.8rem] font-semibold text-brand transition-colors hover:border-brand hover:bg-brand-100"
+                            className="inline-flex min-h-8 items-center gap-2 rounded-full border border-brand-200 bg-brand-50 pl-2.5 pr-3 text-[0.8rem] font-semibold text-brand-700 transition-colors hover:border-brand hover:bg-brand-100"
                           >
                             <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
                             {region.name}
@@ -480,7 +484,7 @@ export async function RegionalNewsBlock({ title, description, settings }: { titl
                     <ul className="flex flex-wrap gap-x-4" aria-label={fmt(active.length > 0 ? t.blocks.regionsOther : t.blocks.regionsIn, { name: loc.name })}>
                       {quiet.map(({ region }) => (
                         <li key={region.id}>
-                          <Link href={`/rehiyon/${region.slug}`} className="inline-flex min-h-8 items-center text-[0.78rem] font-medium text-muted transition-colors hover:text-brand">
+                          <Link href={`/rehiyon/${region.slug}`} className="inline-flex min-h-8 items-center text-[0.8rem] font-medium text-muted transition-colors hover:text-brand">
                             {region.name}
                           </Link>
                         </li>

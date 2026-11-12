@@ -5,9 +5,9 @@ import { Notice } from "@/components/studio/ui";
 export function RangeFilter({ action, range, today }: { action: string; range: DateRange; today: string }) {
   return (
     <div className="mb-6 space-y-3">
-      <form method="get" action={action} className="flex flex-wrap items-end gap-3 rounded-2xl bg-paper p-4 ring-1 ring-line">
+      <form method="get" action={action} className="flex flex-wrap items-end gap-3 rounded-[10px] border border-line bg-paper px-[22px] py-4 shadow-panel">
         <div>
-          <label htmlFor="range" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
+          <label htmlFor="range" className="mb-[7px] block text-xs font-bold text-ink-soft">
             Range
           </label>
           <select id="range" name="range" defaultValue={range.preset} className="field min-h-10 py-1.5">
@@ -19,18 +19,18 @@ export function RangeFilter({ action, range, today }: { action: string; range: D
           </select>
         </div>
         <div>
-          <label htmlFor="from" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
+          <label htmlFor="from" className="mb-[7px] block text-xs font-bold text-ink-soft">
             From (custom)
           </label>
           <input id="from" name="from" type="date" max={today} defaultValue={range.fromDate} className="field min-h-10 py-1.5" />
         </div>
         <div>
-          <label htmlFor="to" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
+          <label htmlFor="to" className="mb-[7px] block text-xs font-bold text-ink-soft">
             To (custom)
           </label>
           <input id="to" name="to" type="date" max={today} defaultValue={range.toDate} className="field min-h-10 py-1.5" />
         </div>
-        <button type="submit" className="btn btn-primary min-h-10 px-4 text-sm">
+        <button type="submit" className="btn btn-primary">
           Apply
         </button>
         <p className="w-full text-xs text-muted sm:ml-auto sm:w-auto">
@@ -38,16 +38,6 @@ export function RangeFilter({ action, range, today }: { action: string; range: D
         </p>
       </form>
       {range.error && <Notice tone="warn">{range.error} Showing the default range.</Notice>}
-    </div>
-  );
-}
-
-export function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl bg-paper shadow-card ring-1 ring-line p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-      <p className="mt-2 text-[1.75rem] font-extrabold tabular-nums text-navy">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
     </div>
   );
 }

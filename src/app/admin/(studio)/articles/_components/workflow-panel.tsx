@@ -96,7 +96,7 @@ export function WorkflowPanel({
       </div>
 
       {active && (
-        <div className="space-y-2 rounded-lg bg-surface p-3 ring-1 ring-line">
+        <div className="space-y-2 rounded-[7px] border border-line bg-surface p-3">
           {active.input === "schedule" ? (
             <label className="block text-sm font-semibold text-ink">
               Publication date and time (Asia/Manila)

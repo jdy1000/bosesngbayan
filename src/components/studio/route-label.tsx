@@ -11,17 +11,17 @@ function pageLabel(path: string): string {
   return findNavItem(path)?.label ?? "Overview";
 }
 
-/** Top-bar location: "Workspace / <page>". */
+/** Top-bar location: "Workspace / <page>". Below 551px only the icon and the page name stay. */
 export function StudioCrumb() {
   const path = usePathname();
   return (
-    <p className="flex min-w-0 items-center gap-2 text-sm">
-      <LayoutGrid className="hidden size-4 shrink-0 text-muted sm:block" aria-hidden="true" />
-      <span className="hidden text-muted sm:inline">Workspace</span>
-      <span aria-hidden="true" className="hidden text-line sm:inline">
+    <p className="flex min-w-0 items-center gap-2.5 whitespace-nowrap text-[13px] text-muted">
+      <LayoutGrid className="size-[18px] shrink-0" aria-hidden="true" />
+      <span className="hidden min-[551px]:inline">Workspace</span>
+      <span aria-hidden="true" className="hidden opacity-50 min-[551px]:inline">
         /
       </span>
-      <strong className="truncate font-semibold text-ink">{pageLabel(path)}</strong>
+      <strong className="truncate font-semibold text-ink-soft">{pageLabel(path)}</strong>
     </p>
   );
 }

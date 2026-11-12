@@ -4,8 +4,8 @@ import { requireStaffPage } from "@/lib/auth/session";
 import { loadAnalyticsSummary } from "@/lib/studio/analytics";
 import { fillDays, manilaToday, parseRange } from "@/lib/studio/range";
 import { formatNumber } from "@/lib/format";
-import { Empty, PageHeader, Panel } from "@/components/studio/ui";
-import { RangeFilter, RankList, Stat } from "../_overview/range-filter";
+import { Empty, PageHeader, Panel, Stat, StatStrip } from "@/components/studio/ui";
+import { RangeFilter, RankList } from "../_overview/range-filter";
 import { TrendChart } from "../_overview/trend-chart";
 import { MetricDefinitions } from "../_overview/metric-definitions";
 
@@ -32,18 +32,20 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
       />
       <RangeFilter action="/admin/analytics" range={range} today={manilaToday()} />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="mb-6">
+        <StatStrip>
         <Stat label="Page views" value={formatNumber(s.page_views)} />
         <Stat label="Visitors (estimated)" value={formatNumber(s.daily_unique_visitors_sum)} hint="Sum of daily counts" />
         <Stat label="Views per visitor" value={viewsPerVisitor} />
         <Stat label="Ballots" value={formatNumber(s.poll_ballots)} />
         <Stat label="New subscribers" value={formatNumber(s.new_subscribers)} hint="Still subscribed" />
         <Stat label="Articles published" value={formatNumber(s.articles_published)} />
+        </StatStrip>
       </div>
 
       <Panel title="Traffic trend" description="Page views and estimated visitors per day (Manila)." className="mb-6">
         {s.page_views === 0 ? (
-          <Empty title="No page views recorded in this range yet.">Data appears here once people visit the public site.</Empty>
+          <Empty bare title="No page views recorded in this range yet.">Data appears here once people visit the public site.</Empty>
         ) : (
           <TrendChart
             ariaLabel="Page views and visitors per day"
@@ -93,14 +95,14 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <Panel title="Ballots per day">
           {s.poll_ballots === 0 ? (
-            <Empty title="No ballots in this range." />
+            <Empty bare title="No ballots in this range." />
           ) : (
             <TrendChart kind="bar" ariaLabel="Ballots per day" data={ballots} series={[{ key: "ballots", label: "Ballots", color: "var(--color-brand)" }]} />
           )}
         </Panel>
         <Panel title="Newsletter growth" description="New subscribers per day (excluding those who have since unsubscribed).">
           {s.new_subscribers === 0 ? (
-            <Empty title="No new subscribers in this range." />
+            <Empty bare title="No new subscribers in this range." />
           ) : (
             <TrendChart kind="bar" ariaLabel="New subscribers per day" data={subscribers} series={[{ key: "subscribers", label: "Subscribers", color: "var(--color-chart-2)" }]} />
           )}
