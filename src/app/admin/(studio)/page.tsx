@@ -41,6 +41,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
   const data = await loadDashboard(ctx, range);
   const a = data.analytics;
   const rangeQuery = { range: range.preset, from: range.preset === "custom" ? range.fromDate : undefined, to: range.preset === "custom" ? range.toDate : undefined };
+  // The Articles list is closed to roles without these two (moderator, analyst), so the Overview does not link there for them.
+  const canOpenArticles = ctx.permissions.has("articles.create") || ctx.permissions.has("articles.view_all");
 
   return (
     <>
@@ -59,7 +61,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       <section aria-labelledby="operations-heading" className="mb-6">
         <SectionHeading kicker={data.allArticles ? "Entire publication" : "Articles you can access"} title="Overall operations" id="operations-heading" />
         <StatStrip>
-          <Stat label="Articles" value={formatNumber(data.totalArticles)} hint={`${formatNumber(data.statusCounts.published)} published`} href="/admin/articles" />
+          <Stat label="Articles" value={formatNumber(data.totalArticles)} hint={`${formatNumber(data.statusCounts.published)} published`} href={canOpenArticles ? "/admin/articles" : undefined} />
           {a && <Stat label={`Reads · ${range.label}`} value={formatNumber(a.page_views)} hint="Aggregated page views" href={withParams("/admin/analytics", rangeQuery)} />}
           {data.team && <Stat label="Newsroom users" value={formatNumber(data.team.total)} hint={`${formatNumber(data.team.active)} active`} href="/admin/team" />}
           {data.openReports !== null && <Stat label="Open reports" value={formatNumber(data.openReports)} hint="Open or under review" href="/admin/moderation?tab=reports" />}
@@ -75,14 +77,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
           labelledBy="recent-heading"
           description={data.allArticles ? "Latest work across the publication." : "Latest work on your own articles."}
           actions={
-            <Link href="/admin/articles" className="text-[13px] font-bold text-brand hover:underline">
-              View all <span aria-hidden="true">→</span>
-            </Link>
+            canOpenArticles && (
+              <Link href="/admin/articles" className="text-[13px] font-bold text-brand hover:underline">
+                View all <span aria-hidden="true">→</span>
+              </Link>
+            )
           }
         >
           {data.recent.length === 0 ? (
             <Empty bare title="No articles yet">
-              Create the publication’s first story.
+              {ctx.permissions.has("articles.create") ? "Create the publication’s first story." : "Articles you are credited on will appear here."}
             </Empty>
           ) : (
             <ul className="divide-y divide-line">
@@ -105,14 +109,25 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
         <Panel flush title="Editorial workflow" labelledBy="workflow-heading" description="Current article state.">
           <ul className="divide-y divide-line">
-            {DASHBOARD_STATUSES.map((status) => (
-              <li key={status}>
-                <Link href={`/admin/articles?status=${status}`} className={`${ROW} text-[15px] text-ink-soft transition-colors hover:bg-surface`}>
+            {DASHBOARD_STATUSES.map((status) => {
+              const row = (
+                <>
                   <span>{ARTICLE_STATUS[status]?.label ?? status}</span>
                   <strong className="text-lg font-bold tabular-nums text-ink">{formatNumber(data.statusCounts[status])}</strong>
-                </Link>
-              </li>
-            ))}
+                </>
+              );
+              return (
+                <li key={status}>
+                  {canOpenArticles ? (
+                    <Link href={`/admin/articles?status=${status}`} className={`${ROW} text-[15px] text-ink-soft transition-colors hover:bg-surface`}>
+                      {row}
+                    </Link>
+                  ) : (
+                    <div className={`${ROW} text-[15px] text-ink-soft`}>{row}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </Panel>
       </div>

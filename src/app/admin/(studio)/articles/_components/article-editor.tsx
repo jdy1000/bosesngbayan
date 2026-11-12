@@ -95,12 +95,17 @@ export function ArticleEditor({
           <SaveIndicator status={status} message={message} savedAt={savedAt} />
         )}
         <div className={`ml-auto flex flex-wrap gap-2 ${isNew ? "hidden" : ""}`}>
-          <Link href={`/admin/preview/articles/${article.id}`} target="_blank" onClick={(e) => previewAfterSave(e, isDirty() && !disabled, saveNow)} className="btn btn-outline min-h-9 px-3 text-sm">
-            <Eye className="h-4 w-4" aria-hidden="true" /> Preview
-          </Link>
-          <Link href={`/admin/articles/${article.id}/history`} className="btn btn-outline min-h-9 px-3 text-sm">
-            <History className="h-4 w-4" aria-hidden="true" /> History
-          </Link>
+          {/* A new article has no id yet, so these two would point at pages that do not exist. */}
+          {!isNew && (
+            <>
+              <Link href={`/admin/preview/articles/${article.id}`} target="_blank" onClick={(e) => previewAfterSave(e, isDirty() && !disabled, saveNow)} className="btn btn-outline min-h-9 px-3 text-sm">
+                <Eye className="h-4 w-4" aria-hidden="true" /> Preview
+              </Link>
+              <Link href={`/admin/articles/${article.id}/history`} className="btn btn-outline min-h-9 px-3 text-sm">
+                <History className="h-4 w-4" aria-hidden="true" /> History
+              </Link>
+            </>
+          )}
           {!disabled && (
             <button type="submit" disabled={status === "saving" || status === "conflict"} className="btn btn-primary min-h-9 px-3 text-sm">
               <Save className="h-4 w-4" aria-hidden="true" /> Save

@@ -151,6 +151,7 @@ Every data view renders:
 - **loading:** server-rendered, so there are no spinners on first paint; client forms show pending text on the submit button;
 - **empty:** `EmptyState` / `Empty`, with a plain sentence and the next action;
 - **error:** the route `error.tsx` boundary with a retry button, and inline `Notice` messages in forms;
+- **not found:** the public site and Studio each have their own `not-found.tsx`; the Studio one renders inside the shell with a link back to the dashboard;
 - **success:** inline confirmation text announced through `role="status"`.
 
 Blocks that depend on data that does not exist yet are hidden rather than shown with fake numbers: Most Read without page views, Breaking without breaking stories, and the hero count at zero.

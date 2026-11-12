@@ -471,3 +471,20 @@ Not done / not verified:
 - https://admin.bosesngbayan.com, throwaway administrator (deleted): Overview, Articles, Reports, Users & roles, Site categories and My account return 200 with no console errors and no horizontal overflow; Overview also in dark and at 390.
 - https://bosesngbayan.com: /, /balita and /botohan return 200; the regions block serves the reviewed version (6 filled chips, labels "Mga rehiyon sa … na may balita").
 Not verified on the live domains: the screens not listed above, and everything listed as not exercised in the previous entry.
+
+[2026-11-12] Link check of the live Studio, three fixes
+What was run: a read-only crawler (it follows links, it never submits a form) on https://admin.bosesngbayan.com, with one throwaway account switched through five roles and deleted afterwards.
+- Administrator: 94 Studio pages opened by following every link from the dashboard; 16 links that leave Studio requested. Detail pages were capped at three per kind, so 27 links to further articles, categories and people were not followed.
+- Editor, writer, moderator, analyst: the dashboard and every link on it.
+- Each page was checked for its status code, an error or not-found screen, console errors, failed requests, horizontal overflow at 1440 and anchors without a target.
+Found and fixed:
+- Moderator and analyst: the Overview linked to the Articles list in nine places (the Articles figure, "View all", seven workflow rows). Those roles may not open that list and got "You don't have access to articles." Root cause: the links added with the Newsmaker-shape Overview did not check the permission the list page checks. Fix: the links render only for roles with articles.create or articles.view_all; the other roles see the same figures as plain rows.
+- Create article: the hidden Preview and History links pointed at /admin/preview/articles/ and /admin/articles//history, because a new article has no id yet. Nobody could see or click them (display: none). Fix: they are not rendered until the article exists.
+- A Studio address with no record behind it (a deleted article, a mistyped id) showed the bare framework 404, outside the Studio shell. Fix: a Studio "Page not found" screen inside the shell, with a link back to the dashboard (src/app/admin/(studio)/not-found.tsx).
+Not defects:
+- The Facebook and X share links on the article preview answer 400 and 403 to a plain request. Opened in a browser, the Facebook link returns 200. The X link returns 403 to the automated browser too, which is X refusing automation; it is X's documented share address and could not be confirmed from here.
+- Moderator and analyst can open an article from the Overview's activity and top-stories lists. It opens read-only, as before.
+Verified before deploying:
+- pnpm typecheck clean; pnpm lint clean; pnpm test 15 files / 142 tests passed; pnpm build succeeded.
+- Local production build against the live database, throwaway account deleted afterwards: the missing-article address shows "Page not found" with the menu and the back link; the dashboards of moderator, analyst, writer and administrator were crawled again, every link opens, 0 problems.
+Still not exercised (unchanged): forms that write. The crawler follows links only, so the Reports form, Review queue decisions, Applications decisions, ad create and edit, category add/hide/delete, invite, role change, password change and email change have still not been submitted on the live site.
