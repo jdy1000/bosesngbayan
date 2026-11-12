@@ -526,3 +526,21 @@ Measured on https://bosesngbayan.com with Lighthouse 13.6.0 run from this machin
 Not verified: the PageSpeed score itself. Both the PageSpeed API and its web page answered 429 (rate limit) from this network, so no PageSpeed run was made after the changes.
 Not reached: 100 on mobile. Expected about 97 to 98. Mobile LCP would have to drop under about 1.9 s; what remains in front of the photo is the framework's JavaScript (155 KB, not removable) and the two fonts (69 KB). Options left, none taken: a custom subset of Inter and Lora (about 35 KB saved, risk of missing glyphs such as the peso sign), or system fonts (changes the look).
 Not done: caching public data on the server. It would take the homepage's server time from about 0.3 s to near zero, but Studio and the public site are two Vercel projects, so a publish or an unpublish in Studio could not clear the public site's cache without a new signed call between them; without it an unpublished story could be served once more from the cache.
+
+[2026-11-12] Studio Overview moved to /dashboard; article photo in the text column (commit 8db5543)
+Requests:
+- "https://admin.bosesngbayan.com/admin should be https://admin.bosesngbayan.com/dashboard". It arrived through another session, so the scope was confirmed with the owner before any change. Chosen: the home page only. Every other Studio page keeps its /admin/... address.
+- "I want the image to be same size on the text margin" (article page).
+Done:
+- The Overview page is src/app/dashboard/page.tsx; its layout, loading and error screens re-export the Studio ones. /admin redirects to /dashboard with its query. The menu, the logo link, the redirect after sign-in, the "no access" redirect, the callback's default destination and robots.txt point at /dashboard. No Supabase Auth setting or email template changed. Recorded as ADR-022; the master spec has a dated note.
+- STUDIO_HOME and isStudioPath in src/lib/host-routing.ts are the one definition of a Studio path, used by the proxy and by the two-host redirect.
+- Article page: the lead photo and caption use the body text column (760px, was 1040px).
+Review: an independent security review of the diff found no critical, high or medium issue. Three low points were taken before shipping: the path is percent-decoded before the Studio test (the router decodes it, so /%64ashboard and /%61dmin/... skipped the proxy's handling; the page-level check still held), anything under /dashboard counts as Studio, and the new behaviour has end-to-end tests.
+Verified:
+- pnpm typecheck clean; pnpm lint clean; pnpm test 15 files / 145 tests passed (3 new host-routing tests); pnpm build succeeded.
+- End-to-end, local production build: the three Studio address tests and the 404 test pass on desktop and mobile (8 runs). The rest of the end-to-end suite was not run.
+- Live, signed out: admin.bosesngbayan.com/dashboard, /admin, /admin?range=30d and / all end at the sign-in page; /%64ashboard does too; bosesngbayan.com/dashboard is sent to the Studio host; robots.txt disallows /dashboard.
+- Live, signed in with a throwaway account (deleted afterwards): sign-in lands on /dashboard; /admin?range=30d becomes /dashboard?range=30d; the menu marks Overview; moving Overview -> Articles -> Overview through the menu does not reload the page. Administrator: 92 Studio pages opened, none with a problem. Editor (21), writer (14), moderator (7), analyst (7): every link on the dashboard opens. The only flagged links are the Facebook and X share links, as in the earlier crawl.
+- Live article page: the photo, its caption and the body text share the same left and right edges at 1440, 1024 and 390 wide, with no horizontal overflow.
+Known consequences (ADR-022): the console has two address shapes; the shell re-renders when moving between the Overview and another Studio page; a public page cannot use the slug "dashboard".
+Not verified: the Owner role (no throwaway Owner was created); forms that write (unchanged from the earlier entries).
