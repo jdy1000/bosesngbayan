@@ -5,8 +5,9 @@ Status (2026-11-12): live at `https://bosesngbayan.vercel.app` (public site) and
 - GitHub `jdy1000/bosesngbayan`, production branch `main`. A push to `main` deploys both Vercel projects.
 - Vercel team `jdy2`, two projects on the same repository (ADR-020): `bosesngbayan` (public site) and `bosesngbayan-admin` (Studio).
 - Custom domains are attached but wait for DNS at the registrar (GoDaddy): `bosesngbayan.com` and `www.bosesngbayan.com` on `bosesngbayan`, `admin.bosesngbayan.com` on `bosesngbayan-admin`. Until DNS resolves, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ADMIN_URL` hold the two `.vercel.app` origins; switch both on both projects and redeploy once it does (section 3, step 4).
-- Supabase project `civmfyqegywwiofhqcya` (Mumbai, `ap-south-1`). The Owner exists. The preview content was loaded on request (ADR-019).
-- Still open: Supabase Auth settings (section 2, step 4) and the go-live checklist (section 5).
+- Supabase project `civmfyqegywwiofhqcya` (Mumbai, `ap-south-1`). Two Owners exist. The preview content was loaded on request (ADR-019).
+- Supabase Auth is set (section 2, step 4): sign-ups off, password rules, email links, Site URL = the Studio `.vercel.app` origin, redirect URLs for both Studio origins. When the custom domains serve, change the Site URL to `https://admin.bosesngbayan.com`.
+- Still open: custom SMTP (the built-in mailer sends about 2 emails an hour, and only to members of the Supabase organisation, so invitations to other people will not arrive), leaked-password protection, backups, and the go-live checklist (section 5).
 
 The steps below are kept for a rebuild or a move to other accounts.
 
@@ -53,12 +54,16 @@ pnpm test:e2e                 # Playwright; needs `pnpm dev` + a seeded local st
 
    If the direct host `db.<ref>.supabase.co` does not resolve (it is IPv6-only), push through the session pooler instead: `pnpm exec supabase db push --db-url "postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres"`. Copy the exact host from Dashboard → Connect → Session pooler; the `aws-0` / `aws-1` prefix depends on the project.
 3. Load the base seed (roles, permission matrix, starter categories, topics, menus, pages, homepage) **once**. Run `supabase/seed.sql` in the SQL editor, or with `psql "$DATABASE_URL" -f supabase/seed.sql`. It contains no demo articles or people.
-4. Auth settings:
+4. Auth settings (dashboard, or `PATCH /v1/projects/<ref>/config/auth` on the Management API with a personal access token):
    - **disable "Allow new users to sign up"**;
-   - Site URL = `https://<domain>`;
-   - Redirect URLs = `https://<domain>/admin/auth/callback`;
+   - Site URL = the Studio origin, `https://admin.<domain>` (the email links below are built from it);
+   - Redirect URLs = `https://admin.<domain>/admin/auth/callback**`;
+   - minimum password length 12 with lower-case, upper-case and digits, and reauthentication for password changes (the same as `supabase/config.toml`);
    - configure custom SMTP;
-   - set the email templates' links to `{{ .SiteURL }}/admin/auth/callback?token_hash={{ .TokenHash }}&type=<invite|recovery>`.
+   - set the email templates' links. The default `{{ .ConfirmationURL }}` does not work: the callback route reads `token_hash` or `code`, not a URL fragment.
+     - invite: `{{ .SiteURL }}/admin/auth/callback?token_hash={{ .TokenHash }}&type=invite`
+     - recovery: `{{ .SiteURL }}/admin/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/admin/auth/update-password`
+     - email change: `{{ .SiteURL }}/admin/auth/callback?token_hash={{ .TokenHash }}&type=email_change&next=/admin/account`
 5. Storage: the `media` bucket and its policies come from migration `…0400_storage.sql`. Confirm they exist after the push.
 6. Backups: enable daily backups. Use point-in-time recovery on a paid plan. Test a restore before launch.
 

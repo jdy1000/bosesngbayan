@@ -371,3 +371,24 @@ Not done / not verified:
 - DNS at GoDaddy is unchanged (the authoritative name server still answers the parking addresses for bosesngbayan.com and has no `admin` record), so the custom domains do not serve yet and the two URL variables still hold the .vercel.app origins.
 - Supabase Auth settings (sign-ups off, Site URL, redirect URL): no access from this session.
 - Tablet and phone widths and dark mode were not re-checked on the live site. Some preview photos show identifiable people next to invented stories; one more reason to replace the preview content before promoting the site.
+
+[2026-11-12] Second Owner granted on request: joeseffdy@gmail.com
+- Request: "make joeseffdy@gmail.com superadmin". The app's top role is Owner, so Owner was granted.
+- Checked first: the Auth user was created on 2026-11-09 with the email confirmed at creation and no confirmation email sent (created from the Supabase dashboard, not through a public sign-up), has an active profile, had no role and has never signed in.
+- Done with `set_user_role` in the service context (the same path as scripts/bootstrap-owner.ts), not from Studio, plus an `owner.grant` audit row. The usual route is an existing Owner promoting from Studio -> Users & roles (docs/ADMIN_RBAC.md section 2).
+Verified: user_roles now lists two Owners (newsph2000@gmail.com, joeseffdy@gmail.com); the two desk accounts are unchanged.
+Not verified: a sign-in as either Owner. The password of joeseffdy@gmail.com is whatever was set when the account was created in the dashboard; it is not known to this session.
+
+[2026-11-12] Supabase Auth settings applied on the production project (Management API, access token from .env.local)
+- Before: public sign-ups enabled, Site URL http://localhost:3000, no redirect URLs, minimum password length 6 with no character rules, no reauthentication for password changes, default email templates ({{ .ConfirmationURL }}), built-in mailer.
+- Now: sign-ups disabled; Site URL https://bosesngbayan-admin.vercel.app; redirect URLs https://bosesngbayan-admin.vercel.app/admin/auth/callback** and https://admin.bosesngbayan.com/admin/auth/callback**; minimum password length 12 with lower-case, upper-case and digits; reauthentication required for password changes (all as declared in supabase/config.toml); invite, recovery and email-change templates link to {{ .SiteURL }}/admin/auth/callback with token_hash, type and, for recovery and email change, next.
+- The recovery and email-change links carry `next`, which the earlier doc line left out: without it a recovery link signed the person in and opened the dashboard instead of the new-password page. docs/DEPLOYMENT.md section 2 step 4 now lists the three links.
+Verified:
+- A public sign-up with the anon key is refused: "Signups not allowed for this instance".
+- Email-link callback on the live Studio host, with a throwaway account without a role (created and deleted by the check; no profile row left): a valid recovery token answers 307 to /admin/auth/update-password and sets the session cookie; an invalid token and a reused token answer 307 to /admin/login?error=link; an outside `next` is ignored.
+- Accounts on the project afterwards: the two Owners and the two locked desk accounts.
+Not done / not verified:
+- No real email was sent, so the rendered templates were not seen in an inbox. The built-in mailer is limited to about 2 emails an hour and delivers only to members of the Supabase organisation; invitations to other people need custom SMTP (no SMTP credentials available).
+- Leaked-password protection not enabled (the organisation's plan could not be read with this token).
+- Site URL must change to https://admin.bosesngbayan.com when the custom domains serve. DNS at GoDaddy is still unchanged.
+- Sign-in as an existing Owner not tested. Existing passwords shorter than the new rules still sign in; the rules apply when a password is set or changed.
