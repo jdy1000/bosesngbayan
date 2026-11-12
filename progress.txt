@@ -409,3 +409,20 @@ Not done / not verified:
 - DNS and the switch to the .com origins.
 - Publish/unpublish from Studio, uploads and moderation were not exercised on the live site (they need a signed-in person). Owner sign-in and password change are still for the owners to do.
 - Dark mode on the live site was not re-checked.
+
+[2026-11-12] Custom domains live: https://bosesngbayan.com (public) and https://admin.bosesngbayan.com (Studio)
+- DNS was entered at GoDaddy by the requester from written steps: A @ 76.76.21.21, CNAME www cname.vercel-dns.com, CNAME admin cname.vercel-dns.com. Confirmed on GoDaddy's name server and on 8.8.8.8 and 1.1.1.1; Vercel reports all three names as configured.
+- NEXT_PUBLIC_SITE_URL = https://bosesngbayan.com and NEXT_PUBLIC_ADMIN_URL = https://admin.bosesngbayan.com on both Vercel projects (Production); Supabase Auth Site URL = https://admin.bosesngbayan.com. Both projects were redeployed with `vercel redeploy` (Ready in 55 s and 1 min).
+- Request during the switch: "https://admin.bosesngbayan.com/ should be the dashboard login". Before the redeploy that address showed the public homepage, because the running build still had the .vercel.app origins. After it, the root opens /admin, which sends a signed-out visitor to /admin/login.
+- `vercel env pull` shows the two URL variables as empty strings. The values cannot be read back (they are stored as sensitive), so they were confirmed through the deployed site instead: canonical, og:url, robots, sitemap, RSS and every cross-host redirect use the .com origins.
+Verified on the live domains:
+- curl: bosesngbayan.com / and /balita 200; /admin and /admin/login answer 307 to admin.bosesngbayan.com; www answers 308 to the apex with the path kept; http answers 308 to https on both hosts; certificates valid on all three names; public API 200; cron 401 without the secret and {"ok":true,"published":0} with it on the public project, 401 on the Studio project.
+- curl: admin.bosesngbayan.com / -> /admin -> /admin/login (200); /admin/apply 200; /admin/articles signed out -> /admin/login; a public path answers 307 to bosesngbayan.com. The old addresses: bosesngbayan.vercel.app and bosesngbayan-admin.vercel.app send /admin paths to admin.bosesngbayan.com; their "/" still shows the public homepage, with the canonical pointing at bosesngbayan.com.
+- Browser (Playwright): 9 pages x 3 widths on bosesngbayan.com, 27 loads, no errors, broken images or overflow. Vote 200 then 409 from the same browser, 403 for another site's Origin. Newsletter subscribe 200, duplicate kept as one row, no consent 422. Comment 201 pending and not on the public page. Test rows removed; all polls at 0 ballots.
+- Browser: opening https://admin.bosesngbayan.com/ lands on the "Sign in to Studio" page; a wrong sign-in shows "Incorrect email or password."; "Back to Boses ng Bayan" points at https://bosesngbayan.com. A recovery token on the Studio domain answers 307 to /admin/auth/update-password with the session cookie (throwaway account, deleted).
+- The unsubscribe call in this second run answered 429. Cause: the newsletter limit is 5 requests per hour per network (src/lib/security/rate-limit.ts) and the two test runs together made 6. Unsubscribe itself passed in the first run an hour earlier; the limiter is working as designed.
+Not done / not verified:
+- Custom SMTP (left out on request), so invitation and reset emails reach only members of the Supabase organisation, about 2 an hour.
+- Sign-in as an Owner, and publish, upload and moderation from Studio.
+- The Supabase access token is still in .env.local; it is no longer needed and should be revoked.
+- The two .vercel.app roots are not redirected to the .com domains.

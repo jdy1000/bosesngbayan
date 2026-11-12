@@ -1,13 +1,13 @@
 # Boses ng Bayan — Local setup, deployment and owner bootstrap
 
-Status (2026-11-12): live at `https://bosesngbayan.vercel.app` (public site) and `https://bosesngbayan-admin.vercel.app` (Studio).
+Status (2026-11-12): live at `https://bosesngbayan.com` (public site) and `https://admin.bosesngbayan.com` (Studio).
 
 - GitHub `jdy1000/bosesngbayan`, production branch `main`. A push to `main` deploys both Vercel projects.
 - Vercel team `jdy2`, two projects on the same repository (ADR-020): `bosesngbayan` (public site) and `bosesngbayan-admin` (Studio).
-- Custom domains are attached but wait for DNS at the registrar (GoDaddy): `bosesngbayan.com` and `www.bosesngbayan.com` on `bosesngbayan`, `admin.bosesngbayan.com` on `bosesngbayan-admin`. Until DNS resolves, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ADMIN_URL` hold the two `.vercel.app` origins; switch both on both projects and redeploy once it does (section 3, step 4).
+- Domains: `bosesngbayan.com` and `www.bosesngbayan.com` (308 to the apex) on `bosesngbayan`; `admin.bosesngbayan.com` on `bosesngbayan-admin`. DNS is hosted at GoDaddy: `A @ 76.76.21.21`, `CNAME www cname.vercel-dns.com`, `CNAME admin cname.vercel-dns.com`. `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ADMIN_URL` hold the two `.com` origins on both projects. The two `.vercel.app` addresses still answer and send Studio paths to the Studio domain.
 - Supabase project `civmfyqegywwiofhqcya` (Mumbai, `ap-south-1`). Two Owners exist. The preview content was loaded on request (ADR-019).
-- Supabase Auth is set (section 2, step 4): sign-ups off, password rules, email links, Site URL = the Studio `.vercel.app` origin, redirect URLs for both Studio origins. When the custom domains serve, change the Site URL to `https://admin.bosesngbayan.com`.
-- Still open: custom SMTP (the built-in mailer sends about 2 emails an hour, and only to members of the Supabase organisation, so invitations to other people will not arrive), leaked-password protection, backups, and the go-live checklist (section 5).
+- Supabase Auth is set (section 2, step 4): sign-ups off, password rules, leaked-password protection, email links, Site URL = `https://admin.bosesngbayan.com`, redirect URLs for both Studio origins. Daily backups exist; point-in-time recovery is off.
+- Still open: custom SMTP (the built-in mailer sends about 2 emails an hour, and only to members of the Supabase organisation, so invitations to other people will not arrive), and the go-live checklist (section 5).
 
 The steps below are kept for a rebuild or a move to other accounts.
 
