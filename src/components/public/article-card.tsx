@@ -40,6 +40,7 @@ function Thumb({
         alt={article.image?.alt_text ?? ""}
         fill
         sizes={sizes}
+        quality={60}
         preload={priority}
         fetchPriority={priority ? "high" : undefined}
         className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"

@@ -27,6 +27,8 @@ export async function CoverStory({ article, priority, className = "" }: { articl
           alt={article.image?.alt_text ?? ""}
           fill
           sizes="(min-width: 1024px) 780px, 100vw"
+          // The scrim covers most of the photo, so a lighter file costs nothing visible and paints sooner.
+          quality={60}
           preload={priority}
           fetchPriority={priority ? "high" : undefined}
           className="-z-20 object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"

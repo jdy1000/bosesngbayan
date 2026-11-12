@@ -80,7 +80,7 @@ Rules:
 
 - **One family: Inter** (variable), via `next/font/google`, `display: swap`, preloading the `latin` subset only (covers Filipino incl. ñ; latin-ext loads on demand). `--font-serif` maps to the same family.
 - Hierarchy comes from size and weight, not from a second face. Headlines are **bold 700** with slight negative tracking (−0.01 to −0.025em); small card titles stay semibold 600. (Polish pass 2026-11-09: card and section headlines were medium/semibold and read too evenly.)
-- **One exception, by owner request (2026-11-09):** the cover story headline on the homepage is set in **Lora** (variable, Latin subset), declared in `components/public/display-font.ts` so Next preloads it only on routes that render the cover. Nothing else uses it. Everything else stays Inter.
+- **One exception, by owner request (2026-11-09):** the cover story headline on the homepage is set in **Lora** (weight 600 only, Latin subset; the single-weight file is 22 KB against 38 KB for the variable one), declared in `components/public/display-font.ts` so Next preloads it only on routes that render the cover. Nothing else uses it. Everything else stays Inter.
 
 | Role | Size | Line height |
 | --- | --- | --- |
@@ -166,7 +166,7 @@ Blocks that depend on data that does not exist yet are hidden rather than shown 
 | Banner | 21:9 |
 | Regional | 16:11 |
 
-- Images use `next/image` with `sizes` set per slot.
+- Images use `next/image` with `sizes` set per slot. They are served as AVIF, with WebP for browsers without it. The cover and story thumbnails ask for quality 60; other images keep the default 75 (`images` in `next.config.ts`). Optimized copies are kept for 31 days, because an uploaded file never changes under the same storage path.
 - Alt text comes from the media record. New uploads require it in the picker, and the picker flags existing images without it. Credit and caption render under figures.
 - When no image exists, a brand gradient with the category name stands in. Stock "fake product" shots are never substituted.
 - Development photographs in `supabase/seed-media/` carry licences and credits in `CREDITS.json`. Every preview photo is CC0, public domain or Unsplash License (no attribution required), so no credit line is shown; a photo with `credit_required: true` would get one. Story photos (`ph-*.jpg`) are real Philippine scenes matched to each preview story; captions describe only what is in the photo and never name real places or people (ADR-013). Photos are never copied from other publishers' articles (copyright).

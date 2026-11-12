@@ -16,9 +16,16 @@ const nextConfig: NextConfig = {
   cacheComponents: false,
   poweredByHeader: false,
   // Media uploads post one file (≤ MAX_UPLOAD_BYTES = 4 MB) per server action; default limit is 1 MB.
+  // experimental.inlineCss was measured and left off: it writes the CSS into the HTML twice (38 KB -> 88 KB), which slows first paint.
   experimental: { serverActions: { bodySizeLimit: "5mb" } },
   productionBrowserSourceMaps: false,
   images: {
+    // AVIF first (smaller than WebP for photographs); browsers without it get WebP.
+    formats: ["image/avif", "image/webp"],
+    // Story photos ask for 60; everything else keeps the default 75. Next only serves the values listed here.
+    qualities: [60, 75],
+    // An uploaded file never changes under the same storage path, so its optimized copies can be kept for 31 days.
+    minimumCacheTTL: 2678400,
     remotePatterns: supabaseUrl
       ? [
           {
