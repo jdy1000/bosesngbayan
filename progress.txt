@@ -392,3 +392,20 @@ Not done / not verified:
 - Leaked-password protection not enabled (the organisation's plan could not be read with this token).
 - Site URL must change to https://admin.bosesngbayan.com when the custom domains serve. DNS at GoDaddy is still unchanged.
 - Sign-in as an existing Owner not tested. Existing passwords shorter than the new rules still sign in; the rules apply when a password is set or changed.
+
+[2026-11-12] Production checklist pass (docs/SECURITY.md section 9, docs/DEPLOYMENT.md section 5), everything except email delivery and DNS
+- Leaked-password protection turned on in Supabase Auth (Management API, HTTP 200).
+- Backups: the project has 4 daily backups, the latest from 2026-11-12 01:16 UTC. Point-in-time recovery is off (paid add-on, not changed).
+- Storage bucket `media`: public, 10 MiB limit, images and PDF only.
+- Supabase security advisor read (60 findings, none at ERROR level): 4 INFO for tables with RLS and no policy (page_view_events, poll_ballots, poll_votes, rate_limits: service-role only by design); 8 WARN for functions without a fixed search_path (is_service_context, touch_updated_at, profiles_guard, article_is_public, articles_guard, poll_is_open, polls_guard, poll_options_guard; none of them is SECURITY DEFINER); the rest are WARN for SECURITY DEFINER functions that anon or signed-in users may execute, which is how the RLS helper and workflow functions are meant to be called. Nothing changed; pinning the search_path of the 8 functions needs a migration.
+- Asked to set the DNS records at GoDaddy from this session: not possible. There is no GoDaddy login or browser control here, and GoDaddy does not accept Vercel's Domain Connect template (the template lookup answers 404). The three records were given to the requester to enter; a watcher polls the name server.
+Verified on https://bosesngbayan.vercel.app (Playwright, Chromium; page-view tracking blocked so the numbers are not inflated):
+- 9 pages x 3 widths (1440, 768, 390) = 27 loads: every page 200, no console or CSP errors, no broken images, no horizontal overflow. Pages: /, /balita, an article, /botohan, a poll, /usap-bayan, a category, search results, /tungkol.
+- Vote: first vote 200 "ok"; second vote from the same browser 409 "already_voted"; a post with another site's Origin 403. The test ballot was deleted (poll back to 0 ballots, 0 votes).
+- Newsletter: subscribe 200; subscribing again keeps one row; without consent 422; consent flag and time stored; unsubscribe 200 sets status "unsubscribed" with a time. The test row was deleted (this writes one newsletter delete audit row).
+- Comment: 201 "pending", stored as pending, not shown on the public article page. The test comment was deleted.
+Not done / not verified:
+- Custom SMTP (left out on request).
+- DNS and the switch to the .com origins.
+- Publish/unpublish from Studio, uploads and moderation were not exercised on the live site (they need a signed-in person). Owner sign-in and password change are still for the owners to do.
+- Dark mode on the live site was not re-checked.
