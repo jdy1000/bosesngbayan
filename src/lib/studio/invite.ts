@@ -2,7 +2,7 @@ import "server-only";
 import type { StaffContext } from "@/lib/auth/session";
 import type { AppRole } from "@/lib/auth/permissions";
 import { toActionError } from "@/lib/actions";
-import { siteUrl } from "@/lib/env";
+import { adminUrl } from "@/lib/env";
 import { logServerError } from "@/lib/log";
 import { createServiceClient } from "@/lib/supabase/server";
 
@@ -29,7 +29,7 @@ export async function inviteStaff(ctx: StaffContext, input: { email: string; dis
   const admin = authAdmin();
   if (!admin) return { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured on the server, so invitations cannot be sent." };
   const { data, error } = await admin.inviteUserByEmail(input.email, {
-    redirectTo: siteUrl("/admin/auth/callback?next=/admin/auth/update-password"),
+    redirectTo: adminUrl("/admin/auth/callback?next=/admin/auth/update-password"),
     data: { display_name: input.displayName },
   });
   if (error || !data.user) {

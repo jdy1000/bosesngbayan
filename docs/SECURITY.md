@@ -129,13 +129,14 @@ The article JSON-LD is a non-executable data block (`application/ld+json`) with 
 
 ## 9. Production checklist
 
-- [ ] Supabase: apply migrations (`supabase db push`), then load `seed.sql` (roles, permissions and base taxonomy only). Do **not** run `pnpm seed:demo`, which refuses non-local URLs anyway.
+- [ ] Supabase: apply migrations (`supabase db push`), then load `seed.sql` (roles, permissions and base taxonomy only). `pnpm seed:demo` refuses non-local URLs unless `SEED_DEMO_REMOTE_HOST` names the exact host; on a hosted project its two desk accounts are locked after the run (ADR-019). It was run once on the production project on 2026-11-12, on request.
 - [ ] Supabase Auth:
   - disable public sign-ups;
   - set Site URL and redirect URLs to the production origin plus `/admin/auth/callback`;
   - configure custom SMTP;
   - enable leaked-password protection.
-- [ ] Set `NEXT_PUBLIC_SITE_URL` to the canonical https origin. It drives CSRF origin checks, canonicals and invitation links.
+- [ ] Set `NEXT_PUBLIC_SITE_URL` to the canonical https origin. It drives CSRF origin checks and canonicals.
+- [ ] Set `NEXT_PUBLIC_ADMIN_URL` to the Studio https origin on both Vercel projects (ADR-020). It drives the redirect between the two hosts and the invitation and recovery links.
 - [ ] Generate fresh `HASH_SECRET` and `CRON_SECRET` (≥32 random characters) and store them only in Vercel environment variables.
 - [ ] Bootstrap the Owner, then sign in and change the temporary password.
 - [ ] Confirm the `media` bucket policies exist (migration `…0400_storage.sql`).

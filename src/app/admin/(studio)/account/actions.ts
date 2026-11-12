@@ -6,7 +6,7 @@ import { getStaffContext } from "@/lib/auth/session";
 import { newPasswordSchema } from "@/lib/auth/password";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { networkHash } from "@/lib/security/hash";
-import { siteUrl } from "@/lib/env";
+import { adminUrl } from "@/lib/env";
 import { logServerError } from "@/lib/log";
 import type { FormActionResult } from "@/components/studio/action-form";
 
@@ -26,7 +26,7 @@ export async function changeEmail(_prev: FormActionResult, formData: FormData): 
 
   const { error } = await ctx.supabase.auth.updateUser(
     { email: parsed.data.email },
-    { emailRedirectTo: siteUrl("/admin/auth/callback?next=/admin/account") },
+    { emailRedirectTo: adminUrl("/admin/auth/callback?next=/admin/account") },
   );
   if (error) {
     logServerError("email_change_request_failed", error);

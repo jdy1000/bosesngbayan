@@ -84,7 +84,7 @@ function SidebarFooter() {
           Authorized editors only
         </span>
       </p>
-      <a href="/" target="_blank" rel="noopener noreferrer" className={row}>
+      <a href={process.env.NEXT_PUBLIC_SITE_URL || "/"} target="_blank" rel="noopener noreferrer" className={row}>
         <ExternalLink className="size-4 shrink-0" aria-hidden="true" /> View publication
       </a>
       <form action={signOut}>

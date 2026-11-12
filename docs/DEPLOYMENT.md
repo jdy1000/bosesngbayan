@@ -1,11 +1,12 @@
 # Boses ng Bayan — Local setup, deployment and owner bootstrap
 
-Status (2026-11-12): live at `https://bosesngbayan.vercel.app`.
+Status (2026-11-12): live at `https://bosesngbayan.vercel.app` (public site) and `https://bosesngbayan-admin.vercel.app` (Studio).
 
-- GitHub `jdy1000/bosesngbayan`, production branch `main`. A push to `main` deploys to production.
-- Vercel project `bosesngbayan` in team `jdy2`. No custom domain yet.
-- Supabase project `civmfyqegywwiofhqcya` (Mumbai, `ap-south-1`).
-- Still open: Supabase Auth settings (section 2, step 4), owner bootstrap (section 4), and the go-live checklist (section 5).
+- GitHub `jdy1000/bosesngbayan`, production branch `main`. A push to `main` deploys both Vercel projects.
+- Vercel team `jdy2`, two projects on the same repository (ADR-020): `bosesngbayan` (public site) and `bosesngbayan-admin` (Studio).
+- Custom domains are attached but wait for DNS at the registrar (GoDaddy): `bosesngbayan.com` and `www.bosesngbayan.com` on `bosesngbayan`, `admin.bosesngbayan.com` on `bosesngbayan-admin`. Until DNS resolves, `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ADMIN_URL` hold the two `.vercel.app` origins; switch both on both projects and redeploy once it does (section 3, step 4).
+- Supabase project `civmfyqegywwiofhqcya` (Mumbai, `ap-south-1`). The Owner exists. The preview content was loaded on request (ADR-019).
+- Still open: Supabase Auth settings (section 2, step 4) and the go-live checklist (section 5).
 
 The steps below are kept for a rebuild or a move to other accounts.
 
@@ -23,11 +24,11 @@ cp .env.example .env.local    # paste the printed URL and keys; generate HASH_SE
 pnpm db:reset                 # applies supabase/migrations/* then supabase/seed.sql
 pnpm db:types                 # regenerate src/lib/database.types.ts after schema changes
 pnpm bootstrap:owner --email you@example.com --name "Your Name"
-pnpm seed:demo                # optional: labelled demo staff, articles, polls (0 votes), photos
+pnpm seed:demo                # optional: preview staff, articles, polls (0 votes), photos; needs the Owner first
 pnpm dev                      # http://localhost:3000  ·  Studio: /admin
 ```
 
-- `seed:demo` refuses any non-local Supabase URL.
+- `seed:demo` refuses any non-local Supabase URL unless `SEED_DEMO_REMOTE_HOST` is set to that project's exact hostname (ADR-019). On a hosted project it creates only the editor and writer desk accounts and locks them when it ends.
 - Demo staff use `@bosesngbayan.test` addresses and one shared password, which the script prints.
 - Local Auth emails (invites, password resets) appear in Inbucket at http://127.0.0.1:56324.
 
@@ -63,14 +64,15 @@ pnpm test:e2e                 # Playwright; needs `pnpm dev` + a seeded local st
 
 ## 3. Vercel
 
-1. Import the client's GitHub repository. Framework preset: Next.js. Install command: `pnpm install`.
-2. Environment variables (Production and Preview):
+1. Import the client's GitHub repository twice, as two projects with the same settings: one for the public site and one for Studio (ADR-020). Framework preset: Next.js. Install command: `pnpm install`.
+2. Environment variables (Production and Preview), the same on both projects except `CRON_SECRET`, which goes on the public project only:
 
    | Name | Value |
    | --- | --- |
    | `NEXT_PUBLIC_SUPABASE_URL` | Project API URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon / publishable key |
-   | `NEXT_PUBLIC_SITE_URL` | `https://<domain>`, the canonical origin, no trailing slash |
+   | `NEXT_PUBLIC_SITE_URL` | `https://<domain>`, the canonical origin of the public site, no trailing slash |
+   | `NEXT_PUBLIC_ADMIN_URL` | `https://admin.<domain>`, the Studio origin, no trailing slash |
    | `SUPABASE_SERVICE_ROLE_KEY` | service_role key (**sensitive**) |
    | `HASH_SECRET` | ≥32 random characters (**sensitive**); never rotate casually |
    | `CRON_SECRET` | ≥32 random characters (**sensitive**); Vercel Cron sends it as a Bearer token |
@@ -79,7 +81,7 @@ pnpm test:e2e                 # Playwright; needs `pnpm dev` + a seeded local st
    ```bash
    node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
    ```
-   The live project has these on Production only. A preview build would otherwise run against the live database, and its own URL would not match `NEXT_PUBLIC_SITE_URL`.
+   The live projects have these on Production only. A preview build would otherwise run against the live database, and its own URL would not match `NEXT_PUBLIC_SITE_URL`.
 
    `vercel.json` runs the functions in `bom1` (Mumbai), the same region as the live Supabase project. If the database moves, change `regions` to match.
 3. Cron jobs come from `vercel.json`:
@@ -87,7 +89,7 @@ pnpm test:e2e                 # Playwright; needs `pnpm dev` + a seeded local st
    - `/api/cron/retention` at 19:30 UTC = 03:30 Manila.
 
    Hobby allows daily jobs. Scheduled articles still go live on time, because visibility is computed from `published_at` (ADR-008). The job only tidies the stored status. For frequent runs, use Vercel Pro or Supabase `pg_cron`, calling `select public.publish_due_articles();` every 5 minutes.
-4. Add the custom domain, then update `NEXT_PUBLIC_SITE_URL` and the Supabase Auth URLs to match.
+4. Add the custom domains: the apex and `www` on the public project, `admin.<domain>` on the Studio project. DNS at the registrar: `A @ 76.76.21.21`, `CNAME www cname.vercel-dns.com`, `CNAME admin cname.vercel-dns.com`. When they resolve, set `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ADMIN_URL` on both projects, redeploy both, and update the Supabase Auth URLs to match (Site URL = the Studio origin, redirect URL = `<Studio origin>/admin/auth/callback`).
 
 ## 4. Owner bootstrap (production)
 

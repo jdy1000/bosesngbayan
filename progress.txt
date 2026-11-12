@@ -329,3 +329,34 @@ Not done / not verified:
 - The site has no articles or polls yet; the homepage shows its empty states.
 - Not tested on the live site: voting, newsletter subscribe/unsubscribe, comments, uploads, Studio (all need content or a signed-in user). No browser or screenshot check of the live pages. Retention cron not called with its secret.
 - No custom domain. Backups not checked. docs/SECURITY.md section 9 not walked through.
+
+[2026-11-12] Live site was empty: Owner created, preview content loaded into the production database (ADR-019)
+- Report: https://bosesngbayan.vercel.app showed only the empty states. The schema, base seed and the Vercel-to-Supabase connection were already in place (navigation and trending chips came from the database); the production database simply had 0 articles and 0 polls, because the preview stories existed only in the local Docker database. Request: put the content on the provided Supabase project.
+- scripts/seed-demo.ts: still refuses a hosted URL by default; runs there only with SEED_DEMO_REMOTE_HOST=<exact hostname>. On a hosted project it creates only the editor and writer desk accounts (no moderator, analyst or administrator), never prints the password, and locks both accounts (random password + ban) when it ends, also after a failure.
+- Failure: first hosted run stopped with {"code":"23514","message":"at_least_one_owner_required"}. Cause: set_user_role keeps the invariant "at least one active Owner" (docs/ADMIN_RBAC.md section 2) and production had no Owner yet; locally the Owner is always bootstrapped first. Fix: not a code change. Asked for the Owner address, ran `pnpm bootstrap:owner` (Owner = newsph2000@gmail.com, display name "Boses ng Bayan Owner"), then re-ran the seed. The half-created editor account from the failed run was reused and locked by the second run; lockStaff now finds accounts by email so a half-finished run is covered.
+- Owner's one-time password was written to a local file outside the repo and not shown in the session.
+Verified:
+- Guard: `pnpm seed:demo` against the production URL refuses with no opt-in, with a wrong host and with an empty value.
+- Seed result: 13 articles, 2 polls (0 votes), 4 community posts, 19 media assets; 6 starter pages published with placeholder text; homepage draft published.
+- Live site (curl): homepage has the lead story and the featured poll question; /balita/pagbabago-ng-ruta-ng-dyip, /botohan/pinakamahalagang-isyu, /usap-bayan, /tungkol, /paksa/ekonomiya return 200; a photo loads through /_next/image (200, image/jpeg).
+- Accounts on the production project: editor and writer desks are banned until 2126 and a sign-in attempt answers "User is banned"; the Owner is active.
+Not done / not verified:
+- An Auth user joeseffdy@gmail.com exists on the production project with no role. It was not created by these scripts and was left alone. Public sign-ups are probably still enabled in Supabase Auth (docs/SECURITY.md section 9); a user without a role has no Studio permission, but sign-ups should be switched off.
+- The stories are preview content, not reporting, and are indexable (seo.allow_indexing is true). Replace or delete them, and the placeholder page text, before promoting the site.
+- No browser or screenshot check of the live pages.
+
+[2026-11-12] Public site and Studio on separate origins, two Vercel projects, one codebase (ADR-020)
+- Request: bosesngbayan.com and admin.bosesngbayan.com as two Vercel projects from the one repository. Chosen with the requester: both projects build this same app (not a split into two apps).
+- New src/lib/host-routing.ts (crossHostRedirect) called first in src/proxy.ts: /admin paths on any host other than the Studio host go to NEXT_PUBLIC_ADMIN_URL; on the Studio host "/" opens /admin and other public paths go to NEXT_PUBLIC_SITE_URL. Unset NEXT_PUBLIC_ADMIN_URL = one host, as before (local development unchanged).
+- adminUrl() in src/lib/env.ts; invitation, recovery and email-change links now use it. Studio's two "view site" links are absolute to NEXT_PUBLIC_SITE_URL.
+- Found while testing: on the Studio host, the signed-out redirect went to the other host's /admin/login, because request.nextUrl carried the server's own host under `next start`. Fix: the login redirect takes its host from the Host header. Re-tested.
+- Vercel: project bosesngbayan-admin created in jdy2 and connected to jdy1000/bosesngbayan (main). Env on both projects, Production only: the three public values, NEXT_PUBLIC_ADMIN_URL, SUPABASE_SERVICE_ROLE_KEY, HASH_SECRET. CRON_SECRET only on bosesngbayan, so the cron jobs work once (the cron routes answer 401 on the Studio project).
+- Domains attached: bosesngbayan.com and www.bosesngbayan.com (308 to the apex) on bosesngbayan; admin.bosesngbayan.com on bosesngbayan-admin. DNS is at GoDaddy and is not pointed yet (A @ is "Parked"). Records needed: A @ 76.76.21.21, CNAME www cname.vercel-dns.com, CNAME admin cname.vercel-dns.com.
+- Until DNS resolves, NEXT_PUBLIC_SITE_URL = https://bosesngbayan.vercel.app and NEXT_PUBLIC_ADMIN_URL = https://bosesngbayan-admin.vercel.app, so nothing points at a host that does not resolve.
+- `vercel link` re-adds a `.vercel` line at the end of .gitignore each time the folder is linked to the other project; left in place.
+Verified before the push: pnpm typecheck clean; pnpm lint clean; pnpm test 14 files / 128 tests passed (6 new in tests/unit/host-routing.test.ts); pnpm build succeeded; a local production build with two test origins answered every redirect as designed (public host /admin -> Studio origin with path and query kept; Studio host / -> /admin, /admin signed out -> /admin/login on the same host, /hanap?q= -> site origin; API routes and robots.txt answer on both hosts).
+Not done / not verified:
+- DNS at GoDaddy, then the switch of both URL variables to the custom domains and a redeploy of both projects.
+- Supabase Auth: Site URL and redirect URL must be the Studio origin (currently not set at all); invitation and recovery emails will not work until then.
+- Not tested in a browser: client-side navigation across the two origins (a Next <Link> from Studio to a public path relies on the redirect), sign-in on the Studio origin, a server action on the Studio origin.
+- Preview deployments have no environment variables on either project.

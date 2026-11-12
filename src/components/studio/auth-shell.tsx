@@ -46,9 +46,8 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <div className="mx-auto w-full max-w-[400px] lg:mx-0">{children}</div>
         </div>
         <div className="mx-auto mt-12 flex w-full max-w-[400px] flex-wrap items-center justify-between gap-x-6 gap-y-2 text-sm text-muted lg:mx-0">
-          {/* Plain link: a full page load so <html lang> switches from Studio (en) to the site language. */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- the root layout (and its lang) must re-render */}
-          <a href="/" className="inline-flex min-h-11 items-center gap-1.5 font-medium text-ink-soft transition-colors hover:text-brand">
+          {/* Plain link: a full page load so <html lang> switches from Studio (en) to the site language. Absolute, because Studio can sit on its own origin (ADR-020). */}
+          <a href={process.env.NEXT_PUBLIC_SITE_URL || "/"} className="inline-flex min-h-11 items-center gap-1.5 font-medium text-ink-soft transition-colors hover:text-brand">
             <ArrowLeft aria-hidden="true" className="size-4" />
             Back to Boses ng Bayan
           </a>

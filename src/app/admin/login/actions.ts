@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createSessionClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 import { networkHash } from "@/lib/security/hash";
-import { siteUrl } from "@/lib/env";
+import { adminUrl } from "@/lib/env";
 import { logServerError } from "@/lib/log";
 
 export interface LoginState {
@@ -44,7 +44,7 @@ export async function requestPasswordReset(_prev: LoginState, formData: FormData
   }
   const supabase = await createSessionClient();
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: siteUrl("/admin/auth/callback?next=/admin/auth/update-password"),
+    redirectTo: adminUrl("/admin/auth/callback?next=/admin/auth/update-password"),
   });
   if (error) logServerError("password_reset_request_failed", error);
   // Same answer regardless of outcome, so account existence cannot be probed.

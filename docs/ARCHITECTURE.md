@@ -53,7 +53,7 @@ supabase/
 scripts/
   gen-db-types.ts      types generator (runs the migrations in PGlite)
   bootstrap-owner.ts   one-time Owner creation
-  seed-demo.ts         local-only labelled demo content
+  seed-demo.ts         preview content; local by default (ADR-013, ADR-019)
 tests/
   unit/                pure logic
   db/                  migrations + RLS + RPC behaviour in PGlite
@@ -144,7 +144,7 @@ Hidden sidebar items are only a convenience.
 - The `hero` block type remains in the schema and the renderer. Since ADR-017 the homepage layout can no longer be changed from Studio.
 
 **ADR-013 — Unlabelled local preview content (2026-11-06).** The owner asked for the local site to read as a real publication, with no "[Demo]" labels, disclaimers or photo credits. The spec (section 0) asks for clearly labelled demo content, so the following safeguards replace the visible labels:
-- `pnpm seed:demo` refuses any non-local Supabase URL (`assertLocal`), so this content cannot reach production.
+- `pnpm seed:demo` refuses any non-local Supabase URL, so this content cannot reach production. *(Changed 2026-11-12: the content was loaded into the production project on request, behind an explicit opt-in. See ADR-019.)*
 - Content is generic: no real people, quotes, statistics, named institutions or events; bylines are newsroom desks (`Editorial Desk`, `Boses ng Bayan Newsroom`); polls start with zero votes.
 - Photos are CC0, public domain or Unsplash License only (no attribution required); provenance stays in `supabase/seed-media/CREDITS.json`. CC BY / BY-SA photos were removed because they legally require a visible credit.
 - Before launch, the newsroom replaces all preview content with real reporting (a fresh production database never runs the seed).
@@ -263,6 +263,22 @@ This supersedes the Filipino Studio labels in ADR-014.
 - Only `users.manage` holders (Owner and Administrator by default) can read applications, in Studio → Applications (`/admin/applications`). RLS gives them SELECT only, and UPDATE is revoked from `authenticated`, so no one can update rows directly. Decisions go only through the audited `review_publisher_application`. It allows only pending → approved or rejected, requires a reason for a rejection, and writes an `approve_application` or `reject_application` audit row with no personal data.
 - Only an administrator's approval sends an invitation, and it is the normal Studio invitation (`inviteStaff` in `src/lib/studio/invite.ts`: Supabase Auth invite, then `set_user_role` run as the administrator; team invitations use the same helper). Approval can grant only Writer or Moderator. If the applicant is already staff, the application is marked approved without a new invitation or role change.
 - Only the network hash is stored, never the raw IP. Reviewed applications are deleted 180 days after the decision by `purge_old_publisher_applications`, which runs in the daily `/api/cron/retention` job.
+
+**ADR-019 — Preview content on the hosted project (2026-11-12).** After the first production deployment the live site was empty, and the request was to load the local preview content into the production Supabase project. This replaces the first safeguard of ADR-013 (the seed could never reach production). The other two still hold: generic content and no-attribution photos.
+- `pnpm seed:demo` still refuses a hosted Supabase URL by default. It runs there only when `SEED_DEMO_REMOTE_HOST` equals the project's exact hostname.
+- On a hosted project it creates only the two desk accounts the content references: `editor@bosesngbayan.test` (uploader and reviewer) and `writer@bosesngbayan.test` (byline). It never creates the moderator, analyst or administrator accounts there. When the run ends, also after a failure, both accounts get a random password that is not printed, and a ban, so nobody can sign in as them.
+- The Owner must exist first: `set_user_role` refuses to assign any role while there is no active Owner.
+- Run once on 2026-11-12 against `civmfyqegywwiofhqcya`: 13 articles, 2 polls with zero votes, 4 community posts, 19 photos, the 6 starter pages published with placeholder text, and the homepage draft published.
+- The stories are not reporting. Before the site is promoted, replace them with real stories or delete them, and replace the placeholder page text.
+
+**ADR-020 — Public site and Studio on separate origins, one codebase (2026-11-12).** The request was for `bosesngbayan.com` and `admin.bosesngbayan.com` as two Vercel projects from the one repository, the way the team's other publications are deployed. Both projects build the same app, and the request's host decides what is shown.
+- `NEXT_PUBLIC_SITE_URL` is the readers' origin and `NEXT_PUBLIC_ADMIN_URL` is the Studio origin. Both projects carry both values. With `NEXT_PUBLIC_ADMIN_URL` unset (local development) everything stays on one host.
+- `src/proxy.ts` calls `crossHostRedirect` (`src/lib/host-routing.ts`, unit-tested). A `/admin` path on any host other than the Studio host is redirected to the Studio origin. On the Studio host, `/` opens `/admin` and any other public path is redirected to the site origin. API routes and files with an extension are outside the proxy matcher and answer on both hosts.
+- This is routing only. Permissions are still enforced by every Studio page, server action and RPC, and by RLS.
+- Invitation, recovery and email-change links use `adminUrl()` so they open on the Studio origin. Supabase Auth must list `<Studio origin>/admin/auth/callback` as a redirect URL.
+- Both projects read the same Supabase project and pages render per request (ADR-004), so a story published in Studio shows on the public site with no cross-project cache step.
+- `CRON_SECRET` is set only on the public project, so the jobs in `vercel.json` do their work once. On the Studio project the cron routes answer 401.
+- Rejected: moving Studio into its own Next.js app in a workspace. It would rewrite working code and duplicate the shared data layer with no visible gain.
 
 ## 6. Environment variables
 

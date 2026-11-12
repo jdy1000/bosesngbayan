@@ -1,7 +1,9 @@
 /**
- * DEVELOPMENT-ONLY preview content. Usage: pnpm seed:demo   (after `supabase start` + `supabase db reset`)
+ * Preview content. Usage: pnpm seed:demo   (after `supabase start` + `supabase db reset`)
  *
- * Refuses to run against anything but a local Supabase URL, so none of this can reach production.
+ * Runs against a local Supabase URL by default. A hosted project is refused unless SEED_DEMO_REMOTE_HOST
+ * names its exact hostname (ADR-019); there it creates only the two desk accounts the content needs and
+ * locks them afterwards, so nobody can sign in as them.
  * At the owner's request the content carries no visible "sample" labels (ADR-013), so it is written to be
  * harmless if mistaken for real: generic features with no real people, statistics, institutions or events;
  * staff bylines are newsroom desks on the reserved `.test` domain; polls start with ZERO votes.
@@ -10,7 +12,7 @@
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { config } from "dotenv";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../src/lib/database.types";
@@ -25,27 +27,32 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD || `Demo-${randomUUID().slice(0, 12)}`;
 
-function assertLocal() {
-  const host = (() => {
-    try {
-      return new URL(url).hostname;
-    } catch {
-      return "";
-    }
-  })();
-  if (!["127.0.0.1", "localhost"].includes(host)) {
+const host = (() => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+})();
+const isLocal = ["127.0.0.1", "localhost"].includes(host);
+
+function assertTarget() {
+  // A hosted project must be named exactly; an empty or mistyped value never matches.
+  if (!isLocal && (!host || host !== process.env.SEED_DEMO_REMOTE_HOST)) {
     throw new Error(`Refusing to seed demo content into non-local Supabase (${host || "no URL"}).`);
   }
   if (!anonKey || !serviceKey) throw new Error("Anon and service-role keys are required (see .env.example).");
 }
 
-const STAFF = [
+const ALL_STAFF = [
   { email: "editor@bosesngbayan.test", name: "Editorial Desk", role: "editor" },
   { email: "writer@bosesngbayan.test", name: "Boses ng Bayan Newsroom", role: "writer" },
   { email: "moderator@bosesngbayan.test", name: "Community Desk", role: "moderator" },
   { email: "analyst@bosesngbayan.test", name: "Audience Desk", role: "analyst" },
   { email: "admin@bosesngbayan.test", name: "Site Administrator", role: "administrator" },
 ] as const;
+// A hosted project gets only the desks that own content (uploader/reviewer and byline), never a spare admin login.
+const STAFF = isLocal ? ALL_STAFF : ALL_STAFF.filter((s) => s.role === "editor" || s.role === "writer");
 
 async function ensureStaff(admin: Db) {
   const ids: Record<string, string> = {};
@@ -58,13 +65,26 @@ async function ensureStaff(admin: Db) {
       if (created.error || !created.data.user) throw created.error;
       user = created.data.user;
     } else {
-      await admin.auth.admin.updateUserById(user.id, { password: DEMO_PASSWORD });
+      // "none" lifts the lock a previous hosted run left, so this run can sign in again.
+      const updated = await admin.auth.admin.updateUserById(user.id, { password: DEMO_PASSWORD, ban_duration: "none" });
+      if (updated.error) throw updated.error;
     }
     const { error: roleError } = await admin.rpc("set_user_role", { p_user_id: user.id, p_role: s.role });
     if (roleError) throw roleError;
     ids[s.role] = user.id;
   }
   return ids;
+}
+
+/** Hosted projects: the desk accounts own the content, but nobody may sign in as them. Looks accounts up by email so a half-finished run is covered too. */
+async function lockStaff(admin: Db) {
+  const { data: list, error: listError } = await admin.auth.admin.listUsers({ perPage: 200 });
+  if (listError) throw listError;
+  const emails: string[] = STAFF.map((s) => s.email);
+  for (const user of list.users.filter((u) => emails.includes(u.email ?? ""))) {
+    const { error } = await admin.auth.admin.updateUserById(user.id, { password: randomBytes(32).toString("base64url"), ban_duration: "876000h" });
+    if (error) throw error;
+  }
 }
 
 async function signIn(email: string): Promise<Db> {
@@ -137,7 +157,7 @@ type SeedArticle = {
 };
 
 // Local preview stories (owner request: no visible sample labels). They are generic features with no real
-// people, statistics, institutions or events, and this script refuses to run against a non-local database.
+// people, statistics, institutions or events. A hosted database needs the explicit opt-in above (ADR-019).
 const ARTICLES: SeedArticle[] = [
   {
     slug: "pagbabago-ng-ruta-ng-dyip",
@@ -434,7 +454,7 @@ const COMMUNITY: { kind: "perspective" | "question" | "discussion"; title: strin
   { kind: "perspective", title: "Mas maraming kabataan ang gustong tumulong kung malinaw ang programa", body: "Kapag alam ng kabataan kung saan at paano sila makakatulong, mas marami ang sumasali sa mga gawain ng barangay. Kailangan lang ng malinaw na paanyaya.", author_name: "Jun", author_location: "Davao City" },
 ];
 
-/** Approved community posts so Usap Bayan areas render with real rows (service client, local only). */
+/** Approved community posts so Usap Bayan areas render with real rows (service client). */
 async function seedCommunity(admin: Db) {
   for (const p of COMMUNITY) {
     const { data: existing } = await admin.from("community_posts").select("id").eq("title", p.title).maybeSingle();
@@ -447,21 +467,30 @@ async function seedCommunity(admin: Db) {
 }
 
 async function main() {
-  assertLocal();
+  assertTarget();
   const admin = createClient<Database>(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const staff = await ensureStaff(admin);
-  const editor = await signIn("editor@bosesngbayan.test");
-  const media = await uploadMedia(editor, staff.editor!);
-  const articles = await seedArticles(editor, staff.writer!, media);
-  const polls = await seedPolls(editor);
-  await seedPages(editor);
-  const posts = await seedCommunity(admin);
-  await wireHomepage(editor, media, polls[0]!);
+  let summary: string;
+  try {
+    // Roles need an active Owner first (set_user_role invariant): run `pnpm bootstrap:owner` before this.
+    const staff = await ensureStaff(admin);
+    const editor = await signIn("editor@bosesngbayan.test");
+    const media = await uploadMedia(editor, staff.editor!);
+    const articles = await seedArticles(editor, staff.writer!, media);
+    const polls = await seedPolls(editor);
+    await seedPages(editor);
+    const posts = await seedCommunity(admin);
+    await wireHomepage(editor, media, polls[0]!);
+    summary = `  ${articles.length} articles, ${polls.length} polls (0 votes), ${posts} community posts, ${Object.keys(media).length} media assets.`;
+  } finally {
+    // Also after a failed run: a hosted project never keeps a desk account that can sign in.
+    if (!isLocal) await lockStaff(admin);
+  }
   process.stdout.write(
     [
-      "Preview content ready (local only).",
-      `  ${articles.length} articles, ${polls.length} polls (0 votes), ${posts} community posts, ${Object.keys(media).length} media assets.`,
-      `  Local staff password: ${DEMO_PASSWORD}`,
+      isLocal ? "Preview content ready (local)." : `Preview content ready on ${host}. Desk accounts are locked (no sign-in).`,
+      summary,
+      // The password is printed for local use only; on a hosted project it is never shown and is replaced above.
+      ...(isLocal ? [`  Local staff password: ${DEMO_PASSWORD}`] : []),
       ...STAFF.map((s) => `  ${s.role.padEnd(13)} ${s.email}`),
       "Create the Owner separately with: pnpm bootstrap:owner --email you@example.com",
       "",

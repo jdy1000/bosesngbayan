@@ -34,3 +34,12 @@ export function siteUrl(path = "/"): string {
   const base = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/+$/, "");
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/**
+ * Absolute Studio URL, for links that are opened from an email (invitation, recovery, email change).
+ * Studio has its own origin when NEXT_PUBLIC_ADMIN_URL is set (ADR-020); otherwise it shares the site origin.
+ */
+export function adminUrl(path: string): string {
+  const base = process.env.NEXT_PUBLIC_ADMIN_URL?.replace(/\/+$/, "");
+  return base ? `${base}${path.startsWith("/") ? path : `/${path}`}` : siteUrl(path);
+}

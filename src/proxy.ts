@@ -1,8 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { crossHostRedirect } from "@/lib/host-routing";
 
 /**
  * Next 16 proxy (formerly middleware).
+ * 0. Two-origin deployments: a Studio path on the public host, or a public path on the Studio host,
+ *    is redirected to the other origin (ADR-020). A single host (local development) is untouched.
  * 1. Every page: a per-request nonce Content-Security-Policy (Next applies the nonce to its own
  *    scripts; all pages render dynamically, see ARCHITECTURE.md ADR-004).
  * 2. /admin/*: refresh the Supabase session cookie and send signed-out visitors to the login page
@@ -31,6 +34,9 @@ function contentSecurityPolicy(nonce: string): string {
 }
 
 export async function proxy(request: NextRequest) {
+  const otherOrigin = crossHostRedirect(request.headers.get("host") ?? request.nextUrl.host, request.nextUrl.pathname, request.nextUrl.search);
+  if (otherOrigin) return NextResponse.redirect(otherOrigin);
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = contentSecurityPolicy(nonce);
   request.headers.set("x-nonce", nonce);
@@ -67,6 +73,8 @@ export async function proxy(request: NextRequest) {
   const isPublicAdminPath = path === "/admin/login" || path === "/admin/apply" || path.startsWith("/admin/auth/");
   if (!data.user && !isPublicAdminPath) {
     const login = request.nextUrl.clone();
+    // Stay on the host the visitor used: nextUrl can carry the server's own host instead of the Studio host.
+    login.host = request.headers.get("host") ?? login.host;
     login.pathname = "/admin/login";
     login.search = "";
     return withCsp(NextResponse.redirect(login));

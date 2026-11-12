@@ -42,7 +42,7 @@ Two surfaces:
 | P5 | Data-dependent blocks (Most Read, Breaking, hero ballot count) hide themselves rather than show placeholders. | Spec: no fabricated metrics. |
 | P6 | Scheduled stories go live by time, not by cron. | Reliable on free hosting (ADR-008). |
 | P7 | Newsletter is collection only, with no campaign sending until a provider is configured. | Spec §3.11: never claim email was sent. |
-| P8 | Seed content: the base seed has structure only (categories, topics, menus, page shells, a homepage layout). Demo articles and polls come only from `pnpm seed:demo`, are labelled "[Demo]", and run locally only. | Spec §0: no invented news or statistics. |
+| P8 | Seed content: the base seed has structure only (categories, topics, menus, page shells, a homepage layout). Demo articles and polls come only from `pnpm seed:demo`. They carry no visible label (ADR-013) and run locally by default; on 2026-11-12 they were loaded into the production project on request (ADR-019). | Spec §0: no invented news or statistics. |
 | P9 | Staff accounts are created by invitation only, plus a one-time Owner bootstrap CLI. People can apply at `/admin/apply`, but an application creates no account; only an administrator's approval sends the invitation (ADR-018). | Spec §4.10 and §9. |
 
 ## Out of scope for v1
