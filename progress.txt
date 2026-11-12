@@ -464,3 +464,10 @@ Not done / not verified:
 - Pages not read as screenshots: Audience, Applications, Community posts and Comments tabs, Settings, Analytics, the profile tab after saving. Tablet width was not checked on the new pages.
 - The mobile menu still switches at 1024px with a fixed button (Newsmaker: 800px, inside the top bar).
 - Blank excerpts are not filled from the body.
+
+[2026-11-12] Newsmaker-shape Studio verified on the live domains (commit ca5acae)
+- Both production deployments are Ready (bosesngbayan and bosesngbayan-admin).
+- https://admin.bosesngbayan.com, sign-in flows with throwaway accounts: 15 of 15 checks passed (the same list as the local run: recovery and invitation links, new-password gate, non-staff refusal, generic wrong-password message, profile save, sign out everywhere, notices). All three throwaway accounts deleted; the project has its four accounts.
+- https://admin.bosesngbayan.com, throwaway administrator (deleted): Overview, Articles, Reports, Users & roles, Site categories and My account return 200 with no console errors and no horizontal overflow; Overview also in dark and at 390.
+- https://bosesngbayan.com: /, /balita and /botohan return 200; the regions block serves the reviewed version (6 filled chips, labels "Mga rehiyon sa … na may balita").
+Not verified on the live domains: the screens not listed above, and everything listed as not exercised in the previous entry.
