@@ -503,3 +503,26 @@ Diagnosis:
 - The site's Permissions-Policy header is camera=(), microphone=(), geolocation=() and does not mention unload. The Vercel toolbar (the cause on the earlier report) is not involved this time: its vercel.live message is absent.
 Decision: nothing changed. Re-allowing unload through the header would hide the second message only, for a feature Chrome is removing, and would make back/forward navigation slower for visitors.
 Not verified: which extension in the reporter's browser writes the messages (it cannot be seen from here). An Incognito window, where extensions are off, should show a clean console.
+
+[2026-11-12] Homepage performance (PageSpeed request: mobile 95, desktop 99, target 100)
+Starting point, from the two PageSpeed reports of 7:28 PM (Lighthouse 13.6.0):
+- Mobile 95: FCP 1.0 s, LCP 2.9 s, TBT 20 ms, CLS 0, Speed Index 2.5 s. Only LCP lost points (21 of 25).
+- Desktop 99: FCP 0.3 s, LCP 0.6 s, TBT 0 ms, CLS 0, Speed Index 1.1 s. The unrounded total is about 99.4.
+Diagnosis:
+- Lighthouse's slow-4G model charges mobile LCP for every byte that finishes before the main photo paints. On the homepage that was the photo itself (112 KB WebP), two preloaded fonts (85 KB), the framework's JavaScript (155 KB) and the stylesheets (18 KB), plus 175 KB of story thumbnails.
+- The server took about 0.45 s (1.5 s on a cold start) to build the homepage: 35 database requests in five rounds, each waiting for the one before. The first round was a single site_settings request (the reader's default language) that everything else queued behind. This time is part of desktop Speed Index.
+Changes (commits cf78c24 and c69cc0b):
+- Images are served as AVIF, with WebP as the fallback; the cover and story thumbnails ask for quality 60. Optimized copies are kept for 31 days (an uploaded file never changes under the same storage path).
+- Lora is loaded in the one weight the cover headline uses: 22 KB instead of 38 KB.
+- The homepage configuration and its sections are read in one request, started together with the language lookup: five database rounds became three.
+Tried and dropped: experimental.inlineCss. Next writes the CSS into the HTML twice, the document grew from 38 KB to 88 KB, and FCP went from 1.0 s to 1.4 s on the local build.
+Measured on https://bosesngbayan.com with Lighthouse 13.6.0 run from this machine (the same version PageSpeed uses, but not PageSpeed itself):
+- Page weight 593 KB -> 387 KB. Main photo 112 KB -> 32 KB at phone width, 138 KB -> 40 KB on desktop. Thumbnails 175 KB -> 64 KB. Fonts 85 KB -> 69 KB.
+- Mobile LCP 3.3 s -> 2.5 to 2.6 s over five runs. Mobile score on this machine 80 -> 85 to 96; it swings with TBT, which this machine measures at 110 to 470 ms where PageSpeed measured 20 ms.
+- Desktop: 99 before; 99 and 100 after the image change; 100, 100, 100 after the database change (Speed Index 0.6 to 0.8 s, was 1.0 to 1.1 s).
+- Document on a reused connection: first byte 0.31 to 0.39 s (a static file on the same host: 0.04 s).
+- The live homepage has the same 11 headings and the same 32 story links as before the query change; the public API /homepage returns its 9 blocks; /balita, /botohan, /usap-bayan and /paksa/pulitika return 200; the console is clean on the homepage (1440 and 390), an article and the Studio sign-in page. Photos and the cover headline were compared side by side with the old version at phone and desktop size.
+- pnpm typecheck clean; pnpm lint clean; pnpm test 15 files / 142 tests passed; pnpm build succeeded.
+Not verified: the PageSpeed score itself. Both the PageSpeed API and its web page answered 429 (rate limit) from this network, so no PageSpeed run was made after the changes.
+Not reached: 100 on mobile. Expected about 97 to 98. Mobile LCP would have to drop under about 1.9 s; what remains in front of the photo is the framework's JavaScript (155 KB, not removable) and the two fonts (69 KB). Options left, none taken: a custom subset of Inter and Lora (about 35 KB saved, risk of missing glyphs such as the peso sign), or system fonts (changes the look).
+Not done: caching public data on the server. It would take the homepage's server time from about 0.3 s to near zero, but Studio and the public site are two Vercel projects, so a publish or an unpublish in Studio could not clear the public site's cache without a new signed call between them; without it an unpublished story could be served once more from the cache.
