@@ -269,3 +269,43 @@ Not done / not verified:
 - Chip rows still have a 32px tall hit area; not changed because the row gap would make larger targets overlap.
 - Short last grid rows (for example 1 card in a 3-column category grid) remain for categories with few stories; real content will fill them.
 - No visual regression test exists; the checks above are manual screenshots.
+
+[2026-11-09] Lead story (ArticleCard variant "feature") refinement, requested by the owner from a screenshot
+- Text column widened (1.1fr -> 1.25fr) so the photo no longer outweighs the headline; excerpt 17px / line-height 1.6.
+- Category label uses leading-none inside the lead so its cap height sits on the photo's top edge (was ~7px lower).
+- Byline stacks: author on one line, date and reading time on the next (Meta `stackAuthor`), so "1 min basa" is never stranded alone.
+- Unchanged on purpose: a 66-character headline still wraps to 4 lines at 32px; getting 3 would need a ~480px text column, which would squeeze the photo to a strip.
+Verified: pnpm typecheck and pnpm lint clean; screenshots at 1440 / 768 / 390 checked. Not re-run: unit tests and production build (CSS/JSX-only change to one component). Not committed or pushed yet.
+
+[2026-11-09] Homepage lead restyled as a cover story (owner reference screenshot)
+- New `CoverStory` (components/public/cover-story.tsx): full-bleed photo, dark scrim, spaced uppercase kicker with a slash, Lora semibold headline, two-line deck, underlined "Read the story ↗" + reading time; one link for the whole card; white text in both themes; navy field when the story has no image. New i18n keys common.card.coverStory / readStory (FIL + EN).
+- Lora is the project's second typeface, for this headline only (owner reference); declared in components/public/display-font.ts so only routes that render the cover preload it. docs/DESIGN_SYSTEM.md updated (section 1 table, section 3, section 5).
+- TopStoriesBlock: cover spans 8 columns and stretches to the height of the right rail (they end on the same line at 1440); the 3-story row moved out of the left column to a full-width strip under both. The `feature` variant is unchanged and still used by the category page and the featured-story block.
+- Found while checking: the kicker was unreadable over a bright banner in the demo photo; scrim strengthened mid-height (0.9 / 0.74 / 0.3 / 0) and a soft text-shadow added to the kicker. On a 390px phone "cover story / category" wrapped, so phones show only the category.
+Verified: pnpm typecheck, lint clean; pnpm test 13 files / 122 tests passed; pnpm build succeeded; screenshots at 1440, 768, 390 and dark mode (cover looks identical in dark).
+Not verified: contrast over other photographs (checked on one demo photo only; the scrim keeps text over >=0.74 black behind the headline, but a very bright photo under the kicker at 0.3-0.5 has not been measured); no-image fallback and a breaking-news cover were not rendered; LCP/CLS impact of the Lora swap not measured (next/font size-adjusted fallback is on by default).
+Not committed or pushed: this and the earlier lead-story refinement are local only; origin/main is at 7ed9958.
+
+[2026-11-09] Cover story made shorter and the story row moved back under it (owner request from a screenshot)
+- TopStoriesBlock is back to the shared-row (subgrid) layout: the cover is row 1 of the left column, the 3-story row is row 2 directly under it; the rail's top card shares row 1 and the compact list shares row 2.
+- CoverStory from lg: no min height, padding 28px, headline 2rem (3 lines), deck hidden, tighter gaps. Measured in Chromium: at 1440, 1280 and 1024 the cover and the rail's Trabaho card have identical top and bottom (206 -> 537 at 1440, 331px tall); the story row starts 40px below, level with the rail list.
+- Below lg the stack order is cover, story row, rail card (as before the cover existed); the deck is still shown there.
+Verified: layout measured with getBoundingClientRect at three widths; screenshot checked at 1440. Not re-run after this change: unit tests and the production build (JSX/class changes in two files; the same files built clean one step earlier). Not re-checked visually: tablet and phone after this change, dark mode.
+Not committed or pushed: origin/main is still 7ed9958.
+
+[2026-11-09] Cover story a little taller; the rail's Trabaho card adjusted to match (owner request from a screenshot)
+- CoverStory lg: min height 26rem (416px, was 331px), headline 2.2rem (was 2rem), padding 32px. Deck still hidden at lg.
+- ArticleCard gained `fill` (grid variant, lg and up): the card takes the full row height and its photo flex-grows (min 13rem) while the text block stays fixed. TopStoriesBlock passes `fill` to the rail's top card, so its photo grows from 211px to about 295px and its meta line ends on the cover's bottom edge. Below lg nothing changes.
+- Measured with getBoundingClientRect at 1440 / 1280 / 1024: cover and rail card are both 206 -> 622; the story row and the rail list both start at 662.
+Verified: layout measured at three widths; screenshot checked at 1440; pnpm typecheck and lint clean. Not re-run: unit tests, production build, tablet / phone / dark-mode visual check. At 1024 the headline wraps to 4 lines (it still fits inside 416px).
+Not committed or pushed: origin/main is still 7ed9958.
+
+[2026-11-09] Public UI polish: bolder, more approachable hierarchy with a community band (owner request: "trendy, approachable, bold headlines, engaging visuals, strong community feel, visual hierarchy", inspired by Istorya)
+- Hierarchy: headlines are now bold with tighter tracking (card grid/list/side/feature, section headings 2.15rem, column and sidebar heads 1.25rem); `.section-rule` gets a 72px red tab on its heavy rule; list rows use a 280px thumbnail and a 1.45rem headline; Pili ng Editor thumbs are larger (4:3, 176px).
+- Community: the poll block became a full-bleed brand-blue band (PollShowcaseBlock): gold-sun kicker (new `--color-sun`, used only on that band), 3rem title, pitch line, "Ibahagi ang iyong boses" button, counting note and other polls, with the ballot as the one white object. New i18n keys blocks.bandKicker / bandPitch (FIL + EN). Phones stack intro -> ballot -> details; the band sits flush on the footer (`data-flush-footer`, footer arbitrary variant) with no white strip.
+- Sidebar Usap Bayan picks are cards with an initial avatar; the share button is primary. Newsletter block is a tinted full-bleed band instead of a boxed card.
+- Found while checking: ballot option labels disappeared (they inherited the band's white text on the white card) -> Ballot wrapper sets text-ink; on phones the ballot sat below the methodology text -> reordered with grid placement; a 64px white strip sat between the band and the footer -> flush rule above.
+- Data order unchanged on purpose: homepage block order lives in the database (ADR-017, no Studio editor), so the band keeps the poll block's place near the bottom instead of reordering production data.
+Verified: screenshots at 1440 (light + dark), 768 and 390; band crops at all three; pnpm typecheck and lint clean; pnpm test 13 files / 122 tests passed. Not run: production build.
+Not verified: Lighthouse/contrast on other brand colours (sun on a custom brand colour could fall under 4.5:1; Settings validates only white-on-brand); latest-news list still repeats the stories already in the top row when the site has few articles (content, not layout).
+Not committed or pushed: origin/main is still 7ed9958.

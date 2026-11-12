@@ -15,7 +15,7 @@ Starter homepage, top to bottom (all CMS blocks; since ADR-017 the order can no 
 | Navy masthead, two rows on desktop: wordmark + search + red "Mag-subscribe" CTA, then the category row (uppercase, 3px accent underline on the active item, scrolls sideways if the CMS menu outgrows the width). Phones: one row + hamburger panel. | `site-header.tsx`, `main-nav.tsx` (`MainNav`, `DesktopNav`); items from the `header` menu, CTA from Settings `header_cta`. Nav styles live in `globals.css` (`.nav-link`). |
 | Dateline (Asia/Manila) + #trending chips | `TrendingTopicsBlock`. |
 | Breaking strip (only when a breaking story exists) | `BreakingNewsBlock`. |
-| Top stories: lead story (text beside a 4:3 image) with a 3-story row below and a right rail (one card plus compact items) | `TopStoriesBlock`, `ArticleCard` variants `feature`, `grid`, `compact`. |
+| Top stories: the lead is a cover story (full-bleed photo, dark scrim, serif headline; owner reference 2026-11-09) that shares row 1 with the right rail's top card, so the two end on the same line (416px tall from `lg`; the rail card's photo stretches to fill, `ArticleCard` prop `fill`); the 3-story row sits directly under the cover and the rail's compact list beside it, on the shared row 2 | `TopStoriesBlock`, `CoverStory` (`components/public/cover-story.tsx`), `ArticleCard` variants `grid`, `compact`. The `feature` variant (text beside image) is still used by the category page lead and the featured-story block. |
 | "Pinakabagong Balita" list with a sticky sidebar: ranked "Trending" when tracked views exist, otherwise a "Mga Paksa" section index; then the latest approved Usap Bayan posts | `ArticleListBlock` layout `list`, `with_sidebar`. |
 | "Pili ng Editor" two-column headline-left/thumb-right list | `ArticleListBlock` layout `side`. |
 | Newsletter card (red top rule) | `NewsletterBlock`. |
@@ -34,7 +34,8 @@ The original poll hero (`blocks/hero-block.tsx`) remains available as the `hero`
 | `brand-50/100/200` | mixes toward the page (`--tint-base`: white, or black in dark mode) | Tinted surfaces, badges, hover fills |
 | `brand-600/700/800` | mixes away from the page (`--shade-base`: black, or white in dark mode) | Hover and pressed states, badge text |
 | `navy` (`--brand-navy`) | `#0b1f5c` | Headlines, footer, dark bands |
-| `accent` (`--brand-accent`) | `#d62828` Philippine red | Section rule, breaking label, the highlighted headline word, pull-quote mark |
+| `accent` (`--brand-accent`) | `#d62828` Philippine red | Section rule tab, breaking label, the highlighted headline word, pull-quote mark |
+| `sun` | `#fcd116` the flag's sun | Kicker text and "open" labels on the brand-coloured community band only. 5.0:1 on the default cobalt. Never on white, never as a fill behind text. |
 | `ink` / `ink-soft` / `muted` | `#121418` / `#3f4550` / `#5f6672` | Body text, secondary text, metadata |
 | `line` | `#e4e6ea` | Borders and dividers |
 | `surface` / `surface-2` | `#f7f7f8` / `#eeeff2` | Section backgrounds |
@@ -78,14 +79,17 @@ Rules:
 ## 3. Typography
 
 - **One family: Inter** (variable), via `next/font/google`, `display: swap`, preloading the `latin` subset only (covers Filipino incl. ñ; latin-ext loads on demand). `--font-serif` maps to the same family.
-- Hierarchy comes from size and weight (semibold 600 for headlines, medium 500 for card titles), not from a second face.
+- Hierarchy comes from size and weight, not from a second face. Headlines are **bold 700** with slight negative tracking (−0.01 to −0.025em); small card titles stay semibold 600. (Polish pass 2026-11-09: card and section headlines were medium/semibold and read too evenly.)
+- **One exception, by owner request (2026-11-09):** the cover story headline on the homepage is set in **Lora** (variable, Latin subset), declared in `components/public/display-font.ts` so Next preloads it only on routes that render the cover. Nothing else uses it. Everything else stays Inter.
 
 | Role | Size | Line height |
 | --- | --- | --- |
-| Lead story headline | 1.75rem → 2.25rem (md), semibold, tracking −0.015em | 1.15 |
+| Lead story headline (`feature` variant) | 1.85rem → 2.2rem (md), bold, tracking −0.02em | 1.12 |
+| Community band title | 2.25rem → 3rem (md), bold, tracking −0.025em | 1.05 |
 | Article title | 2rem → 2.75rem (md), semibold, tracking −0.02em | 1.12 |
-| Section heading | 1.6rem → 1.9rem, semibold, inside `.section-rule` | 1.25 |
-| Card headline | 0.92–1.3rem, medium | snug |
+| Section heading | 1.75rem → 2.15rem, bold, inside `.section-rule` | 1.25 |
+| Column / sidebar heading | 1.25rem, bold | snug |
+| Card headline | `grid` 0.95rem semibold → 1.15rem bold (sm); `list` 1rem → 1.45rem bold; `side` 1.08 → 1.2rem bold; `compact` 0.95rem semibold | 1.25 |
 | Article body (`.prose-bnb`) | 1.125rem | 1.75 |
 | Metadata | 0.78rem, hairline dividers | — |
 | Category label | 0.72rem uppercase, brand-700 text (red tile for Breaking) | — |
@@ -116,9 +120,13 @@ Headings use `text-wrap: balance`.
 | `.card` | White, 6px radius, 1px inset line border, no heavy shadow |
 | `.field` | 44px, 4px radius, inset ring, 2px brand ring on focus |
 | Focus | 3px brand outline, 2px offset, on every interactive element (`:focus-visible`) |
+| `CoverStory` | Homepage lead. Min height 30rem (34rem from `sm`); from `lg` the minimum is 26rem (416px) and the row is shared with the rail's top card, whose photo grows to end on the same line; the deck is hidden at `lg` (headline 2.2rem, three lines at 1280 and up). Photo fills the card; scrim `linear-gradient(to top, black 90% → 74% at 45% → 30% at 72% → 0)`. Over it, in white: a spaced uppercase kicker ("Pangunahing balita / Category"; phones show only the category), a Lora semibold headline (1.9rem → 2.6rem), a two-line deck, then an underlined "Basahin ang kuwento ↗" with the reading time. The whole card is one link; hover zooms the photo 2%. White text in both themes. No image: navy field. |
 | `ArticleCard` variants | `grid` (16:10 image over headline), `list` (thumb left, excerpt), `feature` (lead: text beside 4:3 image), `compact` (small thumb left), `side` (headline left, thumb right) |
 | Poll card | Radio for single choice or checkbox for multiple; result bars appear after voting when visibility allows; "hindi kumakatawan sa buong populasyon ng Pilipinas" caveat and a methodology link |
-| Section heading | `.section-rule`: 3px ink rule above, hairline below, optional "label →" action link. Page headers still use `.section-kicker`. |
+| Section heading | `.section-rule`: 3px ink rule above with a 72px red tab at its left end, hairline below, optional "label →" action link. Page headers still use `.section-kicker`. |
+| Community band (`PollShowcaseBlock`) | The page's one loud moment: full-bleed `bg-brand`, white text in both themes. Left: a kicker (2px sun rule + uppercase "Boses ng Bayan"), a 3rem bold title, a one-line pitch, a white "Ibahagi ang iyong boses" button and an underlined "Lahat ng botohan →", then the counting note and other polls under a hairline. Right: the ballot, the only white (black in dark mode) object, lifted with a soft shadow. Phones stack intro → ballot → details. A band that ends the page carries `data-flush-footer` and the footer drops its top margin, so no white strip separates them. |
+| Newsletter band | Full-bleed `bg-brand-50`, no card: red-rule kicker, 2.5rem bold title, form beside it. |
+| Community picks (sidebar) | Each approved Usap Bayan post is a `bg-brand-50` card: red kind label, semibold title, an initial-in-a-circle avatar with name and place. The "Ibahagi ang iyong boses" button is a primary button. |
 
 **Studio** uses the same tokens and fonts in a denser layout (`components/studio/ui.tsx`): PageHeader (with an optional `eyebrow`), Panel, Table, Badge tones (neutral, info, success, warning, danger), StatusBadge for article states, Notice, Empty, Pagination and Field. There are no gradients or decorative imagery.
 

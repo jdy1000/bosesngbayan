@@ -24,6 +24,8 @@ export const fil = {
   card: {
     breaking: "Breaking",
     readingMinutes: "{n} min basa",
+    coverStory: "Pangunahing balita",
+    readStory: "Basahin ang kuwento",
   },
   list: {
     emptyTitle: "Wala pang nailalathalang balita dito.",
@@ -125,6 +127,8 @@ export const en: typeof fil = {
   card: {
     breaking: "Breaking",
     readingMinutes: "{n} min read",
+    coverStory: "The cover story",
+    readStory: "Read the story",
   },
   list: {
     emptyTitle: "No stories published here yet.",

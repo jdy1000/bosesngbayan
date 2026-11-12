@@ -19,6 +19,8 @@ export const fil = {
   editorsPicks: "Pili ng Editor",
   polls: "Mga Botohan",
   allPolls: "Lahat ng botohan",
+  bandKicker: "Boses ng Bayan",
+  bandPitch: "Isang boto, isang boses. Pumili, tingnan ang resulta, at sumali sa usapan.",
   howVotesCount: "Paano binibilang ang boto",
   howVotesCountBody:
     "Isang boto bawat browser ang pinapayagan (may ilang botohan na naglilimita rin bawat network), at sa server sinusuri ang bawat boto. Ang mga online poll ay boluntaryo at hindi kumakatawan sa buong populasyon ng Pilipinas.",
@@ -67,6 +69,8 @@ export const en: typeof fil = {
   editorsPicks: "Editor's Picks",
   polls: "Polls",
   allPolls: "All polls",
+  bandKicker: "The people's voice",
+  bandPitch: "One vote, one voice. Choose, see the results, and join the conversation.",
   howVotesCount: "How votes are counted",
   howVotesCountBody:
     "One vote per browser is allowed (some polls also limit votes per network), and every vote is checked on the server. Online polls are voluntary and do not represent the entire population of the Philippines.",

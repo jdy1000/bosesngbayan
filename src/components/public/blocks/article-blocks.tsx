@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TrendingUp } from "lucide-react";
 import { ArticleCard, EmptyState, SectionHeading } from "@/components/public/article-card";
+import { CoverStory } from "@/components/public/cover-story";
 import type { BlockSettings } from "@/lib/homepage/blocks";
 import {
   getMostReadArticles,
@@ -37,7 +38,7 @@ async function resolveArticles(s: ListSettings): Promise<Article[]> {
   }
 }
 
-const section = "py-10 md:py-12";
+const section = "py-10 md:py-14";
 
 /** Lead story, right rail, and a row of three (Morning "hero"). The lead image is the page's LCP. */
 export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"top_stories"> }) {
@@ -68,10 +69,11 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
 
   return (
     <section aria-label={t.blocks.topStories} className="pb-8 pt-8 md:pb-10 md:pt-10">
-      {/* lg: two shared rows (subgrid), so the story row and the rail list start on the same rule. */}
+      {/* lg: two shared rows (subgrid). Row 1 holds the cover story and the rail's top card, so the cover ends on the
+          same line as that card; row 2 holds the story row under the cover and the rail list beside it. */}
       <div className="container-site grid gap-10 lg:grid-cols-12 lg:gap-x-8">
         <div className="grid content-start gap-10 lg:col-span-8 lg:row-span-2 lg:grid-rows-subgrid">
-          <ArticleCard article={lead} variant="feature" priority />
+          <CoverStory article={lead} priority />
           {below.length > 0 && (
             <div className="grid gap-8 border-t border-line pt-8 sm:grid-cols-3 sm:gap-6">
               {below.map((a) => (
@@ -85,7 +87,7 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
             aria-label={t.blocks.moreStories}
             className="grid content-start gap-6 lg:col-span-4 lg:row-span-2 lg:grid-rows-subgrid lg:gap-10 lg:border-l lg:border-line lg:pl-8"
           >
-            <ArticleCard article={railTop} />
+            <ArticleCard article={railTop} fill />
             {railList.length > 0 && (
               <ul className="space-y-5 self-start border-t border-line pt-6 lg:pt-8">
                 {railList.map((a) => (
@@ -105,19 +107,19 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
 function RankedList({ title, articles, note }: { title: string; articles: Article[]; note?: string }) {
   return (
     <div className="card p-6">
-      <h3 className="text-lg font-semibold text-ink">{title}</h3>
+      <h3 className="text-xl font-bold tracking-[-0.01em] text-ink">{title}</h3>
       {note && <p className="mt-1 text-xs text-muted">{note}</p>}
       <ol className="mt-5 space-y-5">
         {articles.map((a, i) => (
           <li key={a.id} className="group flex gap-3">
             <span
-              className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-[3px] bg-accent text-xs font-bold text-white tabular-nums"
+              className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[3px] bg-accent text-sm font-bold text-white tabular-nums"
               aria-hidden="true"
             >
               {i + 1}
             </span>
             <Link href={`/balita/${a.slug}`} className="min-w-0">
-              <span className="line-clamp-3 text-[0.92rem] font-medium leading-snug text-ink group-hover:text-brand">{a.title}</span>
+              <span className="line-clamp-3 text-[0.95rem] font-semibold leading-snug text-ink group-hover:text-brand">{a.title}</span>
               {a.category && <span className="mt-1 block text-[0.75rem] text-muted">{a.category.name}</span>}
             </Link>
           </li>
@@ -128,7 +130,7 @@ function RankedList({ title, articles, note }: { title: string; articles: Articl
 }
 
 function SideTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="border-b-2 border-ink pb-2 text-lg font-semibold text-ink">{children}</h3>;
+  return <h3 className="border-b-2 border-ink pb-2 text-xl font-bold tracking-[-0.01em] text-ink">{children}</h3>;
 }
 
 /** Section index: always available, so the sidebar never sits empty before view data exists. */
@@ -158,21 +160,27 @@ async function CommunityPicks({ posts }: { posts: Post[] }) {
   return (
     <div>
       <SideTitle>Usap Bayan</SideTitle>
-      <ul className="divide-y divide-line">
+      {/* Each voice is a small card with the reader's initial, so the column reads as people, not as more headlines. */}
+      <ul className="mt-4 space-y-3">
         {posts.map((p) => (
-          <li key={p.id} className="py-3.5">
-            <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-accent">{COMMUNITY_KIND_LABELS[locale][p.kind]}</p>
-            <Link href={`/usap-bayan/${p.id}`} className="mt-1 block text-[0.95rem] font-medium leading-snug text-ink hover:text-brand">
+          <li key={p.id} className="rounded-md bg-brand-50 p-4">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.08em] text-accent-700">{COMMUNITY_KIND_LABELS[locale][p.kind]}</p>
+            <Link href={`/usap-bayan/${p.id}`} className="mt-1 block text-[1rem] font-semibold leading-snug text-ink hover:text-brand">
               {p.title}
             </Link>
-            <p className="mt-1 text-[0.75rem] text-muted">
-              {p.author_name}
-              {p.author_location ? ` · ${p.author_location}` : ""}
+            <p className="mt-2.5 flex items-center gap-2 text-[0.78rem] text-ink-soft">
+              <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand text-[0.7rem] font-bold uppercase text-white">
+                {p.author_name.trim().charAt(0)}
+              </span>
+              <span className="min-w-0 truncate">
+                {p.author_name}
+                {p.author_location ? ` · ${p.author_location}` : ""}
+              </span>
             </p>
           </li>
         ))}
       </ul>
-      <Link href="/usap-bayan#magbahagi" className="btn mt-4 min-h-10 w-full border border-ink px-4 text-sm text-ink hover:bg-ink hover:text-white">
+      <Link href="/usap-bayan#magbahagi" className="btn btn-primary mt-4 min-h-11 w-full px-4 text-sm">
         {t.blocks.shareVoice}
       </Link>
     </div>
@@ -333,7 +341,7 @@ export async function TrendingTopicsBlock({ title, settings }: { title: string |
 function ColumnHead({ title, href, linkLabel }: { title: string; href: string; linkLabel: string }) {
   return (
     <div className="mb-5 flex items-baseline justify-between border-b-2 border-ink pb-2">
-      <h3 className="text-lg font-semibold text-ink">
+      <h3 className="text-xl font-bold tracking-[-0.01em] text-ink">
         <Link href={href} className="hover:text-brand">
           {title}
         </Link>

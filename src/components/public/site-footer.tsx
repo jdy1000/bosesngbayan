@@ -59,7 +59,8 @@ export async function SiteFooter({
   const copyright = general.copyright_text.replace("{year}", String(new Date().getFullYear()));
 
   return (
-    <footer className="mt-16 bg-navy-900 text-white">
+    // A full-bleed band that ends the page (`data-flush-footer`) sits directly on the footer, with no white strip between.
+    <footer className="mt-16 bg-navy-900 text-white [main:has(>[data-flush-footer]:last-child)+&]:mt-0">
       <div className="container-site grid gap-12 py-14 md:grid-cols-2 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1.4fr] lg:py-16">
         <div className="max-w-sm">
           <Link href="/" aria-label={`${general.site_name} — ${t.common.homeSuffix}`} className="inline-block">

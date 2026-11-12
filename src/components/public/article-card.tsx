@@ -54,16 +54,19 @@ async function Meta({
   showAuthor = true,
   showCategory = false,
   showReading = true,
+  stackAuthor = false,
 }: {
   article: Article;
   showAuthor?: boolean;
   showCategory?: boolean;
   showReading?: boolean;
+  /** Byline on its own line, date and reading time on the next, so a long byline never strands "1 min basa" alone. */
+  stackAuthor?: boolean;
 }) {
   const { locale, t } = await getI18n();
-  const parts: { key: string; node: React.ReactNode; wide?: boolean }[] = [];
+  const parts: { key: string; node: React.ReactNode; wide?: boolean; fullRow?: boolean }[] = [];
   if (showCategory && article.category) parts.push({ key: "c", node: <span className="font-medium text-brand-700">{article.category.name}</span> });
-  if (showAuthor && article.author) parts.push({ key: "a", node: <span className="font-medium text-ink-soft">{article.author.display_name}</span> });
+  if (showAuthor && article.author) parts.push({ key: "a", node: <span className="font-medium text-ink-soft">{article.author.display_name}</span>, fullRow: stackAuthor });
   if (article.published_at)
     parts.push({
       key: "t",
@@ -82,7 +85,7 @@ async function Meta({
         {parts.map((p) => (
           <span
             key={p.key}
-            className={`relative pl-3 pr-0.5 before:absolute before:left-[0.3rem] before:text-muted/60 before:content-['·'] ${p.wide ? "hidden sm:inline" : ""}`}
+            className={`relative pl-3 pr-0.5 before:absolute before:left-[0.3rem] before:text-muted/60 before:content-['·'] ${p.wide ? "hidden sm:inline" : ""} ${p.fullRow ? "basis-full" : ""}`}
           >
             {p.node}
           </span>
@@ -104,7 +107,11 @@ function Labels({ article }: { article: Article }) {
 
 const headline = "text-ink transition-colors group-hover:text-brand";
 
-export function ArticleCard({ article, variant = "grid", priority }: { article: Article; variant?: Variant; priority?: boolean }) {
+/**
+ * `fill` (grid variant, lg and up): the card takes the full height of the grid row it sits in and the photo absorbs
+ * the extra height, so it can end on the same line as a taller neighbour (the cover story).
+ */
+export function ArticleCard({ article, variant = "grid", priority, fill }: { article: Article; variant?: Variant; priority?: boolean; fill?: boolean }) {
   const href = `/balita/${article.slug}`;
 
   if (variant === "compact") {
@@ -114,7 +121,7 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
           <Thumb article={article} sizes="112px" className="aspect-[4/3] w-28 shrink-0 rounded" />
           <div className="min-w-0 space-y-1">
             {article.category && <p className="category-badge">{article.category.name}</p>}
-            <h3 className={`line-clamp-3 text-[0.92rem] font-medium leading-snug ${headline}`}>{article.title}</h3>
+            <h3 className={`line-clamp-3 text-[0.95rem] font-semibold leading-snug ${headline}`}>{article.title}</h3>
           </div>
         </Link>
       </article>
@@ -126,10 +133,10 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
       <article className="group">
         <Link href={href} className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-2">
-            <h3 className={`line-clamp-3 text-[1.02rem] font-medium leading-snug ${headline}`}>{article.title}</h3>
+            <h3 className={`line-clamp-3 text-[1.08rem] font-bold leading-[1.25] tracking-[-0.01em] sm:text-[1.2rem] ${headline}`}>{article.title}</h3>
             <Meta article={article} showAuthor={false} showCategory />
           </div>
-          <Thumb article={article} sizes="140px" className="aspect-[16/10] w-32 shrink-0 rounded sm:w-36" />
+          <Thumb article={article} sizes="180px" className="aspect-[4/3] w-32 shrink-0 rounded sm:w-44" />
         </Link>
       </article>
     );
@@ -138,10 +145,10 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
   if (variant === "list") {
     return (
       <article className="group">
-        <Link href={href} className="grid grid-cols-[112px_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[minmax(0,240px)_1fr] sm:items-center sm:gap-6">
-          <Thumb article={article} sizes="(min-width: 640px) 240px, 112px" className="aspect-[4/3] w-full rounded sm:aspect-[16/10]" />
-          <div className="min-w-0 space-y-1.5 sm:space-y-2">
-            <h3 className={`line-clamp-3 text-[0.98rem] font-medium leading-snug sm:text-[1.15rem] md:text-[1.3rem] ${headline}`}>{article.title}</h3>
+        <Link href={href} className="grid grid-cols-[112px_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[minmax(0,280px)_1fr] sm:items-center sm:gap-7">
+          <Thumb article={article} sizes="(min-width: 640px) 280px, 112px" className="aspect-[4/3] w-full rounded sm:aspect-[16/10]" />
+          <div className="min-w-0 space-y-1.5 sm:space-y-2.5">
+            <h3 className={`line-clamp-3 text-[1rem] font-bold leading-[1.25] tracking-[-0.01em] sm:text-[1.2rem] md:text-[1.45rem] ${headline}`}>{article.title}</h3>
             {article.excerpt && <p className="hidden text-[0.92rem] text-ink-soft sm:line-clamp-2">{article.excerpt}</p>}
             <Meta article={article} showAuthor={false} showCategory />
           </div>
@@ -153,15 +160,18 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
   if (variant === "feature") {
     return (
       <article className="group">
-        <Link href={href} className="grid gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-8">
+        <Link href={href} className="grid gap-6 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-8">
           <div className="order-2 flex flex-col gap-4 md:order-1">
-            <Labels article={article} />
-            <h2 className={`text-[1.75rem] font-semibold leading-[1.15] tracking-[-0.015em] md:text-[2rem] ${headline}`}>
+            {/* leading-none: the label's cap height sits on the top edge of the photo instead of 6px below it. */}
+            <div className="[&_.category-badge]:leading-none">
+              <Labels article={article} />
+            </div>
+            <h2 className={`text-[1.85rem] font-bold leading-[1.12] tracking-[-0.02em] md:text-[2.2rem] ${headline}`}>
               {article.title}
             </h2>
-            {article.excerpt && <p className="text-[1rem] leading-relaxed text-ink-soft">{article.excerpt}</p>}
+            {article.excerpt && <p className="text-[1.0625rem] leading-[1.6] text-ink-soft">{article.excerpt}</p>}
             <div className="mt-auto pt-2">
-              <Meta article={article} />
+              <Meta article={article} stackAuthor />
             </div>
           </div>
           <Thumb
@@ -176,18 +186,18 @@ export function ArticleCard({ article, variant = "grid", priority }: { article: 
   }
 
   return (
-    <article className="group flex flex-col">
+    <article className={`group flex flex-col ${fill ? "lg:h-full" : ""}`}>
       {/* Phones: thumbnail row (keeps long pages scannable); sm and up: image over headline. */}
       <Link href={href} className="grid h-full grid-cols-[112px_minmax(0,1fr)] items-start gap-3.5 sm:flex sm:flex-col sm:gap-3">
         <Thumb
           article={article}
           priority={priority}
           sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 112px"
-          className="aspect-[4/3] w-full rounded sm:aspect-[16/10]"
+          className={`aspect-[4/3] w-full rounded sm:aspect-[16/10] ${fill ? "lg:aspect-auto lg:min-h-[13rem] lg:flex-1" : ""}`}
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:gap-3">
+        <div className={`flex min-w-0 flex-1 flex-col gap-1.5 sm:gap-3 ${fill ? "lg:flex-none" : ""}`}>
           <Labels article={article} />
-          <h3 className={`line-clamp-3 text-[0.95rem] font-medium leading-snug sm:line-clamp-none sm:text-[1.08rem] ${headline}`}>{article.title}</h3>
+          <h3 className={`line-clamp-3 text-[0.95rem] font-semibold leading-snug sm:line-clamp-none sm:text-[1.15rem] sm:font-bold sm:leading-[1.25] sm:tracking-[-0.01em] ${headline}`}>{article.title}</h3>
           <div className="mt-auto hidden sm:block">
             <Meta article={article} showAuthor={false} showReading={false} />
           </div>
@@ -223,7 +233,7 @@ export function SectionHeading({
   return (
     <div className={`mb-8 ${light ? "border-y border-white/25 py-3.5" : "section-rule"}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <Tag className={`text-[1.6rem] font-semibold leading-tight tracking-[-0.01em] md:text-[1.9rem] ${light ? "text-white" : "text-ink"}`}>
+        <Tag className={`text-[1.75rem] font-bold leading-tight tracking-[-0.02em] md:text-[2.15rem] ${light ? "text-white" : "text-ink"}`}>
           {title}
         </Tag>
         {action && (
