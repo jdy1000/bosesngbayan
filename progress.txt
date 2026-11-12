@@ -360,3 +360,14 @@ Not done / not verified:
 - Supabase Auth: Site URL and redirect URL must be the Studio origin (currently not set at all); invitation and recovery emails will not work until then.
 - Not tested in a browser: client-side navigation across the two origins (a Next <Link> from Studio to a public path relies on the redirect), sign-in on the Studio origin, a server action on the Studio origin.
 - Preview deployments have no environment variables on either project.
+
+[2026-11-12] Two-origin deployment verified on the live hosts (commit caab6c6)
+- Both production deployments are Ready: bosesngbayan (public) and bosesngbayan-admin (Studio).
+- curl, https://bosesngbayan.vercel.app: / and /balita 200; /admin, /admin/login?next=x and /admin/apply answer 307 to the same path on https://bosesngbayan-admin.vercel.app; public API 200; /api/cron/publish 401 without the secret and {"ok":true,"published":0} with it.
+- curl, https://bosesngbayan-admin.vercel.app: / -> /admin; /admin and /admin/articles signed out -> /admin/login on the same host; /admin/login and /admin/apply 200; /balita/<slug> and /hanap?q= answer 307 to the public origin; /robots.txt 200; /api/cron/publish 401 with or without the secret (no CRON_SECRET on this project, as intended). Studio pages carry X-Robots-Tag noindex, no-store, CSP and HSTS.
+- Browser (Playwright, Chromium, 1440x900): the public homepage shows the cover story, the rail and the story row with photos, 31 images and none broken, no horizontal overflow, no console errors. Opening /admin on the public host lands on the Studio host's sign-in page. A sign-in with a wrong address and password stays on the Studio host and shows "Incorrect email or password.", so the server action and the Supabase Auth call work on the Studio origin.
+Not done / not verified:
+- A real sign-in. The Owner's one-time password was not used; the Owner still has to sign in and change it.
+- DNS at GoDaddy is unchanged (the authoritative name server still answers the parking addresses for bosesngbayan.com and has no `admin` record), so the custom domains do not serve yet and the two URL variables still hold the .vercel.app origins.
+- Supabase Auth settings (sign-ups off, Site URL, redirect URL): no access from this session.
+- Tablet and phone widths and dark mode were not re-checked on the live site. Some preview photos show identifiable people next to invented stories; one more reason to replace the preview content before promoting the site.
