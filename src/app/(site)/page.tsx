@@ -12,8 +12,9 @@ export function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const { locale, t } = await getI18n();
-  const [homepage, settings] = await Promise.all([getHomepage("published", undefined, locale), getSiteSettings()]);
+  // The homepage query starts together with the language lookup instead of after it (one database round trip less).
+  const i18n = getI18n();
+  const [{ locale, t }, homepage, settings] = await Promise.all([i18n, getHomepage("published", undefined, i18n.then((i) => i.locale)), getSiteSettings()]);
   const { site_name, tagline } = localizeSettings(settings, locale).general;
   // The news layout has no visible page title (the masthead is the logo), so the h1 is for screen readers and search.
   const title = <h1 className="sr-only">{tagline ? `${site_name}: ${tagline}` : site_name}</h1>;

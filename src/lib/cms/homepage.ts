@@ -21,28 +21,27 @@ export interface HomepageData {
 export async function getHomepage(
   status: "draft" | "published" = "published",
   client: SupabaseClient<Database> = createPublicClient(),
-  locale: Locale = "fil",
+  // A promise is accepted so the caller can start this query before the reader's language is known.
+  locale: Locale | Promise<Locale> = "fil",
 ): Promise<HomepageData | null> {
-  const { data: config, error } = await client
-    .from("homepage_configurations")
-    .select("id, status")
-    .eq("status", status)
-    .maybeSingle();
+  // One request for the configuration and its enabled sections: every block on the page waits for this answer.
+  const [{ data: config, error }, lang] = await Promise.all([
+    client
+      .from("homepage_configurations")
+      .select("id, status, homepage_sections(id, block_type, title, description, title_en, description_en, settings, position, is_enabled)")
+      .eq("status", status)
+      .eq("homepage_sections.is_enabled", true)
+      .order("position", { referencedTable: "homepage_sections" })
+      .maybeSingle(),
+    locale,
+  ]);
   if (error) throw error;
   if (!config) return null;
 
-  const { data: sections, error: secError } = await client
-    .from("homepage_sections")
-    .select("id, block_type, title, description, title_en, description_en, settings, position, is_enabled")
-    .eq("configuration_id", config.id)
-    .eq("is_enabled", true)
-    .order("position");
-  if (secError) throw secError;
-
   const blocks: HomepageBlock[] = [];
   const invalidSections: HomepageData["invalidSections"] = [];
-  for (const s of sections ?? []) {
-    const { block, issues } = parseSection(s, locale);
+  for (const s of config.homepage_sections) {
+    const { block, issues } = parseSection(s, lang);
     if (block) blocks.push(block);
     else {
       invalidSections.push({ id: s.id, issues });
