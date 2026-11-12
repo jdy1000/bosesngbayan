@@ -113,6 +113,25 @@ export async function listPublicArticles(opts: ArticleListOptions = {}): Promise
   };
 }
 
+/**
+ * Location id of each of the newest public stories filed under `locationIds`, one entry per story, newest first.
+ * shortcut: reads the newest `limit` stories only, so it answers "recent coverage", not all-time totals;
+ * use a grouped-count RPC if exact per-location counts are ever shown to readers.
+ */
+export async function listRecentStoryLocations(locationIds: string[], limit = 300): Promise<string[]> {
+  if (locationIds.length === 0) return [];
+  const { data, error } = await createPublicClient()
+    .from("articles")
+    .select("location_id")
+    .in("status", ["published", "scheduled"])
+    .lte("published_at", nowIso())
+    .in("location_id", locationIds)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).flatMap((row) => (row.location_id ? [row.location_id] : []));
+}
+
 /** Keep the caller's ordering for manually curated lists. */
 export async function getPublicArticlesByIds(ids: string[]): Promise<ArticleCard[]> {
   if (ids.length === 0) return [];

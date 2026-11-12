@@ -426,3 +426,18 @@ Not done / not verified:
 - Sign-in as an Owner, and publish, upload and moderation from Studio.
 - The Supabase access token is still in .env.local; it is no longer needed and should be revoked.
 - The two .vercel.app roots are not redirected to the .com domains.
+
+[2026-11-12] Regional news block: regions ranked instead of a flat chip cloud (request: "use visual hierarchy on this part")
+- Before: every region under Luzon, Visayas and Mindanao was the same outline pill, so nothing led the eye and the chips competed with the stories below.
+- Now (RegionalNewsBlock in components/public/blocks/article-blocks.tsx): regions that have recent stories come first as filled chips with a leading dot, the most covered first; regions without stories follow as quiet text links. The reading order is island group -> regions with stories -> other regions -> stories.
+- Data: new listRecentStoryLocations in lib/cms/articles.ts, one query for the location of the newest 300 public stories under the shown island groups (same public filter as listPublicArticles). Stories filed under a province or city count for their region. No number is shown, because the count covers recent stories only.
+- Two new screen-reader labels in Filipino and English (blocks.regionsWithStories, blocks.regionsOther).
+Verified: pnpm typecheck clean; pnpm lint clean; pnpm test 14 files / 128 tests passed. Local dev server against the live database, Playwright at 1440 and 390 in light and dark: filled chips are National Capital Region, Central Luzon, Western Visayas, Eastern Visayas, Northern Mindanao and Davao Region (the regions that have stories), 12 quiet links, no horizontal overflow, no console errors.
+Not verified: production build was not run locally (the dev server was running); tablet width; an independent review of the change was started and its result is not in yet. Link height stays 32px, the existing chip convention.
+
+[2026-11-12] Browser console messages reported from a signed-in Vercel browser ("unload is not allowed", "Framing 'https://vercel.live/'", unused preloads)
+- Reproduced with a clean Chromium on https://bosesngbayan.com/, an article and https://admin.bosesngbayan.com/admin/login, waiting 7 s after load and collecting every console level: 0 messages. The served HTML has no vercel.live reference, and the only unload-type listener in the code is `beforeunload` in the Studio autosave.
+- Cause: the Vercel Toolbar, which Vercel adds for people signed in to the Vercel team. The site's Content-Security-Policy (frame-src) blocks its frame; the unload and preload messages come from the same toolbar. Visitors do not get it.
+- Fix: the toolbar was switched off for production on both Vercel projects (enableProductionFeedback = false). The CSP was not loosened.
+Not verified: the requester's own browser after the change (a Vercel browser extension, if installed, can still add the toolbar).
+- Found while reproducing: `next dev` reads .env.development.local, which points at the local Docker database, so a dev server started without Docker answers 500. For a dev server against the live project, export the values of .env.local in the shell first.

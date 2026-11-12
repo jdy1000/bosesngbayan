@@ -7,6 +7,7 @@ import {
   getMostReadArticles,
   getPublicArticlesByIds,
   listPublicArticles,
+  listRecentStoryLocations,
   type ArticleCard as Article,
 } from "@/lib/cms/articles";
 import { listApprovedPosts, COMMUNITY_KIND_LABELS } from "@/lib/cms/community";
@@ -414,43 +415,79 @@ export async function MostReadBlock({ title, settings }: { title: string | null;
   );
 }
 
-/** Island groups with their regions as chips, then the latest stories from each (Istorya "Interactive Philippines"). */
+/**
+ * Island groups with their regions, then the latest stories from each (Istorya "Interactive Philippines").
+ * Regions are ranked, not listed flat: those with recent stories lead as filled chips, most covered first,
+ * and the rest follow as quiet text links, so the eye lands where there is something to read.
+ */
 export async function RegionalNewsBlock({ title, description, settings }: { title: string | null; description: string | null; settings: BlockSettings<"regional_news"> }) {
   const [locations, { t }] = await Promise.all([listLocations(), getI18n()]);
   const chosen = settings.location_ids.length
     ? settings.location_ids.map((id) => locations.find((l) => l.id === id)).filter((l) => l !== undefined)
     : locations.filter((l) => l.kind === "island_group");
-  const groups = await Promise.all(
-    chosen.map(async (loc) => {
-      const ids = [loc.id];
-      for (let i = 0; i < ids.length; i++) for (const c of locations) if (c.parent_id === ids[i]) ids.push(c.id);
-      const children = locations.filter((c) => c.parent_id === loc.id);
-      return { loc, children, items: (await listPublicArticles({ locationIds: ids, pageSize: settings.per_location, withTotal: false })).items };
-    }),
-  );
-  if (groups.length === 0) return null;
+  if (chosen.length === 0) return null;
+  /** A location with everything filed under it (region -> provinces -> cities). */
+  const withDescendants = (rootId: string) => {
+    const ids = [rootId];
+    for (let i = 0; i < ids.length; i++) for (const c of locations) if (c.parent_id === ids[i]) ids.push(c.id);
+    return ids;
+  };
+  const [recent, lists] = await Promise.all([
+    listRecentStoryLocations(chosen.flatMap((loc) => withDescendants(loc.id))),
+    Promise.all(chosen.map((loc) => listPublicArticles({ locationIds: withDescendants(loc.id), pageSize: settings.per_location, withTotal: false }))),
+  ]);
+  const storiesAt = new Map<string, number>();
+  for (const id of recent) storiesAt.set(id, (storiesAt.get(id) ?? 0) + 1);
+  const groups = chosen.map((loc, index) => {
+    const regions = locations
+      .filter((c) => c.parent_id === loc.id)
+      .map((region, position) => ({ region, position, stories: withDescendants(region.id).reduce((sum, id) => sum + (storiesAt.get(id) ?? 0), 0) }));
+    return {
+      loc,
+      items: lists[index]!.items,
+      active: regions.filter((r) => r.stories > 0).sort((a, b) => b.stories - a.stories || a.position - b.position),
+      quiet: regions.filter((r) => r.stories === 0),
+    };
+  });
   return (
     <section className={`bg-surface ${section}`}>
       <div className="container-site">
         <SectionHeading title={title ?? t.blocks.regionalNews} description={description} />
         {/* md+: each column spans three shared rows (head, region chips, stories), so story lists start level however the chips wrap. */}
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3 lg:gap-x-8">
-          {groups.map(({ loc, children, items }) => (
+          {groups.map(({ loc, items, active, quiet }) => (
             <div key={loc.id} className="md:row-span-3 md:grid md:grid-rows-subgrid md:gap-y-0">
               <ColumnHead title={loc.name} href={`/rehiyon/${loc.slug}`} linkLabel={t.blocks.all} />
-              {children.length > 0 ? (
-                <ul className="mb-6 flex flex-wrap content-start gap-2" aria-label={fmt(t.blocks.regionsIn, { name: loc.name })}>
-                  {children.map((c) => (
-                    <li key={c.id}>
-                      <Link
-                        href={`/rehiyon/${c.slug}`}
-                        className="inline-flex min-h-8 items-center rounded-full border border-line bg-paper px-3 text-[0.78rem] font-medium text-ink-soft transition-colors hover:border-brand-200 hover:text-brand"
-                      >
-                        {c.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+              {active.length + quiet.length > 0 ? (
+                <div className="mb-6 space-y-2">
+                  {active.length > 0 && (
+                    <ul className="flex flex-wrap gap-2" aria-label={fmt(t.blocks.regionsWithStories, { name: loc.name })}>
+                      {active.map(({ region }) => (
+                        <li key={region.id}>
+                          {/* The dot carries the "has stories" meaning without colour; pl is tighter so the dot reads centred in the pill's curve. */}
+                          <Link
+                            href={`/rehiyon/${region.slug}`}
+                            className="inline-flex min-h-8 items-center gap-2 rounded-full border border-brand-200 bg-brand-50 pl-2.5 pr-3 text-[0.8rem] font-semibold text-brand transition-colors hover:border-brand hover:bg-brand-100"
+                          >
+                            <span className="size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
+                            {region.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {quiet.length > 0 && (
+                    <ul className="flex flex-wrap gap-x-4" aria-label={fmt(active.length > 0 ? t.blocks.regionsOther : t.blocks.regionsIn, { name: loc.name })}>
+                      {quiet.map(({ region }) => (
+                        <li key={region.id}>
+                          <Link href={`/rehiyon/${region.slug}`} className="inline-flex min-h-8 items-center text-[0.78rem] font-medium text-muted transition-colors hover:text-brand">
+                            {region.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               ) : (
                 <div />
               )}
