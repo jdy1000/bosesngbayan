@@ -95,7 +95,7 @@ Hidden sidebar items are only a convenience.
 
 **ADR-001 — Supabase for database, auth and storage.** The repository was new, and the spec's default fits. One vendor covers Postgres + RLS, Auth (invitations, recovery, PKCE), and Storage with policies. It has a free tier for staging.
 
-**ADR-002 — Local-only development until account turnover.** The client's GitHub, Vercel and Supabase accounts are not yet available. Nothing is provisioned remotely, and no repository or project is created. Everything runs against `supabase start` (Docker) or PGlite tests. Deployment steps are documented in `docs/DEPLOYMENT.md`.
+**ADR-002 — Local-only development until account turnover.** The client's GitHub, Vercel and Supabase accounts are not yet available. Nothing is provisioned remotely, and no repository or project is created. Everything runs against `supabase start` (Docker) or PGlite tests. Deployment steps are documented in `docs/DEPLOYMENT.md`. *(Superseded 2026-11-12: the accounts are available and the site is deployed. GitHub `jdy1000/bosesngbayan`, Vercel team `jdy2`, Supabase project `civmfyqegywwiofhqcya`. See the status line in `docs/DEPLOYMENT.md`.)*
 
 **ADR-003 — Security in the database, not only in the app.** Every table has RLS enabled. Writes that must be atomic or need elevated rights are SECURITY DEFINER functions with explicit `has_permission()` checks and a pinned `search_path = public`. Examples: transitions, votes, homepage publish, role changes, audit writes. `is_service_context()` recognises service-role calls (JWT role, or `session_user` for migrations and tests) so that only server code can call service-only RPCs.
 

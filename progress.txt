@@ -309,3 +309,23 @@ Not committed or pushed: origin/main is still 7ed9958.
 Verified: screenshots at 1440 (light + dark), 768 and 390; band crops at all three; pnpm typecheck and lint clean; pnpm test 13 files / 122 tests passed. Not run: production build.
 Not verified: Lighthouse/contrast on other brand colours (sun on a custom brand colour could fall under 4.5:1; Settings validates only white-on-brand); latest-news list still repeats the stories already in the top row when the site has few articles (content, not layout).
 Not committed or pushed: origin/main is still 7ed9958.
+
+[2026-11-12] First production deployment: https://bosesngbayan.vercel.app
+- GitHub jdy1000/bosesngbayan (branch main) -> Vercel project "bosesngbayan" in team jdy2 (created today, Git connected, production branch main) -> Supabase project civmfyqegywwiofhqcya.
+- Commit 3e73346 pushed to main: the cover story, community band and hierarchy work from 2026-11-09 (it was local only) plus `regions: ["bom1"]` in vercel.json so functions run in Mumbai next to the database.
+- Vercel env vars, Production only: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, NEXT_PUBLIC_SITE_URL (https://bosesngbayan.vercel.app), SUPABASE_SERVICE_ROLE_KEY, HASH_SECRET, CRON_SECRET (the last three marked sensitive). Values copied from .env.local. Not set on Preview on purpose (a preview would use the live database).
+- Failure 1: the Vercel connector and the logged-in Vercel CLI (kurtgav) could not reach team jdy2 ("Team not found" / "The specified scope does not exist"). Cause: neither account is a member of jdy2. Fix: a second CLI login for the jdy2 account (joeseffdy) in its own config folder, C:\Users\MSI\.vercel-jdy2; every vercel command for this project needs `--global-config C:/Users/MSI/.vercel-jdy2`. The first device code expired before it was approved; a second one worked.
+- `vercel link` appended a duplicate `.vercel` line to .gitignore; removed.
+Checks before the push: pnpm typecheck clean; pnpm lint clean; pnpm test 13 files / 122 tests passed; pnpm build succeeded; `supabase db push --dry-run` says the remote database is up to date (11 migrations).
+Verified on the live site (curl):
+- Deployment dpl_AS92cJwLAYTSaTs8pFP9ihBkkMqG is Ready, target production, functions in bom1, Node 26.x (Vercel picked it from `engines.node >=20.9`; the local build ran on Node 24).
+- 200: /, /balita, /botohan, /usap-bayan, /paksa, /hanap?q=balita, /admin/login, /admin/apply, /robots.txt, /sitemap.xml, /rss.xml, and the public API routes homepage, categories (17 rows, from the live database), articles, polls, trending.
+- /admin redirects to /admin/login. /api/cron/publish and /api/cron/retention return 401 without the secret; publish returns {"ok":true,"published":0} with it. Both cron jobs are registered on the project.
+- Security headers present (HSTS, nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy). Canonical, og:url, robots and sitemap use https://bosesngbayan.vercel.app. No "localhost" and no secret key in the homepage HTML.
+Not done / not verified:
+- Owner not bootstrapped: nobody can sign in to Studio yet (needs the owner's email and name).
+- Supabase Auth settings not changed (sign-ups off, Site URL, redirect URL, SMTP, email templates): this project is not reachable from the connected Supabase account, so they are dashboard steps for the owner. Until then invitation and recovery links will not point at the live site.
+- /tungkol and the other 5 starter pages return 404 (they are drafts with no text), so their footer links are dead.
+- The site has no articles or polls yet; the homepage shows its empty states.
+- Not tested on the live site: voting, newsletter subscribe/unsubscribe, comments, uploads, Studio (all need content or a signed-in user). No browser or screenshot check of the live pages. Retention cron not called with its secret.
+- No custom domain. Backups not checked. docs/SECURITY.md section 9 not walked through.

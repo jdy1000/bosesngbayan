@@ -1,6 +1,13 @@
 # Boses ng Bayan — Local setup, deployment and owner bootstrap
 
-Status: nothing is deployed yet. The client's GitHub, Vercel and Supabase accounts are pending turnover (`ARCHITECTURE.md` ADR-002). Follow these steps once the accounts are available.
+Status (2026-11-12): live at `https://bosesngbayan.vercel.app`.
+
+- GitHub `jdy1000/bosesngbayan`, production branch `main`. A push to `main` deploys to production.
+- Vercel project `bosesngbayan` in team `jdy2`. No custom domain yet.
+- Supabase project `civmfyqegywwiofhqcya` (Mumbai, `ap-south-1`).
+- Still open: Supabase Auth settings (section 2, step 4), owner bootstrap (section 4), and the go-live checklist (section 5).
+
+The steps below are kept for a rebuild or a move to other accounts.
 
 ## 1. Local development
 
@@ -72,6 +79,9 @@ pnpm test:e2e                 # Playwright; needs `pnpm dev` + a seeded local st
    ```bash
    node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
    ```
+   The live project has these on Production only. A preview build would otherwise run against the live database, and its own URL would not match `NEXT_PUBLIC_SITE_URL`.
+
+   `vercel.json` runs the functions in `bom1` (Mumbai), the same region as the live Supabase project. If the database moves, change `regions` to match.
 3. Cron jobs come from `vercel.json`:
    - `/api/cron/publish` at 16:05 UTC = 00:05 Manila;
    - `/api/cron/retention` at 19:30 UTC = 03:30 Manila.
