@@ -300,6 +300,13 @@ This supersedes the Filipino Studio labels in ADR-014.
 - *Also changed:* the menu entry, the logo link, the redirect after sign-in, the "no access" redirect (`/dashboard?denied=1`), the callback's default destination, and `robots.txt`.
 - *Consequences:* the console has two address shapes (`/dashboard` and `/admin/...`); this supersedes the "`/admin` URLs kept" note in ADR-021 for the Overview only. A public page can no longer use the slug `dashboard`. Moving between the Overview and another Studio page re-renders the shell, because the two sit under different layouts.
 
+**ADR-023 — The client's mission statement (2026-11-13, client decision).** The client sent the publication's mission statement: Boses ng Bayan is an independent public-interest research, news and investigative journalism platform and a watchdog of public service, with the tagline "The People's Voice. The Public's Watchdog." It is applied as content, in the client's own English words, by the data migration `supabase/migrations/20261113000100_mission_statement.sql`.
+
+- *What changed:* Site Settings tagline and description (Filipino and English fields hold the same text; the description is shown in the footer and the RSS feed, the tagline in the homepage's screen-reader heading), the SEO default title and description, and the About page (`/tungkol`), whose body was still the starter placeholder. The page title stays "Tungkol sa Boses ng Bayan"; its summary is the tagline.
+- *Why a migration:* the Pages and SEO modules were removed from Studio (ADR-017), so the About page and the SEO defaults cannot be edited there. `supabase/seed.sql` carries the same settings for fresh databases. The tagline and description can still be changed in Studio → Settings.
+- *Previous values (for rollback):* tagline "May boses ka. May saysay ang opinyon mo." / "You have a voice. Your opinion matters."; description "Balitang mahalaga sa bawat Pilipino — mula sa bansa, sa rehiyon, at sa inyong komunidad." / "News that matters to every Filipino — from the nation, the regions and your community."; SEO default title "Boses ng Bayan — Balita, Botohan at Usapang Bayan"; SEO default description "Makibahagi sa mga usaping mahalaga sa araw-araw na buhay ng bawat Pilipino."
+- *Not done:* no Filipino translation was written (the client wrote in English; inventing a translation of brand copy was avoided). No reporting or tip channel for suspected corruption was built: the statement asks readers to report wrongdoing, and the site's existing channels are the moderated Usap Bayan submissions and the contact page.
+
 ## 6. Environment variables
 
 See `.env.example`. Public values (`NEXT_PUBLIC_*`) are validated by `src/lib/env.ts`; secrets by `src/lib/server-env.ts`, which is server-only:

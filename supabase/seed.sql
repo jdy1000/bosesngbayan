@@ -92,8 +92,8 @@ where not exists (select 1 from public.navigation_items i where i.menu_id = m.id
 insert into public.site_settings (key, value) values
   ('general', jsonb_build_object(
     'site_name', 'Boses ng Bayan',
-    'tagline', 'May boses ka. May saysay ang opinyon mo.',
-    'description', 'Balitang mahalaga sa bawat Pilipino — mula sa bansa, sa rehiyon, at sa inyong komunidad.',
+    'tagline', 'The People''s Voice. The Public''s Watchdog.',
+    'description', 'Boses ng Bayan is an independent public-interest research, news, and investigative journalism platform dedicated to measuring public trust, evaluating governance performance, monitoring public sentiment, and promoting transparency and accountability in government.',
     'logo_media_id', null,
     'favicon_media_id', null,
     'brand', jsonb_build_object('primary', '#1d4ed8', 'navy', '#0b1f5c', 'accent', '#d62828'),
@@ -106,8 +106,8 @@ insert into public.site_settings (key, value) values
   ('contact', jsonb_build_object('email', '', 'phone', '', 'address', '')),
   ('seo', jsonb_build_object(
     'title_template', '%s | Boses ng Bayan',
-    'default_title', 'Boses ng Bayan — Balita, Botohan at Usapang Bayan',
-    'default_description', 'Makibahagi sa mga usaping mahalaga sa araw-araw na buhay ng bawat Pilipino.',
+    'default_title', 'Boses ng Bayan — The People''s Voice. The Public''s Watchdog.',
+    'default_description', 'Boses ng Bayan is an independent public-interest research, news, and investigative journalism platform dedicated to measuring public trust, evaluating governance performance, monitoring public sentiment, and promoting transparency and accountability in government.',
     'default_og_image_id', null,
     'x_handle', '',
     'allow_indexing', true)),
@@ -190,8 +190,8 @@ from (values
 where s.title = v.title and (s.title_en is null or s.description_en is null);
 
 update public.site_settings set value = jsonb_build_object(
-    'tagline_en', 'You have a voice. Your opinion matters.',
-    'description_en', 'News that matters to every Filipino — from the nation, the regions and your community.',
+    'tagline_en', 'The People''s Voice. The Public''s Watchdog.',
+    'description_en', 'Boses ng Bayan is an independent public-interest research, news, and investigative journalism platform dedicated to measuring public trust, evaluating governance performance, monitoring public sentiment, and promoting transparency and accountability in government.',
     'copyright_text_en', '© {year} Boses ng Bayan. All rights reserved.') || value
   || jsonb_build_object('header_cta', coalesce(value->'header_cta', 'null'::jsonb) || jsonb_build_object('label_en', coalesce(nullif(value->'header_cta'->>'label_en', ''), 'Subscribe')))
 where key = 'general' and value ? 'header_cta' and jsonb_typeof(value->'header_cta') = 'object';

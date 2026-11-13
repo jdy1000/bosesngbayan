@@ -544,3 +544,15 @@ Verified:
 - Live article page: the photo, its caption and the body text share the same left and right edges at 1440, 1024 and 390 wide, with no horizontal overflow.
 Known consequences (ADR-022): the console has two address shapes; the shell re-renders when moving between the Overview and another Studio page; a public page cannot use the slug "dashboard".
 Not verified: the Owner role (no throwaway Owner was created); forms that write (unchanged from the earlier entries).
+
+[2026-11-13] Client mission statement applied (ADR-023)
+Request: apply the client's statement ("BOSES NG BAYAN — The People's Voice. The Public's Watchdog." and the full mission text) and deploy once green.
+Done:
+- supabase/migrations/20261113000100_mission_statement.sql (data only): Site Settings tagline and description (Filipino and English fields hold the client's English text), SEO default title "Boses ng Bayan — The People's Voice. The Public's Watchdog." and default description, and the About page /tungkol (summary = tagline; body = the full statement, rendered with renderRichText). The About body was still the starter placeholder ("Palitan ito ng opisyal na nilalaman…").
+- supabase/seed.sql carries the same settings for fresh databases. ADR-023 records why a migration (the Pages and SEO modules are no longer in Studio), the previous values for rollback, and what was not done. Master spec tagline line and PRD updated with a dated note.
+Verified:
+- pnpm typecheck clean; pnpm lint clean; pnpm test 15 files / 145 tests passed (the DB suites apply every migration plus seed.sql in PGlite); pnpm build succeeded.
+- Fresh PGlite database (migrations + seed): /tungkol is published and readable as anon; general and seo settings hold the new text.
+- Production: supabase db push (dry run, then applied) for 20261113000100 only; the project now lists 14 migrations.
+- Live https://bosesngbayan.com: /tungkol 200 with the full statement and no placeholder; homepage <title> and meta description are the new defaults; footer and rss.xml show the new description. /tungkol at 1440 and 390: no horizontal overflow, no console errors, screenshots checked.
+Not done: no Filipino translation of the statement (the client wrote it in English; Studio → Settings can take a Filipino tagline and description). No new channel for reporting suspected corruption; readers can use the moderated Usap Bayan submissions and the contact page, whose contact details are still empty.

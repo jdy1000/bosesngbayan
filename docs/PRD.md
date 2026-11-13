@@ -6,7 +6,8 @@ The full, authoritative requirements are in `docs/BOSES_NG_BAYAN_MASTER_SPEC.md`
 
 A Filipino digital newsroom and community-engagement platform.
 
-- Tagline: "May boses ka. May saysay ang opinyon mo."
+- Tagline: "The People's Voice. The Public's Watchdog." (since 2026-11-13, ADR-023; was "May boses ka. May saysay ang opinyon mo.")
+- Positioning (client, 2026-11-13): an independent public-interest research, news and investigative journalism platform and a watchdog of public service. Full statement on the About page (`/tungkol`).
 - Primary language: Filipino, with English and Taglish (`<html lang="fil">`).
 - Timezone: Asia/Manila.
 

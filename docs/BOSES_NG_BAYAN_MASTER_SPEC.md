@@ -2,7 +2,7 @@
 
 **Document type:** Authoritative build specification for Claude Code  
 **Product:** Boses ng Bayan  
-**Product tagline:** May boses ka. May saysay ang opinyon mo.  
+**Product tagline:** The People's Voice. The Public's Watchdog. *(Client decision 2026-11-13: replaces "May boses ka. May saysay ang opinyon mo." Boses ng Bayan is positioned as an independent public-interest research, news and investigative journalism platform and a watchdog of public service; the full statement is the About page. See ADR-023 in `docs/ARCHITECTURE.md`.)*  
 **Primary language:** Filipino, with support for English and natural Taglish  
 **Initial timezone:** Asia/Manila  
 **Status:** Build specification; implementation status must be tracked separately in `progress.txt`.
