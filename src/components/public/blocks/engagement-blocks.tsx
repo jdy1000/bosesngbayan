@@ -221,11 +221,12 @@ export async function CustomCtaBlock({ title, description, settings }: { title: 
                 </h2>
                 {description && <p className="mt-4 text-lg text-white/80">{description}</p>}
               </div>
-              {settings.cta && (
-                <Link href={settings.cta.href} className="btn btn-light h-13 shrink-0 px-8 text-base">
-                  {settings.cta.label}
-                </Link>
-              )}
+              <CtaLinks
+                settings={settings}
+                className="flex shrink-0 flex-wrap gap-3"
+                primary="btn btn-light h-13 px-8 text-base"
+                secondary="btn h-13 px-8 text-base text-white shadow-[inset_0_0_0_1.5px_rgb(255_255_255/0.6)] hover:bg-white/10"
+              />
             </div>
           </div>
         </div>
@@ -240,11 +241,7 @@ export async function CustomCtaBlock({ title, description, settings }: { title: 
           <div className="section-kicker">
             <h2 className="text-3xl font-semibold leading-tight text-ink md:text-[2.4rem]">{title}</h2>
             {description && <p className="mt-3 text-lg text-ink-soft">{description}</p>}
-            {settings.cta && (
-              <Link href={settings.cta.href} className="btn btn-primary mt-6">
-                {settings.cta.label}
-              </Link>
-            )}
+            <CtaLinks settings={settings} className="mt-6 flex flex-wrap gap-3" primary="btn btn-primary" secondary="btn btn-outline" />
           </div>
           <ul className="grid gap-4 sm:grid-cols-2">
             {settings.items.map((item) => {
@@ -271,12 +268,27 @@ export async function CustomCtaBlock({ title, description, settings }: { title: 
           {title && <h2 className="text-2xl font-semibold text-ink md:text-3xl">{title}</h2>}
           {description && <p className="mt-2 text-ink-soft">{description}</p>}
         </div>
-        {settings.cta && (
-          <Link href={settings.cta.href} className="btn btn-primary shrink-0">
-            {settings.cta.label}
-          </Link>
-        )}
+        <CtaLinks settings={settings} className="flex shrink-0 flex-wrap gap-3" primary="btn btn-primary" secondary="btn btn-outline" />
       </div>
     </section>
+  );
+}
+
+/** The block's main link and its optional second, quieter link; renders nothing when neither is set. */
+function CtaLinks({ settings, className, primary, secondary }: { settings: BlockSettings<"custom_cta">; className: string; primary: string; secondary: string }) {
+  if (!settings.cta && !settings.secondary_cta) return null;
+  return (
+    <div className={className}>
+      {settings.cta && (
+        <Link href={settings.cta.href} className={primary}>
+          {settings.cta.label}
+        </Link>
+      )}
+      {settings.secondary_cta && (
+        <Link href={settings.secondary_cta.href} className={secondary}>
+          {settings.secondary_cta.label}
+        </Link>
+      )}
+    </div>
   );
 }

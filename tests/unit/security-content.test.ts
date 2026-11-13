@@ -131,6 +131,21 @@ describe("homepage block schemas", () => {
     const noEn = parseSection({ ...raw, settings: { view_all: { label: "Lahat ng paksa", href: "/paksa" } } }, "en").block;
     expect(label(noEn)).toBe("Lahat ng paksa");
   });
+
+  it("accepts an optional second CTA link with the same href rules and English label", async () => {
+    const { parseSection } = await import("@/lib/homepage/blocks");
+    const section = (secondary: unknown) => ({
+      id: "m",
+      block_type: "custom_cta",
+      title: null,
+      description: null,
+      settings: { variant: "feature_tiles", cta: { label: "Mag-ulat", href: "/mag-ulat" }, secondary_cta: secondary },
+    });
+    const ok = parseSection(section({ label: "Tungkol sa Amin", label_en: "About us", href: "/tungkol" }), "en").block;
+    expect((ok?.settings as { secondary_cta: { label: string } }).secondary_cta.label).toBe("About us");
+    expect((parseSection({ ...section(null), settings: { variant: "simple" } }).block?.settings as { secondary_cta: unknown }).secondary_cta).toBeNull();
+    expect(parseSection(section({ label: "x", href: "javascript:alert(1)" })).block).toBeNull();
+  });
 });
 
 describe("brand contrast", () => {

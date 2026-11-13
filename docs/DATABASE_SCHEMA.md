@@ -31,6 +31,7 @@ Conventions used below:
 | `20261113000200_tips.sql` | Tip line (ADR-024): `tips.manage` permission (Owner, Administrator, Editor), the `tips` table and its RLS, `submit_tip()`, `review_tip()` and `purge_old_tips()`. |
 | `20261113000250_review_tip_conflict_code.sql` | `review_tip()` raises `tip_changed` with SQLSTATE `22023` instead of `40001`: PostgREST retries `40001` (serialization failure) as transient, so a stale Studio form never got an answer. |
 | `20261113000300_tip_line_nav.sql` | Data only: header (`Mag-ulat`) and footer (`Mag-ulat ng Katiwalian`) links to `/mag-ulat` on an existing site. Kept apart from the table so the links went live after the page was deployed. |
+| `20261113000400_homepage_mission_band.sql` | Data only: the mission band (ADR-023), a `custom_cta` section inserted right after `top_stories` in the draft and published homepage configuration; later sections move down one position. Idempotent. |
 
 There are no down migrations. To roll back, drop the objects in reverse migration order (the header of `000100` points here for that).
 
@@ -283,6 +284,6 @@ The seed is structural only. Pages, navigation, the homepage configuration and S
 | Site settings | All 8 keys: site name and tagline, brand colours, Asia/Manila, `fil`, SEO templates, `allow_indexing: true`, community moderation on, newsletter consent text. Social and contact values are empty strings. |
 | Trending topics | 8 topics linked to categories. |
 | Pages | 6 starter pages (tungkol, makipag-ugnayan, patakarang-editoryal, privacy-policy, terms-of-service, mag-advertise), all **drafts**. |
-| Homepage | One draft and one published configuration with the same 5 sections: hero, trending_topics, article_grid, two custom_cta. Image and poll ids are null. |
+| Homepage | One draft and one published configuration with the same 10 sections: trending_topics, breaking_news, top_stories, custom_cta (the mission band, ADR-023), latest_articles, editors_picks, newsletter, category_showcase, regional_news, poll_showcase. Image and poll ids are null. |
 
 The seed contains **no users, articles, polls, votes, comments, subscribers or metrics**. Demo content lives in `scripts/seed-demo.ts`.

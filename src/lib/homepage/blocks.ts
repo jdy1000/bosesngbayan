@@ -141,6 +141,8 @@ export const CTA_ICONS = ["chart", "messages", "users", "megaphone", "vote", "ne
 const customCtaSettings = z.object({
   variant: z.enum(["feature_tiles", "banner", "simple"]).default("simple"),
   cta: optionalLink,
+  /** Optional second, less prominent link shown after the main one. */
+  secondary_cta: optionalLink,
   image_id: optionalUuid,
   items: z
     .array(z.object({ icon: z.enum(CTA_ICONS), label: z.string().trim().min(1).max(80) }))

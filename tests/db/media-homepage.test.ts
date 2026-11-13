@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { PGlite } from "@electric-sql/pglite";
-import { asRole, createStaff, createSupabaseLikeDb } from "../../scripts/lib/pglite-supabase";
+import { readFileSync } from "node:fs";
+import { asRole, createStaff, createSupabaseLikeDb, migrationFiles } from "../../scripts/lib/pglite-supabase";
 
 let db: PGlite;
 let editor: string, writer: string, writer2: string;
@@ -104,5 +105,46 @@ describe("homepage draft-only editing", () => {
     );
     expect(counts.rows[0]!.d).toBe(counts.rows[0]!.a);
     await expect(asRole(db, "authenticated", writer, (tx) => tx.query("select public.publish_homepage(null)"))).rejects.toThrow(/not_authorized/);
+  });
+});
+
+describe("homepage mission band (20261113000400)", () => {
+  const BAND = "custom_cta";
+  const runMigration = async () =>
+    db.exec(readFileSync(migrationFiles().find((f) => f.endsWith("20261113000400_homepage_mission_band.sql"))!, "utf8"));
+  const layout = async (status: "draft" | "published") =>
+    (
+      await db.query<{ block_type: string; position: number; settings: unknown; title: string | null }>(
+        `select s.block_type, s.position, s.settings, s.title from public.homepage_sections s
+         join public.homepage_configurations c on c.id = s.configuration_id where c.status = $1 order by s.position`,
+        [status],
+      )
+    ).rows;
+
+  it("sits right after the top stories in the draft and published homepage, with valid settings", async () => {
+    const { parseSection } = await import("@/lib/homepage/blocks");
+    for (const status of ["draft", "published"] as const) {
+      const rows = await layout(status);
+      const types = rows.map((r) => r.block_type);
+      expect(types.indexOf(BAND), status).toBe(types.indexOf("top_stories") + 1);
+      const band = rows.find((r) => r.block_type === BAND)!;
+      const { block, issues } = parseSection({ id: "b", block_type: BAND, title: band.title, description: null, settings: band.settings });
+      expect(issues).toEqual([]);
+      expect(block?.settings).toMatchObject({ cta: { href: "/mag-ulat" }, secondary_cta: { href: "/tungkol" } });
+    }
+  });
+
+  it("is idempotent and re-inserts after top_stories when missing, shifting later sections", async () => {
+    const before = await layout("published");
+    await runMigration();
+    expect((await layout("published")).map((r) => r.block_type)).toEqual(before.map((r) => r.block_type));
+    await db.query(
+      `delete from public.homepage_sections where block_type = $1 and configuration_id = (select id from public.homepage_configurations where status = 'published')`,
+      [BAND],
+    );
+    await runMigration();
+    const after = await layout("published");
+    expect(after.map((r) => r.block_type)).toEqual(before.map((r) => r.block_type));
+    expect(new Set(after.map((r) => r.position)).size).toBe(after.length);
   });
 });
