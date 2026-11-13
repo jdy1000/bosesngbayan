@@ -27,6 +27,10 @@ Conventions used below:
 | `20261107000200_publisher_applications.sql` | `publisher_applications` table and RLS, `submit_publisher_application()`, `review_publisher_application()` and `purge_old_publisher_applications()` (ADR-018). |
 | `20261112000100_report_reviewing_status.sql` | Adds `reviewing` to the `report_status` enum. Alone in its file, because a new enum value cannot be used in the transaction that adds it. |
 | `20261112000200_resolve_report_reviewing.sql` | `resolve_report()` replaced: `resolved_by` and `resolved_at` are set only for resolved and dismissed, and cleared for open and reviewing. Same signature, permission check, activity log and grants. |
+| `20261113000100_mission_statement.sql` | Data only: the client's mission statement (ADR-023). Site Settings tagline and description, SEO default title and description, and the published About page (`tungkol`). |
+| `20261113000200_tips.sql` | Tip line (ADR-024): `tips.manage` permission (Owner, Administrator, Editor), the `tips` table and its RLS, `submit_tip()`, `review_tip()` and `purge_old_tips()`. |
+| `20261113000250_review_tip_conflict_code.sql` | `review_tip()` raises `tip_changed` with SQLSTATE `22023` instead of `40001`: PostgREST retries `40001` (serialization failure) as transient, so a stale Studio form never got an answer. |
+| `20261113000300_tip_line_nav.sql` | Data only: header (`Mag-ulat`) and footer (`Mag-ulat ng Katiwalian`) links to `/mag-ulat` on an existing site. Kept apart from the table so the links went live after the page was deployed. |
 
 There are no down migrations. To roll back, drop the objects in reverse migration order (the header of `000100` points here for that).
 
@@ -58,7 +62,7 @@ There are no down migrations. To roll back, drop the objects in reverse migratio
 |---|---|---|
 | `profiles` | One row per auth user. `id` PK → `auth.users` **cascade**. `display_name` (1–120), `slug` unique kebab-case, `title`, `bio` (≤2000), `avatar_url`, `is_active`, `deactivated_at`. Created by the `on_auth_user_created` trigger. | S: staff, self, or anyone for profiles credited on a public article (author or contributor). U: self, or `perm(users.manage)`. `is_active`/`deactivated_at` can change only through `set_user_active()` (see `profiles_guard`). No I/D policies. |
 | `user_roles` | One role per user. `user_id` PK → profiles **cascade**; `role app_role`; `assigned_by` → profiles **set null**. Index on `role`. | S: own row or `perm(users.view)`. No write policies: changes go through `set_user_role()`. |
-| `permissions` | Permission catalogue. `key` PK matches `^[a-z_]+\.[a-z_]+$`; `group_name`, `description`. 28 keys are seeded in the core migration, and `ads.manage` is added by `20261107000100` (29 in total; see `docs/ADMIN_RBAC.md`). | S: staff. |
+| `permissions` | Permission catalogue. `key` PK matches `^[a-z_]+\.[a-z_]+$`; `group_name`, `description`. 28 keys are seeded in the core migration, `ads.manage` is added by `20261107000100` and `tips.manage` by `20261113000200` (30 in total; see `docs/ADMIN_RBAC.md`). | S: staff. |
 | `role_permissions` | Role → permission matrix. PK `(role, permission)`; `permission` → permissions **cascade**. The migration seeds it: owner gets all, administrator gets all except `roles.manage`, plus fixed sets for editor, writer, moderator and analyst. | S: staff. Writes go through `set_role_permission()`. |
 
 ### 3.2 Content
@@ -128,12 +132,13 @@ Since ADR-017 there is no Studio homepage builder. These tables are unchanged an
 | `audit_logs` | Append-only. `actor_id` **set null**, `action`, `entity_type`, `entity_id text`, `details jsonb`. Indexes `created_at desc`, `(entity_type, entity_id)`. There is no Studio viewer since ADR-017: read it with SQL. The team member page shows that member's last 20 rows. | S: `perm(audit.view)`. Written only by triggers and definer RPCs. |
 | `content_activity_logs` | Editorial and moderation history. `actor_id`, `entity_type`, `entity_id uuid`, `action`, `from_status`, `to_status`, `note`. Indexes `(entity_type, entity_id, created_at desc)`, `created_at desc`. | S: staff. Written only by definer RPCs. |
 
-### 3.9 Ads and publisher applications
+### 3.9 Ads, publisher applications and tips
 
 | Table | Purpose and key columns | Notable indexes | RLS |
 |---|---|---|---|
 | `ad_slots` | Direct-sold image ads, managed in Studio → Ad inventory (`/admin/ads`). `name` (1–120), `placement` (`home` or `article`), `image_id` → media_assets **restrict** (required), `alt_text` (≤300, optional), `destination_url` (must match `^https://`, ≤2048; a CHECK), `is_active` (default false), optional `starts_at`/`ends_at` window (end must be after start), `sort_order`, `created_by`/`updated_by` → profiles **set null**, timestamps. The public site shows at most one live ad per placement (lowest `sort_order`, then oldest): on the homepage after the top-stories block, and on article pages after the body. It is labelled "Anunsyo"/"Advertisement" and linked with `rel="sponsored noopener noreferrer"`. Impressions and clicks are not tracked. | partial `(placement, sort_order, created_at) where is_active`; `image_id` | S (anon and authenticated): live ads only (active, `starts_at ≤ now() < ends_at`, both bounds optional), or `perm(ads.manage)` for every row. All writes: `perm(ads.manage)`. Anon has no write grants. Every change is audited by `audit_row_change`. |
 | `publisher_applications` | Public requests to join the newsroom from `/admin/apply` (ADR-018). `full_name` (2–120), `email citext` (≤254), `requested_role app_role` (writer or moderator only, default writer), `organization` (≤160), `portfolio_url` (https only, ≤500), `message` (≤2000), `consent_at`, `status` (pending, approved, rejected), `review_note` (≤1000; required when rejected), `reviewed_by` → profiles **set null**, `reviewed_at` (set exactly when not pending), `invited_user_id` → profiles **set null**, `network_hash` (only the hash, never the raw IP), timestamps. Creating a row creates no account and grants no access. | partial unique `(email) where status = 'pending'` (one pending application per email); `(status, created_at desc)` | S: `perm(users.manage)` only. No insert, update or delete policy, and those privileges are revoked from `authenticated`; anon has no privileges. Nobody can update rows directly: inserts go only through `submit_publisher_application()` and decisions only through the audited `review_publisher_application()`. |
+| `tips` | Private tips from the public tip line `/mag-ulat` (ADR-024); never published. `subject` (5–200), `details` (30–8000), optional `agency` (≤200), `location` (≤120), `contact_name` (≤120) and `contact` (≤200), `evidence_urls text[]` (≤5; each `https://`, checked in `submit_tip`), `status` (`new`, `reviewing`, `verified`, `dismissed`), `staff_note` (≤2000), `reviewed_by`, `reviewed_at`. Checks: `reviewed_at` is null exactly while `new`; `dismissed` needs a note. No IP address or network hash column. | `(status, created_at desc)` | `tips.manage` holders SELECT only. No insert/update/delete policy; anon has no privileges and `authenticated` has INSERT/UPDATE/DELETE revoked. |
 
 ## 4. Functions and RPCs
 
@@ -206,6 +211,14 @@ Since ADR-017 there is no Studio homepage builder. These tables are unchanged an
 | `submit_publisher_application(full_name, email, requested_role, organization, portfolio_url, message, network_hash)` | yes | **service-only** | Called by the `submitApplication` server action after Zod validation, the honeypot and the `application` rate limit (3 per hour per network). Trims the input and stores a pending row. A second pending application for the same email is silently ignored (`on conflict do nothing`), so the reply never reveals who has applied or who is staff. |
 | `review_publisher_application(id, decision, note, role, invited_user_id)` | yes | authenticated, service_role | Requires `users.manage`. Allows only pending → approved or rejected (`application_already_reviewed` otherwise). A rejection needs a reason (`rejection_reason_required`). An approval may record only Writer or Moderator as the granted role, or null when the applicant was already staff. Writes an `approve_application` or `reject_application` audit row with no name, email or message. The invitation itself is sent by the server action before this call. |
 | `purge_old_publisher_applications()` | yes | **service-only** | Deletes reviewed applications 180 days after the decision; pending ones stay. Called by the daily `/api/cron/retention` job. Returns the number deleted. |
+
+### Tips
+
+| Function | Definer | Grants | Internal checks / purpose |
+|---|---|---|---|
+| `submit_tip(subject, details, agency, location, evidence_urls, contact_name, contact)` | yes | **service-only** | Called by `POST /api/public/v1/tips` after Zod validation, honeypot and rate limit. Rejects any evidence link that is not `https://` or is longer than 500 characters (`invalid_evidence_url`); trims text and stores empty optional fields as null. |
+| `review_tip(id, status, note, expected_updated_at)` | yes | authenticated, service_role | Requires `tips.manage`. Target status must be `reviewing`, `verified` or `dismissed`; a note is required to dismiss. Locks the row and refuses the change with `tip_changed` when its `updated_at` is not the one the caller's form was built from. Replaces the note, records `reviewed_by`/`reviewed_at`, and writes an audit row (`review_tip`) holding only the old and new status. |
+| `purge_old_tips()` | yes | **service-only** | Deletes tips dismissed more than 180 days ago. Called by the daily `/api/cron/retention` job. |
 
 ## 5. Triggers
 

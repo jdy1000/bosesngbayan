@@ -294,6 +294,8 @@ Create:
 
 Community submissions must pass the configured moderation process before appearing publicly. Provide report reasons, moderation states, and audit history.
 
+*(Client decision 2026-11-13: the mission statement asks readers to report suspected corruption. A private tip line was added at `/mag-ulat`: tips are never published, are readable only by holders of the new `tips.manage` permission (Owner, Administrator, Editor) in Studio → Tips, may be sent anonymously, and are stored without the sender's IP address. See ADR-024 in `docs/ARCHITECTURE.md`.)*
+
 ## 3.8 Polling and voting
 
 Polling is a core functional feature, not a decorative hero element.

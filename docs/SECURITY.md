@@ -63,7 +63,7 @@ See `ARCHITECTURE.md` §3 for the data-access boundaries this document relies on
 
 ## 5. Public write endpoints
 
-These are the poll vote, newsletter subscribe and unsubscribe, comments, community posts, reports and page-view tracking. Each one:
+These are the poll vote, newsletter subscribe and unsubscribe, comments, community posts, reports, the tip line and page-view tracking. Each one:
 
 1. Requires a same-origin `Origin` or `Referer`. This is the CSRF defence for JSON POSTs.
 2. Rejects bodies that fail Zod validation. The free-text forms (newsletter, comments, community posts) also carry a hidden honeypot field (`website`) that must be empty, so naive form-filling bots get a normal-looking reply and nothing is written.
@@ -85,11 +85,26 @@ The spec forbids public admin registration (§4.10, §9). The application form i
 | Spam and floods | Zod validation, a honeypot field (`website`; a filled one gets the normal reply and nothing is stored) and a per-network rate limit (`application`, 3 per hour), which fails closed. |
 | Personal data | Name, email, optional organisation, optional https portfolio link and message, with the consent time. Only the network hash is stored, never the raw IP. The audit row (`approve_application` / `reject_application`) holds no name, email or message. Reviewed applications are deleted 180 days after the decision by `purge_old_publisher_applications` in the daily retention job; pending ones stay until someone decides. |
 
+### 5.2 Tip line (`/mag-ulat`, ADR-024)
+
+Tips about suspected corruption can put the sender at risk, so the design keeps as little as possible about who sent one.
+
+| Threat | Control |
+| --- | --- |
+| A tip becoming public | Tips are stored in `public.tips`, which the public site never reads. RLS gives `tips.manage` holders (Owner, Administrator, Editor) SELECT only; anon has no privileges, and no one can insert, update or delete directly. Database tests cover each role. |
+| Linking a tip to its sender | The row holds no IP address, network hash or user agent. The rate-limit key is hashed under its own scope (`network:tip`), so it cannot be matched to the hashes stored with comments, posts or applications, and its bucket is deleted after a day. `/mag-ulat` is not page-view tracked (client and `POST /track` both skip it). The audit row for a status change holds only the old and new status. |
+| Lost or overwritten review work | `review_tip()` locks the row and refuses a change made from a form older than the tip's last save (`tip_changed`). A note is required to dismiss. |
+| Malicious evidence links | Only `https://` links, at most 5 of ≤500 characters, checked by Zod and again by `submit_tip()`. Studio shows the real host in bold (punycode for lookalike domains), drops any `user@` part, and opens links with `noopener noreferrer nofollow`. Studio warns that opening a link shows the editor's IP address to that site. |
+| Spam and floods | Same-origin check, Zod, a honeypot (`hp`; a filled one gets the normal reply and nothing is stored) and a per-network rate limit (`tip`, 3 per hour), which fails closed. |
+
+Accepted risks: a flood from many networks could bury real tips (add a self-hosted proof-of-work challenge if that happens); the hosting provider keeps its own short request logs with IP addresses, which the page tells senders; reading a tip is not audited; database backups keep deleted tips until they expire; a verified tip keeps the sender's optional contact until removed with SQL.
+
 ## 6. Privacy
 
 - Stored identifiers are HMAC-SHA256 hashes keyed by `HASH_SECRET`; raw IPs, user agents and voter tokens are never persisted.
 - Visitor hashes rotate daily (Manila day), and likely bots are dropped.
-- `purge_old_analytics()` deletes page-view events older than 13 months and stale rate-limit rows. `purge_old_publisher_applications()` deletes reviewed applications 180 days after the decision (§5.1).
+- `purge_old_analytics()` deletes page-view events older than 13 months and stale rate-limit rows. `purge_old_publisher_applications()` deletes reviewed applications 180 days after the decision (§5.1). `purge_old_tips()` deletes tips 180 days after they were dismissed (§5.2). Each purge in the daily job runs on its own.
+- Tips hold no network data at all, and the tip line page is not tracked (§5.2).
 - Newsletter records hold only the email address, consent (`consent_at`, `consent_text`), the source and status. Unsubscribe uses an unguessable per-subscriber UUID token through a POST, so link scanners cannot unsubscribe people. Suppressed addresses are kept only to honour the opt-out.
 - Rotating `HASH_SECRET` invalidates every existing voter and visitor hash. Do this deliberately.
 - Reader preferences are two cookies: `bnb_lang` (`fil`/`en`) and `bnb_theme` (`light`/`dark`).

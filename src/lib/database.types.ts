@@ -1413,6 +1413,59 @@ export type Database = {
         Relationships: [
         ];
       };
+      tips: {
+        Row: {
+          id: string;
+          subject: string;
+          details: string;
+          agency: string | null;
+          location: string | null;
+          evidence_urls: string[];
+          contact_name: string | null;
+          contact: string | null;
+          status: string;
+          staff_note: string | null;
+          reviewed_by: string | null;
+          reviewed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          subject: string;
+          details: string;
+          agency?: string | null;
+          location?: string | null;
+          evidence_urls?: string[];
+          contact_name?: string | null;
+          contact?: string | null;
+          status?: string;
+          staff_note?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          subject?: string;
+          details?: string;
+          agency?: string | null;
+          location?: string | null;
+          evidence_urls?: string[];
+          contact_name?: string | null;
+          contact?: string | null;
+          status?: string;
+          staff_note?: string | null;
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "tips_reviewed_by_fkey"; columns: ["reviewed_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
       trending_topics: {
         Row: {
           id: string;
@@ -1501,10 +1554,12 @@ export type Database = {
       publish_homepage: { Args: { p_label?: string | null }; Returns: string };
       purge_old_analytics: { Args: never; Returns: number };
       purge_old_publisher_applications: { Args: never; Returns: number };
+      purge_old_tips: { Args: never; Returns: number };
       record_page_view: { Args: { p_path: string | null; p_article_id: string | null; p_visitor_hash: string | null; p_referrer_host: string | null }; Returns: boolean };
       resolve_report: { Args: { p_report_id: string | null; p_status: Database["public"]["Enums"]["report_status"] | null; p_note?: string | null }; Returns: undefined };
       restore_homepage_to_draft: { Args: { p_configuration_id: string | null }; Returns: undefined };
       review_publisher_application: { Args: { p_id: string | null; p_decision: string | null; p_note?: string | null; p_role?: Database["public"]["Enums"]["app_role"] | null; p_invited_user_id?: string | null }; Returns: undefined };
+      review_tip: { Args: { p_id: string | null; p_status: string | null; p_note: string | null; p_expected_updated_at: string | null }; Returns: undefined };
       set_role_permission: { Args: { p_role: Database["public"]["Enums"]["app_role"] | null; p_permission: string | null; p_granted: boolean | null }; Returns: undefined };
       set_subscriber_status: { Args: { p_id: string | null; p_status: Database["public"]["Enums"]["subscriber_status"] | null; p_reason?: string | null }; Returns: undefined };
       set_user_active: { Args: { p_user_id: string | null; p_active: boolean | null }; Returns: undefined };
@@ -1516,6 +1571,7 @@ export type Database = {
       submit_community_post: { Args: { p_kind: Database["public"]["Enums"]["community_kind"] | null; p_title: string | null; p_body: string | null; p_author_name: string | null; p_author_email: string | null; p_author_location: string | null; p_category_id: string | null; p_network_hash: string | null }; Returns: Json };
       submit_publisher_application: { Args: { p_full_name: string | null; p_email: string | null; p_requested_role: Database["public"]["Enums"]["app_role"] | null; p_organization: string | null; p_portfolio_url: string | null; p_message: string | null; p_network_hash: string | null }; Returns: undefined };
       submit_report: { Args: { p_post_id: string | null; p_comment_id: string | null; p_reason: Database["public"]["Enums"]["report_reason"] | null; p_details: string | null; p_network_hash: string | null }; Returns: string };
+      submit_tip: { Args: { p_subject: string | null; p_details: string | null; p_agency: string | null; p_location: string | null; p_evidence_urls: string[] | null; p_contact_name: string | null; p_contact: string | null }; Returns: undefined };
       subscribe_newsletter: { Args: { p_email: string | null; p_consent_text: string | null; p_source: string | null }; Returns: string };
       transition_article: { Args: { p_article_id: string | null; p_to: Database["public"]["Enums"]["article_status"] | null; p_note?: string | null; p_publish_at?: string | null }; Returns: Database["public"]["Tables"]["articles"]["Row"] };
       unsubscribe_newsletter: { Args: { p_token: string | null }; Returns: boolean };

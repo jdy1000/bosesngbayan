@@ -6,7 +6,8 @@ import { checkRateLimit } from "@/lib/security/rate-limit";
 import { logServerError } from "@/lib/log";
 
 const bodySchema = z.object({
-  path: z.string().max(500).regex(/^\/(?!admin)[^\s]*$/),
+  // Studio and the tip line (/mag-ulat, ADR-024) are never recorded.
+  path: z.string().max(500).regex(/^\/(?!admin|mag-ulat)[^\s]*$/),
   articleId: z.uuid().nullable().default(null),
   referrer: z.string().max(1000).default(""),
 });

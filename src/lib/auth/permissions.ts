@@ -22,6 +22,7 @@ export const PERMISSIONS = [
   "polls.manage",
   "polls.view_results",
   "moderation.manage",
+  "tips.manage",
   "newsletter.view",
   "newsletter.manage",
   "analytics.view",

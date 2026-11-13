@@ -186,14 +186,15 @@ This supersedes the Filipino Studio labels in ADR-014.
   3. Articles (`/admin/articles`)
   4. Review queue (`/admin/review`)
   5. Reports (`/admin/moderation`)
-  6. Ad inventory (`/admin/ads`)
-  7. Audience (`/admin/newsletter`)
-  8. Users & roles (`/admin/team`)
-  9. Applications (`/admin/applications`)
-  10. Site categories (`/admin/taxonomy`)
-  11. Settings (`/admin/settings`)
-  12. Create article (`/admin/articles/new`)
-  13. My account (`/admin/account`)
+  6. Tips (`/admin/tips`; added by ADR-024)
+  7. Ad inventory (`/admin/ads`)
+  8. Audience (`/admin/newsletter`)
+  9. Users & roles (`/admin/team`)
+  10. Applications (`/admin/applications`)
+  11. Site categories (`/admin/taxonomy`)
+  12. Settings (`/admin/settings`)
+  13. Create article (`/admin/articles/new`)
+  14. My account (`/admin/account`)
 
   An item is shown only to users who hold one of its permissions. This is a convenience: every page and action re-checks on the server. The active item is the longest matching URL. Only the nav list scrolls. The pinned footer holds "Private workspace / Authorized editors only", "View publication" and "Sign out".
 - *Top bar* (`app/admin/(studio)/layout.tsx`, `components/studio/route-label.tsx`):
@@ -305,7 +306,17 @@ This supersedes the Filipino Studio labels in ADR-014.
 - *What changed:* Site Settings tagline and description (Filipino and English fields hold the same text; the description is shown in the footer and the RSS feed, the tagline in the homepage's screen-reader heading), the SEO default title and description, and the About page (`/tungkol`), whose body was still the starter placeholder. The page title stays "Tungkol sa Boses ng Bayan"; its summary is the tagline.
 - *Why a migration:* the Pages and SEO modules were removed from Studio (ADR-017), so the About page and the SEO defaults cannot be edited there. `supabase/seed.sql` carries the same settings for fresh databases. The tagline and description can still be changed in Studio → Settings.
 - *Previous values (for rollback):* tagline "May boses ka. May saysay ang opinyon mo." / "You have a voice. Your opinion matters."; description "Balitang mahalaga sa bawat Pilipino — mula sa bansa, sa rehiyon, at sa inyong komunidad." / "News that matters to every Filipino — from the nation, the regions and your community."; SEO default title "Boses ng Bayan — Balita, Botohan at Usapang Bayan"; SEO default description "Makibahagi sa mga usaping mahalaga sa araw-araw na buhay ng bawat Pilipino."
-- *Not done:* no Filipino translation was written (the client wrote in English; inventing a translation of brand copy was avoided). No reporting or tip channel for suspected corruption was built: the statement asks readers to report wrongdoing, and the site's existing channels are the moderated Usap Bayan submissions and the contact page.
+- *Not done:* no Filipino translation was written (the client wrote in English; inventing a translation of brand copy was avoided). The channel for reporting suspected corruption that the statement asks for was built next, as ADR-024.
+
+**ADR-024 — Tip line for reporting suspected corruption (2026-11-13).** The mission statement (ADR-023) calls on every Filipino to report suspected corruption and expose wrongdoing through credible evidence. The site had no private channel for that: Usap Bayan submissions are published after moderation, and the contact details are empty. Added a tip line, modelled on the publisher applications (ADR-018).
+
+- *Public:* `/mag-ulat` ("Mag-ulat ng katiwalian" / "Report corruption"), a form with subject, details, optional agency, location, up to five https evidence links, and an optional name and contact, plus a "Before you send" list of safety notes. It posts JSON to `POST /api/public/v1/tips` (same-origin check, Zod, honeypot, `tip` rate limit of 3 per network per hour, failing closed). Linked from the header (`Mag-ulat`) and the footer (`Mag-ulat ng Katiwalian`) through navigation items, and listed in the sitemap.
+- *Private by construction:* tips live in `public.tips`, written only by the service-role function `submit_tip()`. RLS lets `tips.manage` holders read; nobody can insert, update or delete directly. Tips are never shown on the public site.
+- *Who reads them:* the new permission `tips.manage`, granted to Owner, Administrator and Editor. Not Moderator (they handle public community content) and not Writer or Analyst. Studio → Tips (`/admin/tips`) lists them by status (New, Reviewing, Verified, Dismissed) with search; `review_tip()` re-checks the permission, requires a note to dismiss, and audits each change with the two statuses only, never the tip's text. The form carries the tip's `updated_at`; if another editor saved the tip in the meantime, `review_tip()` refuses the change (`tip_changed`) instead of overwriting their status and note, and the page reloads with a warning. Outcomes are shown by the page after a server redirect (as on Applications) because a tip whose status changes leaves its tab, and its form with it. Evidence links are shown with their real host in bold (punycode for lookalike domains) and any `user@` part removed, and open with no referrer.
+- *Privacy:* the tip row holds no IP address, network hash or user agent. The rate-limit key is hashed under its own scope (`network:tip`), so the short-lived bucket (deleted after a day) cannot be matched to the network hashes stored with comments, community posts or applications. `/mag-ulat` is not page-view tracked, so a visit there leaves no analytics row next to a tip's arrival time. Name and contact are optional. Dismissed tips are deleted 180 days after dismissal by the daily retention job (each purge in that job runs on its own, so one failing does not hold back the others); verified and open tips stay.
+- *Accepted risks (security review, 2026-11-13):* (1) the only flood control is the per-network limit and the honeypot, so a spam run from many networks could bury real tips; a self-hosted proof-of-work challenge is the next step if that happens. (2) The hosting provider (Vercel) keeps its own short request logs with IP addresses; the page says so and suggests sending from a network not tied to the sender. (3) Reading a tip is not audited, only status changes. (4) Database backups keep deleted tips until the backups expire. (5) A verified tip keeps the sender's contact until someone removes it with SQL; there is no Studio control for that.
+- *Not built:* file uploads (evidence is by link only: uploads would need malware handling and a private bucket, and a file's metadata can identify its sender), email alerts to editors when a tip arrives (no email provider is configured), and a way for a sender to follow up on a tip. The page warns that a shared-file link can show its owner's name.
+- *Rollout:* the table, functions and permission are in `20261113000200_tips.sql`; `20261113000250_review_tip_conflict_code.sql` changes the stale-form error's SQLSTATE from `40001` to `22023`, because PostgREST retries `40001` as a transient serialization failure and the request never returned (found by the end-to-end check before launch; nothing was written); the header and footer links are in `20261113000300_tip_line_nav.sql`, applied only after the page was deployed so the links never pointed at a missing page.
 
 ## 6. Environment variables
 

@@ -32,6 +32,7 @@ The defaults below are seeded by the migration. Owners can change the matrix for
 | `polls.manage` | Create, edit, publish, close and archive polls | ✓ | ✓ | ✓ | — | — | — |
 | `polls.view_results` | View poll results and export them | ✓ | ✓ | ✓ | — | — | ✓ |
 | `moderation.manage` | Moderate submissions, comments and reports | ✓ | ✓ | ✓ | — | ✓ | — |
+| `tips.manage` | Read and handle tips sent through the public tip line (group Investigations; migration `20261113000200`, ADR-024) | ✓ | ✓ | ✓ | — | — | — |
 | `newsletter.view` | View subscribers | ✓ | ✓ | — | — | — | — |
 | `newsletter.manage` | Suppress, unsubscribe and export subscribers | ✓ | ✓ | — | — | — | — |
 | `analytics.view` | View analytics dashboards | ✓ | ✓ | ✓ | — | — | ✓ |
@@ -81,6 +82,7 @@ Each Studio page calls `requireStaffPage(permission)` on the server, and each se
 | `/admin/articles` | Articles | `articles.create`, `articles.view_all` |
 | `/admin/review` | Review queue | `articles.review` |
 | `/admin/moderation` | Reports | `moderation.manage` |
+| `/admin/tips` | Tips | `tips.manage` |
 | `/admin/ads` | Ad inventory | `ads.manage` |
 | `/admin/newsletter` | Audience | `newsletter.view`, `newsletter.manage` |
 | `/admin/team` | Users & roles | `users.view`, `users.manage` |

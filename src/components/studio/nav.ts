@@ -9,16 +9,17 @@ export interface StudioNavItem {
 }
 
 export type StudioIcon =
-  | "overview" | "analytics" | "articles" | "review" | "reports" | "ads" | "audience" | "users"
+  | "overview" | "analytics" | "articles" | "review" | "reports" | "tips" | "ads" | "audience" | "users"
   | "applications" | "categories" | "settings" | "create" | "account";
 
-/** Flat list in the order of the Newsmaker console (ADR-016), plus Analytics and Settings. */
+/** Flat list in the order of the Newsmaker console (ADR-016), plus Analytics, Tips (ADR-024) and Settings. */
 export const STUDIO_NAV: StudioNavItem[] = [
   { href: "/dashboard", label: "Overview", icon: "overview", anyOf: ["dashboard.view"] },
   { href: "/admin/analytics", label: "Analytics", icon: "analytics", anyOf: ["analytics.view"] },
   { href: "/admin/articles", label: "Articles", icon: "articles", anyOf: ["articles.create", "articles.view_all"] },
   { href: "/admin/review", label: "Review queue", icon: "review", anyOf: ["articles.review"] },
   { href: "/admin/moderation", label: "Reports", icon: "reports", anyOf: ["moderation.manage"] },
+  { href: "/admin/tips", label: "Tips", icon: "tips", anyOf: ["tips.manage"] },
   { href: "/admin/ads", label: "Ad inventory", icon: "ads", anyOf: ["ads.manage"] },
   { href: "/admin/newsletter", label: "Audience", icon: "audience", anyOf: ["newsletter.view", "newsletter.manage"] },
   { href: "/admin/team", label: "Users & roles", icon: "users", anyOf: ["users.view", "users.manage"] },

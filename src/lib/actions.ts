@@ -34,7 +34,8 @@ const DB_MESSAGES: Record<string, string> = {
   application_not_found: "This application no longer exists.",
   application_already_reviewed: "This application has already been reviewed.",
   invalid_application_role: "Applicants can be approved only as Writer or Moderator.",
-};
+  dismissal_reason_required: "A note is required to dismiss a tip.",
+  tip_not_found: "This tip no longer exists.",};
 
 interface PgLikeError {
   code?: string;

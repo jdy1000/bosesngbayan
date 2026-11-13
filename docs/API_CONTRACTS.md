@@ -49,6 +49,7 @@ Rate limits use `RATE_LIMITS` in `src/lib/security/rate-limit.ts`.
 | `search` | 60 | 60 s | GET `/search` |
 | `login` | 10 | 900 s | `signIn` and `requestPasswordReset` server actions |
 | `application` | 3 | 3600 s | `submitApplication` server action (public `/admin/apply` form) |
+| `tip` | 3 | 3600 s | POST `/tips` (public tip line `/mag-ulat`). The network hash is used for this bucket only and is not stored with the tip. |
 | `track` | 600 | 600 s | POST `/track`; over the limit the view is dropped and the reply is still `204` |
 
 ### Honeypot
@@ -116,9 +117,10 @@ All of these require the same-origin JSON guard described in section 1, except `
 | `POST /newsletter` | `email`: trimmed, lowercased, ≤254, valid email. `consent`: literal `true`. `source`: ≤40 chars, `^[a-z0-9_-]*$`, default `site`. `website`: honeypot. | `503` if `newsletter.enabled` is false | `newsletter` | `200 {ok:true, message, status}`. `status` is `"recorded"`, or `"subscribed"` when the address is suppressed. The consent text comes from site settings, not the client. | `429`, `500` |
 | `POST /newsletter/unsubscribe` | `token`: UUID | — | `newsletter` (shared) | `200 {ok:true, message}`. The same answer is returned whether or not the token matched. | `429`, `500` |
 | `POST /community/posts` | `kind`: `perspective` \| `question`. `title`: 5–200. `body`: 20–5000. `authorName`: 2–80. `authorEmail`: `""` or a valid email ≤254. `authorLocation`: ≤120 (default `""`). `categoryId`: UUID or null. `agree`: literal `true`. `website`. | `503` if `community.submissions_enabled` is false | `submission` | `201 {ok:true, status:"pending"\|"approved", message}` | `429`, `500` |
+| `POST /tips` | `subject`: 5–200. `details`: 30–8000. `agency`: ≤200, `location`: ≤120, `contactName`: ≤120, `contact`: ≤200 (each default `""`). `evidence`: the textarea as typed, ≤3000 chars, split on whitespace into at most 5 `https://` URLs of ≤500 chars. `agree`: literal `true`. `hp`: honeypot (≤500); a filled one gets the normal `201` and nothing is stored. | — | `tip` | `201 {ok:true, message}` | `422` (validation), `429`, `500` |
 | `POST /comments` | `articleId` or `postId` (UUID; exactly one). `parentId`: UUID or null. `authorName`: 2–80. `authorEmail`: as above. `body`: 2–2000. `website`. | `403` if `publication.comments_enabled` is false | `comment` | `201 {ok:true, status, message}` | `409` when the RPC raises `comments_closed` or `parent_not_found`; `429`; `500` |
 | `POST /reports` | `postId` or `commentId` (UUID; exactly one). `reason`: one of the 7 `report_reason` values. `details`: ≤1000 (default `""`). There is **no honeypot**. | — | `report` | `201 {ok:true, message}` | `404` (`target_not_found`), `429`, `500` |
-| `POST /track` | `path`: ≤500 chars, matching `^/(?!admin)[^\s]*$`; the query string is stripped. `articleId`: UUID or null. `referrer`: ≤1000 chars (default `""`). | Same-origin, but a mismatch is silent | `track` (silent drop) | Always `204` with `no-store`. | None. It also returns `204` over the rate limit, for cross-origin requests, DNT or GPC, likely bots (user agent shorter than 10 chars, or matching the bot regex), bodies over 2048 chars, invalid JSON or schema, and database errors. Deduplication (30 min) happens in `record_page_view`. |
+| `POST /track` | `path`: ≤500 chars, matching `^/(?!admin|mag-ulat)[^\s]*$` (Studio and the tip line are never recorded); the query string is stripped. `articleId`: UUID or null. `referrer`: ≤1000 chars (default `""`). | Same-origin, but a mismatch is silent | `track` (silent drop) | Always `204` with `no-store`. | None. It also returns `204` over the rate limit, for cross-origin requests, DNT or GPC, likely bots (user agent shorter than 10 chars, or matching the bot regex), bodies over 2048 chars, invalid JSON or schema, and database errors. Deduplication (30 min) happens in `record_page_view`. |
 
 ## 4. Cron endpoints
 
@@ -131,7 +133,7 @@ All of these require the same-origin JSON guard described in section 1, except `
 | Endpoint | Schedule (UTC) | Action | Response |
 |---|---|---|---|
 | `GET /api/cron/publish` | `5 16 * * *` (00:05 Manila) | Calls `publish_due_articles()` with the service client. Runs `revalidatePath("/", "layout")` if any article was published. | `{ok:true, published:n}` or `500 {ok:false}` |
-| `GET /api/cron/retention` | `30 19 * * *` (03:30 Manila) | Calls `purge_old_analytics()`, then `purge_old_publisher_applications()`. | `{ok:true, result:n, applications:m}` (page views and reviewed applications deleted) or `500 {ok:false}` |
+| `GET /api/cron/retention` | `30 19 * * *` (03:30 Manila) | Calls `purge_old_analytics()`, `purge_old_publisher_applications()` and `purge_old_tips()`, each on its own so one failing does not stop the others. | `{ok:true, result:n, applications:m, tips:k, failed:[]}` (page views, reviewed applications and old dismissed tips deleted). If any purge fails: `500` with `ok:false`, `null` for that purge and its key in `failed`. |
 
 Public visibility does not wait for the publish job, because `article_is_public()` already treats past-due scheduled articles as public.
 
@@ -182,6 +184,7 @@ Each action:
 | `(studio)/_media/actions.ts` | `uploadImage` (from the media picker) → `media.upload`. Images only (JPEG, PNG, WebP, GIF, AVIF), bytes sniffed by `storeUpload`; alt text required (≤300), caption ≤600, credit ≤200. Removes the stored object if the `media_assets` insert fails. Returns `{ok:true, media}` or `{ok:false, error}`. |
 | `(studio)/ads/actions.ts` | `createAdSlot`, `updateAdSlot`, `toggleAdSlot`, `deleteAdSlot` → `ads.manage`. The creative must be an image asset; the destination must be `https://`. Each revalidates the whole public site. |
 | `(studio)/applications/actions.ts` | `reviewApplication` → `users.manage`. One form with two buttons, Reject and Approve & invite. Approval sends the normal invitation through `inviteStaff` (Writer or Moderator only; no invitation or role change when the email is already staff), then calls `review_publisher_application` with the optional review note (up to 1000 characters). Rejection requires a reason (3–1000 characters). Both redirect to `/admin/applications?done=…`. |
+| `(studio)/tips/actions.ts` | `reviewTip` → `tips.manage`. Status `reviewing`, `verified` or `dismissed` and an optional staff note (≤2000; required to dismiss, enforced by `review_tip`), plus the tip's `updated_at` from when the form was built. Server-redirects to the same tab with `?done=1`, or with `?changed=1` (nothing saved, the page shows a warning) when someone else saved the tip since the form was built; other errors are shown in the form. The tab value is checked against a fixed list before the address is built. |
 | `(studio)/moderation/actions.ts` | `moderate`, `resolveReport` → `moderation.manage`. `resolveReport` sets a report to open, reviewing, resolved or dismissed with an optional resolution note. |
 | `(studio)/newsletter/actions.ts` | `setSubscriberStatus` → `newsletter.manage` + `newsletter.view` |
 | `(studio)/settings/actions.ts` | `saveSettings` → `settings.manage`. Editable keys: general, social, contact, footer, publication, community, newsletter. |

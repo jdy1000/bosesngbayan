@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: siteUrl("/balita"), changeFrequency: "hourly", priority: 0.9 },
       { url: siteUrl("/botohan"), changeFrequency: "daily", priority: 0.7 },
       { url: siteUrl("/usap-bayan"), changeFrequency: "daily", priority: 0.6 },
+      { url: siteUrl("/mag-ulat"), changeFrequency: "monthly", priority: 0.5 },
       ...categories.map((c) => ({ url: siteUrl(`/paksa/${c.slug}`), changeFrequency: "daily" as const, priority: 0.6 })),
       ...(articles.data ?? []).map((a) => ({
         url: siteUrl(`/balita/${a.slug}`),
