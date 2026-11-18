@@ -17,7 +17,7 @@ const base = {
   canonical_url: "",
   source_attribution: "",
   correction_note: "",
-  tag_ids: "[]",
+  tags_text: "",
   related_ids: "[]",
   contributors: "[]",
 };
@@ -27,7 +27,7 @@ describe("articleFormSchema", () => {
     const r = articleFormSchema.parse(base);
     expect(r.subtitle).toBeNull();
     expect(r.category_id).toBeNull();
-    expect(r.tag_ids).toEqual([]);
+    expect(r.tags_text).toEqual([]);
   });
 
   it("rejects invalid slugs, non-https canonical URLs and duplicate contributors", () => {
@@ -42,24 +42,35 @@ describe("articleFormSchema", () => {
     expect(articleFormSchema.safeParse({ ...base, contributors: dup }).success).toBe(false);
   });
 
-  it("dedupes tag ids and rejects malformed JSON", () => {
-    const t = "6f1c2f9e-0c1a-4d5b-9a8e-1b2c3d4e5f61";
-    expect(articleFormSchema.parse({ ...base, tag_ids: JSON.stringify([t, t]) }).tag_ids).toEqual([t]);
-    expect(articleFormSchema.safeParse({ ...base, tag_ids: "not json" }).success).toBe(false);
+  it("reads tags typed as a comma-separated list: trimmed, no blanks, no repeats", () => {
+    expect(articleFormSchema.parse({ ...base, tags_text: " Design, culture ,, #Manila, DESIGN \n Culture" }).tags_text).toEqual(["Design", "culture", "Manila"]);
+  });
+
+  it("refuses too many tags and over-long tags", () => {
+    const many = Array.from({ length: 21 }, (_, i) => `tag${i}`).join(",");
+    expect(articleFormSchema.safeParse({ ...base, tags_text: many }).success).toBe(false);
+    expect(articleFormSchema.safeParse({ ...base, tags_text: "x".repeat(61) }).success).toBe(false);
   });
 });
 
 const none: WorkflowPerms = { submit: false, review: false, publish: false, archive: false, editAny: false };
 const writer: WorkflowPerms = { ...none, submit: true };
+const author: WorkflowPerms = { ...none, submit: true, publish: true };
 const editor: WorkflowPerms = { submit: true, review: true, publish: true, archive: true, editAny: true };
 const targets = (a: { to: string }[]) => a.map((x) => x.to);
 
 describe("availableActions (UX mirror of transition_article)", () => {
-  it("writer can only submit own drafts and never publish", () => {
+  it("an author without publish permission can only submit own drafts", () => {
     expect(targets(availableActions("draft", writer, true))).toEqual(["pending_review"]);
     expect(availableActions("draft", writer, false)).toEqual([]);
     expect(targets(availableActions("pending_review", writer, true))).toEqual(["draft"]);
     expect(availableActions("approved", writer, true)).toEqual([]);
+  });
+
+  it("an author with publish permission can publish, schedule and unpublish own stories without a review", () => {
+    expect(targets(availableActions("draft", author, true))).toEqual(["pending_review", "published", "scheduled"]);
+    expect(targets(availableActions("published", author, true))).toEqual(["draft"]);
+    expect(availableActions("pending_review", author, true).map((a) => a.to)).toEqual(["draft"]);
   });
 
   it("editor sees review, publish, schedule, unpublish and archive paths", () => {

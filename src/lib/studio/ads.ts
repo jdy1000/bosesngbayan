@@ -3,9 +3,9 @@ import { manilaLocalToIso } from "@/lib/format";
 import { checkbox, optionalText, requiredText } from "@/lib/studio/form";
 import type { BadgeTone } from "@/components/studio/ui";
 
-export const AD_PLACEMENTS = ["home", "article"] as const;
-export type AdPlacement = (typeof AD_PLACEMENTS)[number];
-export const AD_PLACEMENT_LABELS: Record<AdPlacement, string> = { home: "Homepage", article: "Article page" };
+import { AD_PLACEMENTS } from "@/lib/ad-placements";
+
+export { AD_PLACEMENTS, AD_PLACEMENT_INFO, AD_PLACEMENT_LABELS, type AdPlacement } from "@/lib/ad-placements";
 
 export type AdStatus = "live" | "scheduled" | "expired" | "inactive";
 export const AD_STATUS: Record<AdStatus, { label: string; tone: BadgeTone }> = {

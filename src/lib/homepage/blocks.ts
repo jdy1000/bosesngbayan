@@ -10,6 +10,7 @@ import type { Locale } from "@/lib/i18n/config";
 export const BLOCK_TYPES = [
   "hero",
   "top_stories",
+  "surveys",
   "trending_topics",
   "breaking_news",
   "featured_story",
@@ -32,6 +33,7 @@ export type BlockType = (typeof BLOCK_TYPES)[number];
 export const BLOCK_LABELS: Record<BlockType, string> = {
   hero: "Hero (poll)",
   top_stories: "Top stories",
+  surveys: "Surveys (carousel)",
   trending_topics: "Trending topics",
   breaking_news: "Breaking news",
   featured_story: "Featured story",
@@ -80,6 +82,9 @@ const heroSettings = z.object({
   show_participation_count: z.boolean().default(false),
   participation_label: z.string().trim().max(120).default(""),
 });
+
+/** Surveys needs no settings: which surveys show, and in what order, is decided in Studio -> Surveys. */
+const surveysSettings = z.object({});
 
 const trendingSettings = z.object({ view_all: optionalLink });
 
@@ -189,6 +194,7 @@ const quizSettings = z.object({
 export const BLOCK_SETTINGS_SCHEMAS = {
   hero: heroSettings,
   top_stories: topStoriesSettings,
+  surveys: surveysSettings,
   trending_topics: trendingSettings,
   breaking_news: breakingSettings,
   featured_story: featuredStorySettings,

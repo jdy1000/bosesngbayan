@@ -31,10 +31,10 @@ Permissions are those in `role_permissions` (see `ADMIN_RBAC.md`). "Author" mean
 | pending_review → draft (withdraw) | the author with `articles.submit`, or `articles.review` |
 | rejected → draft | author or `articles.edit_any` |
 | pending_review → approved / rejected | `articles.review` |
-| approved / draft → published / scheduled | `articles.publish` (a direct draft → publish records the publisher as approver too) |
-| approved → draft | `articles.review` or `articles.publish` |
-| scheduled → published / draft | scheduler (service) or `articles.publish` |
-| published → draft (unpublish) | `articles.publish` |
+| approved / draft → published / scheduled | `articles.publish` and (author **or** `articles.edit_any`) (a direct draft → publish records the publisher as approver too; writers hold `articles.publish` since ADR-026, so they publish their own stories without review) |
+| approved → draft | `articles.review`, or `articles.publish` on an article you may publish |
+| scheduled → published / draft | scheduler (service), or `articles.publish` on an article you may publish |
+| published → draft (unpublish) | `articles.publish` and (author **or** `articles.edit_any`) |
 | any (except archived) → archived | `articles.archive` |
 | archived → draft (restore) | `articles.archive` |
 
@@ -44,6 +44,7 @@ Anything else raises `transition_not_allowed`, as does a transition to the same 
 
 - *New article.* `/admin/articles/new` opens the full editor. Nothing is stored until the first Save draft, Submit for review, Publish now or Schedule. That first action creates the draft owned by the writer, saves every field, and then applies the transition. If the transition fails, the draft is kept and opened with the error shown.
 - *Editor.* The Publishing card shows only the transitions in the table above that this user may take at the current status. Each one saves pending edits first.
+- *Article editor (ADR-026, 2026-11-18).* The body is built from sections (Heading, Paragraph, Image, Quote, List, Embed) with move and remove buttons; the stored document is still the TipTap JSON the site renders from, so existing articles open unchanged (anything the section editor cannot express, such as tables, is kept as a "kept as written" section). Tags are typed as a comma-separated list; unknown tags are created. The Publishing panel lists **why** the article cannot be submitted or published yet (headline, category, body text, section problems, URL slug, thumbnail image); clicking an item jumps to the field, and clicking Publish now while something is missing sends nothing and shows the list. Publishing is always a deliberate click: **Publish now**, or **Schedule publication** with a date. A thumbnail image (Story settings) is required to publish or schedule; the transition action refuses without it (`transitionArticle`), review and drafts do not need it.
 - *Review queue.* `/admin/review` (`articles.review`) lists `pending_review` articles, oldest submission first. The available actions are:
   - Approve, with an optional note;
   - Approve & publish, which needs `articles.publish`. It runs approve and then publish; if publishing fails, the article stays approved;

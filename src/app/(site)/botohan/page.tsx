@@ -17,7 +17,7 @@ export default async function PollsPage() {
   const m = t.poll;
   return (
     <div className="container-site py-10 md:py-14">
-      <header className="section-kicker mb-10 max-w-3xl">
+      <header className="mb-10 max-w-3xl">
         <h1 className="text-4xl font-semibold text-ink md:text-5xl">{m.listTitle}</h1>
         <p className="mt-3 text-lg text-ink-soft">{m.listIntro}</p>
       </header>

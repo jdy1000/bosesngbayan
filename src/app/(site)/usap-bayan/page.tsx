@@ -36,7 +36,7 @@ export default async function CommunityPage({ searchParams }: Props) {
 
   return (
     <div className="container-site py-10 md:py-14">
-      <header className="section-kicker mb-8 max-w-3xl">
+      <header className="mb-8 max-w-3xl">
         <h1 className="text-4xl font-semibold text-ink md:text-5xl">Usap Bayan</h1>
         <p className="mt-3 text-lg text-ink-soft">{c.intro}</p>
       </header>

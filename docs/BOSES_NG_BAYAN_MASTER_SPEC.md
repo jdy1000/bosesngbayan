@@ -296,6 +296,8 @@ Community submissions must pass the configured moderation process before appeari
 
 *(Client decision 2026-11-13: the mission statement asks readers to report suspected corruption. A private tip line was added at `/mag-ulat`: tips are never published, are readable only by holders of the new `tips.manage` permission (Owner, Administrator, Editor) in Studio → Tips, may be sent anonymously, and are stored without the sender's IP address. See ADR-024 in `docs/ARCHITECTURE.md`.)*
 
+*(Client request 2026-11-18: the Studio Tips page was removed. The public tip line and its table stay, but nothing in Studio reads tips now, so tips can be read only with SQL until the client decides on a replacement. See ADR-027.)*
+
 ## 3.8 Polling and voting
 
 Polling is a core functional feature, not a decorative hero element.
@@ -368,6 +370,10 @@ Build working subscription functionality:
 
 Integrate an email service only through environment-based configuration. Do not claim a campaign or confirmation email was sent unless a configured provider confirms success. Respect privacy and applicable consent requirements.
 
+## 3.11a Surveys band
+
+*(Client request 2026-11-18, ADR-025.)* A "Surveys" band sits under the homepage's lead story: a moving carousel of candidate cards (rank, name, place, overall / trust / performance percentages, photo) for the published surveys switched on for the homepage. It can be swiped or moved with ‹ › buttons, drifts on its own (waiting while it is touched, hovered or focused), and does not move by itself with reduced motion. Figures come only from what editors enter in Studio → Surveys; nothing is invented, and the small-print field carries any method or sample statement.
+
 ## 3.12 Footer
 
 Include editable:
@@ -400,6 +406,10 @@ Routes:
 The console must function as a newsroom management system, not a set of decorative forms. Use clean, information-dense layouts, clear statuses, search/filter controls, useful tables, and strong empty/loading/error states.
 
 *(Owner decision 2026-11-07: the Studio console follows the team's Newsmaker admin (ADR-016). At the owner's request these Studio modules were removed: Pages (§4.6), Media Library (§4.4), Homepage Builder (§4.5), Navigation (§4.13), SEO & redirects (§4.14), Poll management (§4.8) and the audit-log viewer. Analytics and Settings were kept. Audit rows are still written and can be read with SQL. The data stays in the database and the public site still reads it. See ADR-017 in `docs/ARCHITECTURE.md`.)*
+
+## 4.0 Surveys, article publishing and the article editor
+
+*(Client request 2026-11-18, ADR-025 to ADR-027.)* Studio → Surveys (owner, administrator, editor, writer) creates, edits, orders, publishes and deletes surveys and their candidates. Authors (writers) and editors publish their own articles without a review; review stays optional. The create-article screen is a sections builder with a Publishing panel that lists what blocks publishing. The Studio Tips page was removed (the public tip line stays).
 
 ## 4.1 Admin dashboard
 

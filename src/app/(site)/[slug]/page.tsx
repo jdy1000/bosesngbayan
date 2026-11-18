@@ -3,6 +3,7 @@ import { getPublishedPage } from "@/lib/cms/site";
 import { formatDate } from "@/lib/format";
 import { fmt } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
+import { sanitizeRichHtml } from "@/lib/rich-text/sanitize";
 import { buildMetadata } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -28,12 +29,12 @@ export default async function StaticPage({ params }: Props) {
   const { locale, t } = await getI18n();
   return (
     <article className="container-site max-w-[760px] py-10 md:py-14">
-      <header className="section-kicker mb-8">
+      <header className="mb-8">
         <h1 className="text-4xl font-semibold leading-tight text-ink md:text-5xl">{page.title}</h1>
         {page.summary && <p className="mt-3 text-lg text-ink-soft">{page.summary}</p>}
         <p className="mt-3 text-sm text-muted">{fmt(t.article.pageUpdated, { date: formatDate(page.updated_at, locale) })}</p>
       </header>
-      <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: page.body_html }} />
+      <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(page.body_html) }} />
     </article>
   );
 }

@@ -64,10 +64,13 @@ export default async function ArticlePage({ params }: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <PageViewTracker articleId={article.id} />
+      <AdSlot placement="top" />
       <ArticleView
         article={article}
         related={related}
         shareUrl={url}
+        inlineAd={<AdSlot placement="article_inline" className="my-8" />}
+        sideAd={<AdSlot placement="sidebar" />}
         afterBody={
           <>
             <AdSlot placement="article" className="mt-12" />

@@ -11,6 +11,7 @@ export const fil = {
   socialMedia: "Social media",
   footerTopics: "Mga Paksa",
   advertisement: "Anunsyo",
+  storyContinuesBelowAd: "Tuloy ang kwento sa ibaba ng anunsyo",
   language: {
     label: "Wika",
     fil: "Filipino",
@@ -114,6 +115,7 @@ export const en: typeof fil = {
   socialMedia: "Social media",
   footerTopics: "Topics",
   advertisement: "Advertisement",
+  storyContinuesBelowAd: "Story continues below advertisement",
   language: {
     label: "Language",
     fil: "Filipino",

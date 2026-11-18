@@ -19,6 +19,7 @@
     "db:reset": "supabase db reset",
     "db:types": "tsx scripts/gen-db-types.ts",
     "seed:demo": "tsx --conditions=react-server scripts/seed-demo.ts",
+    "seed:survey": "tsx scripts/seed-survey.ts",
     "bootstrap:owner": "tsx scripts/bootstrap-owner.ts"
   },
   "dependencies": {

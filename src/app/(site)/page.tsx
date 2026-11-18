@@ -29,10 +29,13 @@ export default async function HomePage() {
   // A hero block carries its own visible h1; only add the hidden one when it is absent.
   const hasHero = homepage.blocks.some((b) => b.type === "hero");
   // News first: the ad goes below the lead stories, or after the first block when there are none.
-  const adAfter = homepage.blocks.findIndex((b) => b.type === "top_stories") + 1 || 1;
+  // A Surveys block right after the top stories is rendered inside them, so the ad goes below that too.
+  const topIndex = homepage.blocks.findIndex((b) => b.type === "top_stories");
+  const adAfter = topIndex >= 0 ? topIndex + 1 + (homepage.blocks[topIndex + 1]?.type === "surveys" ? 1 : 0) : 1;
   return (
     <>
       {!hasHero && title}
+      <AdSlot placement="top" />
       <RenderBlocks blocks={homepage.blocks.slice(0, adAfter)} />
       <AdSlot placement="home" className="container-site py-6" />
       <RenderBlocks blocks={homepage.blocks.slice(adAfter)} />

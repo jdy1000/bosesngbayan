@@ -42,7 +42,14 @@ async function resolveArticles(s: ListSettings): Promise<Article[]> {
 const section = "py-10 md:py-14";
 
 /** Lead story, right rail, and a row of three (Morning "hero"). The lead image is the page's LCP. */
-export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"top_stories"> }) {
+export async function TopStoriesBlock({
+  settings,
+  between,
+}: {
+  settings: BlockSettings<"top_stories">;
+  /** Full-width band shown under the lead story and over the story grid (the homepage Surveys carousel). */
+  between?: React.ReactNode;
+}) {
   const want = 1 + settings.rail_count + settings.below_count;
   const { t } = await getI18n();
   const [leadPick, latest] = await Promise.all([
@@ -68,37 +75,37 @@ export async function TopStoriesBlock({ settings }: { settings: BlockSettings<"t
   const railList = rest.slice(1, settings.rail_count);
   const below = rest.slice(settings.rail_count, settings.rail_count + settings.below_count);
 
+  // The markup order is the phone reading order (cover, `between`, story row, rail) so keyboard and screen-reader order match it.
+  // From lg every item is placed explicitly: the rail's top card beside the cover (row 1), `between` across the full width
+  // (row 2), the story row and the rail list sharing row 3.
+  const railDivider = "lg:border-l lg:border-line lg:pl-8";
   return (
     <section aria-label={t.blocks.topStories} className="pb-8 pt-8 md:pb-10 md:pt-10">
-      {/* lg: two shared rows (subgrid). Row 1 holds the cover story and the rail's top card, so the cover ends on the
-          same line as that card; row 2 holds the story row under the cover and the rail list beside it. */}
-      <div className="container-site grid gap-10 lg:grid-cols-12 lg:gap-x-8">
-        <div className="grid content-start gap-10 lg:col-span-8 lg:row-span-2 lg:grid-rows-subgrid">
+      <div className="container-site grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-x-8">
+        <div className="lg:col-span-8 lg:row-start-1">
           <CoverStory article={lead} priority />
-          {below.length > 0 && (
-            <div className="grid gap-8 border-t border-line pt-8 sm:grid-cols-3 sm:gap-6">
-              {below.map((a) => (
-                <ArticleCard key={a.id} article={a} />
-              ))}
-            </div>
-          )}
         </div>
+        {between && <div className="min-w-0 lg:col-span-12 lg:row-start-2">{between}</div>}
+        {below.length > 0 && (
+          <div className="grid gap-8 border-t border-line pt-8 sm:grid-cols-3 sm:gap-6 lg:col-span-8 lg:row-start-3">
+            {below.map((a) => (
+              <ArticleCard key={a.id} article={a} />
+            ))}
+          </div>
+        )}
         {railTop && (
-          <aside
-            aria-label={t.blocks.moreStories}
-            className="grid content-start gap-6 lg:col-span-4 lg:row-span-2 lg:grid-rows-subgrid lg:gap-10 lg:border-l lg:border-line lg:pl-8"
-          >
+          <aside aria-label={t.blocks.moreStories} className={`lg:col-span-4 lg:col-start-9 lg:row-start-1 ${railDivider}`}>
             <ArticleCard article={railTop} fill />
-            {railList.length > 0 && (
-              <ul className="space-y-5 self-start border-t border-line pt-6 lg:pt-8">
-                {railList.map((a) => (
-                  <li key={a.id}>
-                    <ArticleCard article={a} variant="compact" />
-                  </li>
-                ))}
-              </ul>
-            )}
           </aside>
+        )}
+        {railList.length > 0 && (
+          <ul className={`space-y-5 self-start border-t border-line pt-6 lg:col-span-4 lg:col-start-9 lg:row-start-3 lg:pt-8 ${railDivider}`}>
+            {railList.map((a) => (
+              <li key={a.id}>
+                <ArticleCard article={a} variant="compact" />
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </section>

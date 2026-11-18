@@ -143,11 +143,54 @@ describe("editorial state machine", () => {
     expect(revs.rows[0]!.n).toBeGreaterThanOrEqual(2);
   });
 
-  it("writer cannot approve or publish", async () => {
+  it("a writer publishes and unpublishes their own story without a review (client decision 2026-11-18)", async () => {
     const id = await newDraft(writer, "writer-publish");
-    await expect(transition(writer, id, "published")).rejects.toThrow(/transition_not_allowed/);
+    await transition(writer, id, "published");
+    const row = await db.query<{ status: string; approved_by: string; published_by: string }>(
+      "select status, approved_by, published_by from public.articles where id = $1",
+      [id],
+    );
+    expect(row.rows[0]).toMatchObject({ status: "published", approved_by: writer, published_by: writer });
+    await transition(writer, id, "draft");
+    expect(await statusOf(id)).toBe("draft");
+  });
+
+  it("a writer still cannot approve or reject; review stays an editor's job", async () => {
+    const id = await newDraft(writer, "writer-review");
     await transition(writer, id, "pending_review");
     await expect(transition(writer, id, "approved")).rejects.toThrow(/transition_not_allowed/);
+    await expect(transition(writer, id, "rejected", "nope")).rejects.toThrow(/transition_not_allowed/);
+  });
+
+  it("republishing an unpublished story marks it as updated, so a quiet rewrite shows", async () => {
+    const id = await newDraft(writer, "quiet-rewrite");
+    await transition(writer, id, "published");
+    const first = await db.query<{ content_updated_at: string | null }>("select content_updated_at from public.articles where id = $1", [id]);
+    expect(first.rows[0]!.content_updated_at).toBeNull();
+    await transition(writer, id, "draft");
+    await transition(writer, id, "published");
+    const again = await db.query<{ content_updated_at: string | null }>("select content_updated_at from public.articles where id = $1", [id]);
+    expect(again.rows[0]!.content_updated_at).not.toBeNull();
+  });
+
+  it("a writer cannot publish, schedule or unpublish another author's story by id", async () => {
+    const theirs = await newDraft(writer2, "writer2-story");
+    await expect(transition(writer, theirs, "published")).rejects.toThrow(/transition_not_allowed/);
+    await transition(writer2, theirs, "published");
+    await expect(transition(writer, theirs, "draft")).rejects.toThrow(/transition_not_allowed/);
+    expect(await statusOf(theirs)).toBe("published");
+  });
+
+  it("a writer cannot raise homepage flags (featured, breaking, editor's pick); the editor can", async () => {
+    const id = await newDraft(writer, "writer-flags");
+    for (const flag of ["is_featured", "is_breaking", "is_editors_pick"]) {
+      await expect(asRole(db, "authenticated", writer, (tx) => tx.query(`update public.articles set ${flag} = true where id = $1`, [id]))).rejects.toThrow(
+        /placement_requires_publish_permission/,
+      );
+    }
+    await asRole(db, "authenticated", editor, (tx) => tx.query("update public.articles set is_featured = true where id = $1", [id]));
+    const r = await db.query<{ is_featured: boolean }>("select is_featured from public.articles where id = $1", [id]);
+    expect(r.rows[0]!.is_featured).toBe(true);
   });
 
   it("writer cannot submit someone else's draft", async () => {

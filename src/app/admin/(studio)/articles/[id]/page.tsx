@@ -23,6 +23,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
     archive: has("articles.archive"),
     editAny: has("articles.edit_any"),
     taxonomy: has("taxonomy.manage"),
+    placement: has("articles.publish") && has("articles.edit_any"),
   };
 
   return (

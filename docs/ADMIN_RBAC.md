@@ -20,7 +20,7 @@ The defaults below are seeded by the migration. Owners can change the matrix for
 | `articles.view_all` | View all articles regardless of author | ✓ | ✓ | ✓ | — | — | — |
 | `articles.submit` | Submit articles for editorial review | ✓ | ✓ | ✓ | ✓ | — | — |
 | `articles.review` | Approve or reject submitted articles | ✓ | ✓ | ✓ | — | — | — |
-| `articles.publish` | Publish, schedule and unpublish articles; set homepage flags | ✓ | ✓ | ✓ | — | — | — |
+| `articles.publish` | Publish, schedule and unpublish articles; set homepage flags (writers: their own articles only; ADR-025) | ✓ | ✓ | ✓ | — | ✓ | — |
 | `articles.archive` | Archive and restore articles | ✓ | ✓ | ✓ | — | — | — |
 | `articles.delete` | Permanently delete articles | ✓ | ✓ | — | — | — | — |
 | `media.upload` | Upload media and edit own media | ✓ | ✓ | ✓ | ✓ | — | — |
@@ -32,7 +32,7 @@ The defaults below are seeded by the migration. Owners can change the matrix for
 | `polls.manage` | Create, edit, publish, close and archive polls | ✓ | ✓ | ✓ | — | — | — |
 | `polls.view_results` | View poll results and export them | ✓ | ✓ | ✓ | — | — | ✓ |
 | `moderation.manage` | Moderate submissions, comments and reports | ✓ | ✓ | ✓ | — | ✓ | — |
-| `tips.manage` | Read and handle tips sent through the public tip line (group Investigations; migration `20261113000200`, ADR-024) | ✓ | ✓ | ✓ | — | — | — |
+| `tips.manage` | Read and handle tips sent through the public tip line (group Investigations; migration `20261113000200`, ADR-024; its Studio page was removed on 2026-11-18, ADR-027, the permission and table remain) | ✓ | ✓ | ✓ | — | — | — |
 | `newsletter.view` | View subscribers | ✓ | ✓ | — | — | — | — |
 | `newsletter.manage` | Suppress, unsubscribe and export subscribers | ✓ | ✓ | — | — | — | — |
 | `analytics.view` | View analytics dashboards | ✓ | ✓ | ✓ | — | — | ✓ |
@@ -40,13 +40,14 @@ The defaults below are seeded by the migration. Owners can change the matrix for
 | `users.manage` | Invite, change roles and deactivate team members | ✓ | ✓ | — | — | — | — |
 | `settings.manage` | Edit site settings | ✓ | ✓ | — | — | — | — |
 | `ads.manage` | Create, edit, activate and delete ad slots (group Site; migration `20261107000100`) | ✓ | ✓ | — | — | — | — |
+| `surveys.manage` | Create, edit, publish and delete surveys and their candidates (group Site; migration `20261118000200`, ADR-025) | ✓ | ✓ | ✓ | ✓ | — | — |
 | `seo.manage` | Manage redirects and global SEO defaults | ✓ | ✓ | — | — | — | — |
 | `audit.view` | View audit logs | ✓ | ✓ | — | — | — | — |
 | `roles.manage` | Edit the role permission matrix (owner only) | ✓ | — | — | — | — | — |
 
 The role intent follows the master spec §5:
 
-- **Writers** draft and submit but cannot publish.
+- **Writers** ("authors") draft, submit for review and, since 2026-11-18 (ADR-026), publish or schedule their **own** stories without a review. They cannot publish, schedule or unpublish another author's story, cannot set homepage placement flags (featured, breaking, editor's pick) and still cannot approve or reject. They also manage Surveys.
 - **Editors** run the newsroom: review, publish, homepage, polls, pages, taxonomy, media and moderation. They do not have team, settings, SEO or navigation rights.
 - **Moderators** handle only the community queues.
 - **Analysts** have read-only dashboards and poll results.
@@ -82,7 +83,7 @@ Each Studio page calls `requireStaffPage(permission)` on the server, and each se
 | `/admin/articles` | Articles | `articles.create`, `articles.view_all` |
 | `/admin/review` | Review queue | `articles.review` |
 | `/admin/moderation` | Reports | `moderation.manage` |
-| `/admin/tips` | Tips | `tips.manage` |
+| `/admin/surveys` | Surveys | `surveys.manage` |
 | `/admin/ads` | Ad inventory | `ads.manage` |
 | `/admin/newsletter` | Audience | `newsletter.view`, `newsletter.manage` |
 | `/admin/team` | Users & roles | `users.view`, `users.manage` |
@@ -94,15 +95,18 @@ Each Studio page calls `requireStaffPage(permission)` on the server, and each se
 | `/admin/preview/articles/[id]` | — | staff session plus read access to that draft (RLS) |
 | `/admin/apply` | — | public, no sign-in needed (`src/proxy.ts` lets it through). It stores an application only and grants no access (ADR-018). |
 
+Removed on 2026-11-18 (ADR-027): `/admin/tips` (the Tips page; the public tip line, its table and the permission remain).
+
 Deleted on 2026-11-07 (ADR-017): `/admin/pages`, `/admin/media`, `/admin/homepage`, `/admin/navigation`, `/admin/seo`, `/admin/polls`, `/admin/audit`, `/admin/preview/pages` and `/admin/preview/homepage`.
 
 ## 4. Tests
 
 `tests/db/*.test.ts` covers both allowed and denied operations per role in PGlite. Examples:
 
-- a writer cannot publish or edit another writer's draft;
+- a writer publishes and unpublishes their own story without review, but cannot publish, unpublish or edit another writer's, and cannot approve or reject;
 - analysts and moderators cannot create articles, and writers cannot moderate;
-- writers cannot create polls or set homepage placement flags;
+- writers cannot create polls or set homepage placement flags (`articles_guard` needs publish **and** edit_any);
+- surveys: the public reads published surveys only; owner, administrator, editor and writer manage them; moderators and analysts cannot write;
 - an administrator cannot promote to Owner;
 - an administrator cannot deactivate the Owner, and deactivated staff lose all permissions at once;
 - only the Owner can edit the permission matrix;

@@ -122,7 +122,8 @@ export async function saveArticle(id: string, expectedUpdatedAt: string, formDat
     }
     const f = parsed.data;
     const rendered = renderRichText(JSON.parse(f.body));
-    const canPlace = ctx.permissions.has("articles.publish") && formData.get("placement_present") === "1";
+    // Homepage flags are for editors and above (the articles_guard trigger enforces the same rule).
+    const canPlace = ctx.permissions.has("articles.publish") && ctx.permissions.has("articles.edit_any") && formData.get("placement_present") === "1";
     const canReassign = ctx.permissions.has("articles.edit_any") && f.author_id;
 
     const { data: updated, error } = await ctx.supabase
@@ -170,7 +171,8 @@ export async function saveArticle(id: string, expectedUpdatedAt: string, formDat
       return { ok: false, error: "You can no longer edit this article in its current status." };
     }
 
-    await syncRelations(ctx, id, f);
+    // Autosave (makeRevision = false) only links tags that already exist, so a half-typed word never becomes a site-wide tag.
+    await syncRelations(ctx, id, f, makeRevision);
     if (makeRevision) unwrap(await ctx.supabase.rpc("snapshot_article", { p_article_id: id, p_note: "Manual save" }));
     if (isPublic(updated.status, updated.published_at)) await revalidateArticle(ctx, updated.slug, updated.category_id);
     return { ok: true, updatedAt: updated.updated_at };
@@ -181,12 +183,33 @@ export async function saveArticle(id: string, expectedUpdatedAt: string, formDat
 
 type ArticleForm = z.infer<typeof articleFormSchema>;
 
+/** Tag names typed in the editor -> tag ids; names that do not exist yet are created (anyone who can write articles may). */
+async function resolveTagIds(ctx: StaffContext, names: string[], create: boolean): Promise<string[]> {
+  const bySlug = new Map<string, string>();
+  for (const name of names) {
+    const slug = slugify(name, 80);
+    if (slug && !bySlug.has(slug)) bySlug.set(slug, name);
+  }
+  const slugs = [...bySlug.keys()];
+  if (slugs.length === 0) return [];
+  const find = async () => need(await ctx.supabase.from("tags").select("id, slug").in("slug", slugs));
+  const have = new Set((await find()).map((t) => t.slug));
+  const missing = slugs.filter((s) => !have.has(s));
+  if (create && missing.length > 0) {
+    // ignoreDuplicates: another save may have created the same tag a moment ago; the lookup below picks it up.
+    const { error } = await ctx.supabase.from("tags").upsert(missing.map((slug) => ({ name: bySlug.get(slug)!, slug })), { onConflict: "slug", ignoreDuplicates: true });
+    if (error) throw error;
+  }
+  return (await find()).map((t) => t.id);
+}
+
 /** Diff-based sync so a failure mid-way never wipes existing tags/credits wholesale. */
-async function syncRelations(ctx: StaffContext, id: string, f: ArticleForm) {
+async function syncRelations(ctx: StaffContext, id: string, f: ArticleForm, createTags: boolean) {
   const db = ctx.supabase;
+  const tagIds = await resolveTagIds(ctx, f.tags_text, createTags);
   const tags = need(await db.from("article_tags").select("tag_id").eq("article_id", id)).map((t) => t.tag_id);
-  const removeTags = tags.filter((t) => !f.tag_ids.includes(t));
-  const addTags = f.tag_ids.filter((t) => !tags.includes(t));
+  const removeTags = tags.filter((t) => !tagIds.includes(t));
+  const addTags = tagIds.filter((t) => !tags.includes(t));
   if (removeTags.length) unwrap(await db.from("article_tags").delete().eq("article_id", id).in("tag_id", removeTags));
   if (addTags.length) unwrap(await db.from("article_tags").insert(addTags.map((tag_id) => ({ article_id: id, tag_id }))));
 
@@ -230,6 +253,11 @@ export async function transitionArticle(
     if (t.to === "scheduled") {
       publishAt = manilaLocalToIso(t.publish_at ?? "");
       if (!publishAt) return { ok: false, error: "Choose a valid date and time for the schedule." };
+    }
+    if (t.to === "published" || t.to === "scheduled") {
+      // Story cards and shared links need a picture, so an article goes out only with a thumbnail (the editor lists this too).
+      const a = need(await ctx.supabase.from("articles").select("featured_image_id").eq("id", id).single());
+      if (!a.featured_image_id) return { ok: false, error: "Add a thumbnail image in Story settings before publishing or scheduling." };
     }
     const row = need(
       await ctx.supabase.rpc("transition_article", { p_article_id: id, p_to: t.to, p_note: t.note || null, p_publish_at: publishAt }),
@@ -344,21 +372,4 @@ export async function searchArticlesForRelated(q: string, excludeId: string): Pr
   if (excludeId) query = query.neq("id", uuid.parse(excludeId));
   if (term) query = query.ilike("title", safeLike(term));
   return need(await query);
-}
-
-const tagSchema = z.object({ name: z.string().trim().min(1, "Enter a tag name.").max(80, "Tag is too long.") });
-
-export async function createTag(name: string): Promise<{ ok: true; tag: { id: string; name: string } } | { ok: false; error: string }> {
-  try {
-    const ctx = await requirePermission("taxonomy.manage");
-    const t = tagSchema.parse({ name });
-    const slug = slugify(t.name, 80);
-    if (!slug) return { ok: false, error: "Invalid tag name." };
-    const existing = unwrap(await ctx.supabase.from("tags").select("id, name").eq("slug", slug).maybeSingle());
-    if (existing) return { ok: true, tag: existing };
-    const tag = need(await ctx.supabase.from("tags").insert({ name: t.name, slug }).select("id, name").single());
-    return { ok: true, tag };
-  } catch (e) {
-    return toActionError(e);
-  }
 }

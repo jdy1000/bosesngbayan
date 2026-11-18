@@ -14,20 +14,27 @@ export function Logo({
 }: {
   siteName: string;
   logoUrl?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   inverted?: boolean;
   /** Only the header logo is above the fold; the footer copy must not compete for preload bandwidth. */
   priority?: boolean;
 }) {
-  const scale = size === "lg" ? "text-[2.6rem]" : size === "sm" ? "text-[1.45rem]" : "text-[1.9rem] sm:text-[2.1rem]";
+  const scale =
+    size === "xl"
+      ? "text-[2.05rem] sm:text-[2.45rem]"
+      : size === "lg"
+        ? "text-[2.6rem]"
+        : size === "sm"
+          ? "text-[1.45rem]"
+          : "text-[1.9rem] sm:text-[2.1rem]";
   if (logoUrl) {
     return (
       <Image
         src={logoUrl}
         alt={siteName}
-        width={size === "lg" ? 220 : 170}
-        height={size === "lg" ? 80 : 60}
-        className="h-auto w-auto max-h-11 object-contain"
+        width={size === "xl" ? 280 : size === "lg" ? 220 : 170}
+        height={size === "xl" ? 100 : size === "lg" ? 80 : 60}
+        className={`h-auto w-auto object-contain ${size === "xl" ? "max-h-14 sm:max-h-[4.25rem]" : "max-h-11"}`}
         preload={priority}
       />
     );

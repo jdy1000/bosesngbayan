@@ -136,7 +136,7 @@ where not exists (select 1 from public.trending_topics);
 
 -- Starter pages are created as DRAFTS so nothing unreviewed goes public.
 insert into public.pages (slug, title, summary, status) values
-  ('tungkol', 'Tungkol sa Boses ng Bayan', 'Sino kami at bakit kami narito.', 'draft'),
+  ('tungkol', 'Boses ng Bayan', 'Sino kami at bakit kami narito.', 'draft'),
   ('makipag-ugnayan', 'Makipag-ugnayan', 'Paano kami makakausap.', 'draft'),
   ('patakarang-editoryal', 'Patakarang Editoryal', 'Ang aming mga pamantayan sa pamamahayag.', 'draft'),
   ('privacy-policy', 'Privacy Policy', 'Paano namin pinangangalagaan ang iyong datos.', 'draft'),
@@ -163,8 +163,9 @@ begin
     (v_cfg, 'breaking_news', 2, null, null, jsonb_build_object('limit', 5)),
     (v_cfg, 'top_stories', 3, null, null, jsonb_build_object(
       'lead_source', 'featured', 'lead_article_id', null, 'rail_count', 4, 'below_count', 3)),
+    (v_cfg, 'surveys', 4, 'Mga Survey', null, '{}'::jsonb),
     -- Mission band (ADR-023); same content as migration 20261113000400_homepage_mission_band.sql.
-    (v_cfg, 'custom_cta', 4, 'The People''s Voice. The Public''s Watchdog.',
+    (v_cfg, 'custom_cta', 5, 'The People''s Voice. The Public''s Watchdog.',
       'More than a public opinion research platform, Boses ng Bayan serves as a watchdog of public service. Our commitment is to the Filipino people—not to political parties, powerful personalities, or vested interests.',
       jsonb_build_object('variant', 'feature_tiles',
         'cta', jsonb_build_object('label', 'Mag-ulat ng Katiwalian', 'label_en', 'Report corruption', 'href', '/mag-ulat'),
@@ -175,15 +176,15 @@ begin
           jsonb_build_object('icon', 'newspaper', 'label', 'Seek the Truth.'),
           jsonb_build_object('icon', 'shield', 'label', 'Expose Corruption.'),
           jsonb_build_object('icon', 'vote', 'label', 'Demand Accountability.')))),
-    (v_cfg, 'latest_articles', 5, 'Pinakabagong Balita', null, jsonb_build_object(
+    (v_cfg, 'latest_articles', 6, 'Pinakabagong Balita', null, jsonb_build_object(
       'source', 'latest', 'category_id', null, 'article_ids', '[]'::jsonb, 'limit', 6, 'with_sidebar', true,
       'view_all', jsonb_build_object('label', 'Lahat ng balita', 'href', '/balita'))),
-    (v_cfg, 'editors_picks', 6, 'Pili ng Editor', null, jsonb_build_object(
+    (v_cfg, 'editors_picks', 7, 'Pili ng Editor', null, jsonb_build_object(
       'source', 'editors_picks', 'category_id', null, 'article_ids', '[]'::jsonb, 'limit', 6, 'with_sidebar', false, 'view_all', null)),
-    (v_cfg, 'newsletter', 7, 'Balitang mahalaga, diretso sa inbox mo.', 'Isang maikling buod ng mga pangunahing balita, isang beses sa isang araw. Libre at puwedeng ihinto anumang oras.', jsonb_build_object('source', 'homepage')),
-    (v_cfg, 'category_showcase', 8, 'Mga Seksyon', null, jsonb_build_object('category_ids', '[]'::jsonb, 'per_category', 4)),
-    (v_cfg, 'regional_news', 9, 'Balitang Rehiyon', 'Mga kwento mula sa Luzon, Visayas, at Mindanao.', jsonb_build_object('location_ids', '[]'::jsonb, 'per_location', 3)),
-    (v_cfg, 'poll_showcase', 10, 'Botohan ng Araw', null, jsonb_build_object('poll_id', null, 'show_active_list', false, 'limit', 3));
+    (v_cfg, 'newsletter', 8, 'Balitang mahalaga, diretso sa inbox mo.', 'Isang maikling buod ng mga pangunahing balita, isang beses sa isang araw. Libre at puwedeng ihinto anumang oras.', jsonb_build_object('source', 'homepage')),
+    (v_cfg, 'category_showcase', 9, 'Mga Seksyon', null, jsonb_build_object('category_ids', '[]'::jsonb, 'per_category', 4)),
+    (v_cfg, 'regional_news', 10, 'Balitang Rehiyon', 'Mga kwento mula sa Luzon, Visayas, at Mindanao.', jsonb_build_object('location_ids', '[]'::jsonb, 'per_location', 3)),
+    (v_cfg, 'poll_showcase', 11, 'Botohan ng Araw', null, jsonb_build_object('poll_id', null, 'show_active_list', false, 'limit', 3));
   end loop;
 end;
 $$;
@@ -194,6 +195,7 @@ update public.homepage_sections s set
   description_en = coalesce(s.description_en, v.description_en)
 from (values
   ('Trending', 'Trending', null),
+  ('Mga Survey', 'Surveys', null),
   ('Pinakabagong Balita', 'Latest News', null),
   ('Pili ng Editor', 'Editor''s Picks', null),
   ('Balitang mahalaga, diretso sa inbox mo.', 'News that matters, straight to your inbox.', 'A short summary of the top stories, once a day. Free, and you can stop anytime.'),

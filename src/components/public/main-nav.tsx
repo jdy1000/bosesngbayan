@@ -120,7 +120,7 @@ export function MainNav({
       <div
         id={panelId}
         hidden={!open}
-        className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-paper px-4 pb-10 pt-4 lg:hidden"
+        className="fixed inset-x-0 bottom-0 top-[4.5rem] z-40 sm:top-20 overflow-y-auto bg-paper px-4 pb-10 pt-4 lg:hidden"
       >
         <nav aria-label={t.common.mobileNav}>
           <ul className="flex flex-col">

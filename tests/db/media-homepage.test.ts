@@ -121,12 +121,14 @@ describe("homepage mission band (20261113000400)", () => {
       )
     ).rows;
 
-  it("sits right after the top stories in the draft and published homepage, with valid settings", async () => {
+  it("sits after the top stories (behind the Surveys band) in the draft and published homepage, with valid settings", async () => {
     const { parseSection } = await import("@/lib/homepage/blocks");
     for (const status of ["draft", "published"] as const) {
       const rows = await layout(status);
       const types = rows.map((r) => r.block_type);
-      expect(types.indexOf(BAND), status).toBe(types.indexOf("top_stories") + 1);
+      // Between the top stories and the band there is only the Surveys band (migration 20261118000200).
+      expect(types.slice(types.indexOf("top_stories") + 1, types.indexOf(BAND)).filter((t) => t !== "surveys"), status).toEqual([]);
+      expect(types.indexOf(BAND), status).toBeGreaterThan(types.indexOf("top_stories"));
       const band = rows.find((r) => r.block_type === BAND)!;
       const { block, issues } = parseSection({ id: "b", block_type: BAND, title: band.title, description: null, settings: band.settings });
       expect(issues).toEqual([]);
@@ -138,13 +140,16 @@ describe("homepage mission band (20261113000400)", () => {
     const before = await layout("published");
     await runMigration();
     expect((await layout("published")).map((r) => r.block_type)).toEqual(before.map((r) => r.block_type));
+    const sorted = (rows: { block_type: string }[]) => rows.map((r) => r.block_type).sort();
     await db.query(
       `delete from public.homepage_sections where block_type = $1 and configuration_id = (select id from public.homepage_configurations where status = 'published')`,
       [BAND],
     );
     await runMigration();
     const after = await layout("published");
-    expect(after.map((r) => r.block_type)).toEqual(before.map((r) => r.block_type));
+    // Re-inserted right after top_stories, so it now sits ahead of the Surveys band: same sections, order aside.
+    expect(sorted(after)).toEqual(sorted(before));
+    expect(after.map((r) => r.block_type).indexOf(BAND)).toBe(after.map((r) => r.block_type).indexOf("top_stories") + 1);
     expect(new Set(after.map((r) => r.position)).size).toBe(after.length);
   });
 });

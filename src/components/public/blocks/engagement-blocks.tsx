@@ -181,10 +181,7 @@ export async function NewsletterBlock({ title, description, settings }: { title:
     <section className="bg-brand-50 py-12 md:py-16">
       <div className="container-site grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
         <div>
-          <p className="flex items-center gap-3 text-[0.72rem] font-bold uppercase tracking-[0.14em] text-accent-700">
-            <span aria-hidden="true" className="h-0.5 w-8 bg-accent" />
-            Newsletter
-          </p>
+          <p className="text-[0.72rem] font-bold uppercase tracking-[0.14em] text-accent-700">Newsletter</p>
           <h2 className="mt-3 text-[1.9rem] font-bold leading-[1.1] tracking-[-0.02em] text-ink md:text-[2.5rem]">{title ?? site.footer.newsletter_title}</h2>
           {(description ?? site.footer.newsletter_description) && (
             <p className="mt-3 max-w-md text-[1.05rem] text-ink-soft">{description ?? site.footer.newsletter_description}</p>
@@ -238,7 +235,7 @@ export async function CustomCtaBlock({ title, description, settings }: { title: 
     return (
       <section className="bg-surface py-14 md:py-18">
         <div className="container-site grid gap-10 lg:grid-cols-[0.9fr_1.4fr] lg:items-center">
-          <div className="section-kicker">
+          <div>
             <h2 className="text-3xl font-semibold leading-tight text-ink md:text-[2.4rem]">{title}</h2>
             {description && <p className="mt-3 text-lg text-ink-soft">{description}</p>}
             <CtaLinks settings={settings} className="mt-6 flex flex-wrap gap-3" primary="btn btn-primary" secondary="btn btn-outline" />

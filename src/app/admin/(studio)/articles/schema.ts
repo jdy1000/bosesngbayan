@@ -50,6 +50,26 @@ const jsonArray = <T extends z.ZodType>(item: T, max: number) =>
     })
     .pipe(z.array(item).max(max, `${max} maximum.`));
 
+/** "Design, Culture, Manila" -> ["Design", "Culture", "Manila"]: trimmed, no blanks, no repeats (any letter case). */
+const MAX_TAGS = 20;
+const MAX_TAG_LENGTH = 60;
+const tagList = z
+  .string()
+  .max(1200, "Tags: too long.")
+  .default("")
+  .transform((v) => {
+    const seen = new Set<string>();
+    return v
+      .split(/[,\n]/)
+      .map((t) => t.trim().replace(/^#/, "").trim())
+      .filter((t) => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
+  })
+  .pipe(
+    z
+      .array(z.string().max(MAX_TAG_LENGTH, `Each tag can be up to ${MAX_TAG_LENGTH} characters.`))
+      .max(MAX_TAGS, `Use at most ${MAX_TAGS} tags.`),
+  );
+
 export const articleFormSchema = z.object({
   title: z.string().trim().min(1, "Enter a title.").max(300, "Title: 300 characters maximum."),
   subtitle: optText(400, "Subtitle"),
@@ -66,7 +86,7 @@ export const articleFormSchema = z.object({
   canonical_url: canonicalUrl,
   source_attribution: optText(1000, "Source"),
   correction_note: optText(1000, "Correction"),
-  tag_ids: jsonArray(z.uuid(), 30).transform((a) => [...new Set(a)]),
+  tags_text: tagList,
   related_ids: jsonArray(z.uuid(), 12).transform((a) => [...new Set(a)]),
   contributors: jsonArray(
     z.object({

@@ -13,7 +13,7 @@ export default async function TipLinePage() {
   const c = t.tips;
   return (
     <div className="container-site py-10 md:py-14">
-      <header className="section-kicker mb-8 max-w-3xl">
+      <header className="mb-8 max-w-3xl">
         {/* The client's call to action, in its own words (ADR-023). */}
         <p className="text-xs font-bold uppercase tracking-wider text-accent">Speak Up. Seek the Truth. Expose Corruption. Demand Accountability.</p>
         <h1 className="mt-2 text-4xl font-semibold text-ink md:text-5xl">{c.title}</h1>

@@ -3,15 +3,17 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, History, Save } from "lucide-react";
-import { RichTextEditor } from "@/components/studio/rich-text-editor";
+import { Eye, History } from "lucide-react";
 import { MediaPicker, type PickedMedia } from "@/components/studio/media-picker";
-import { Field, Notice, Panel, StatusBadge } from "@/components/studio/ui";
+import { Field, Notice, Panel } from "@/components/studio/ui";
 import { formatDateTime, slugify } from "@/lib/format";
+import { docToSections, type Section } from "@/lib/rich-text/sections";
 import type { ArticleForEdit, EditorOptions, PickedImage } from "@/lib/studio/articles";
 import { createArticleFromEditor, saveArticle } from "../actions";
 import { SaveIndicator, useAutosave } from "./use-autosave";
-import { ContributorsPicker, RelatedPicker, TagPicker } from "./relation-pickers";
+import { ContributorsPicker, RelatedPicker } from "./relation-pickers";
+import { SectionBodyEditor } from "./section-body-editor";
+import { articleIssues } from "./article-issues";
 import { WorkflowPanel } from "./workflow-panel";
 import { availableActions, type WorkflowPerms } from "./workflow";
 
@@ -26,7 +28,7 @@ export function ArticleEditor({
 }: {
   data: ArticleForEdit;
   options: EditorOptions;
-  perms: WorkflowPerms & { taxonomy: boolean };
+  perms: WorkflowPerms & { taxonomy: boolean; /** Homepage flags (featured, breaking, editor's pick): editors and above. */ placement: boolean };
   userId: string;
   /** Unsaved article: nothing is written (and autosave stays off) until the first explicit save or action. */
   isNew?: boolean;
@@ -54,6 +56,16 @@ export function ArticleEditor({
   const [slug, setSlug] = useState(article.slug);
   const [slugAuto, setSlugAuto] = useState(!article.first_published_at && article.slug === slugify(article.title, 150));
   const [featured, setFeatured] = useState<PickedImage | PickedMedia | null>(data.image);
+  const [categoryId, setCategoryId] = useState(article.category_id ?? "");
+  const [sections, setSections] = useState<Section[]>(() => {
+    const parsed = docToSections(article.body);
+    return parsed.length > 0 ? parsed : [{ id: "s0", kind: "paragraph", text: "" }];
+  });
+  const issues = articleIssues({ title, slug, categoryId, sections, hasThumbnail: featured !== null });
+  const tagNames = data.tagIds
+    .map((id) => options.tags.find((t) => t.id === id)?.name)
+    .filter(Boolean)
+    .join(", ");
   const isAuthor = article.author_id === userId;
   const actions = availableActions(article.status, perms, isAuthor);
   const err = (name: string) => (field === name ? message ?? undefined : undefined);
@@ -64,13 +76,23 @@ export function ArticleEditor({
       if (!createdId.current && !(await saveNow(true))) return createdId.current;
       return createdId.current;
     }
-    return disabled || !isDirty() || (await saveNow(false)) ? article.id : null;
+    // An explicit save (not autosave): this is where tags typed in the form become real tags.
+    return disabled || !isDirty() || (await saveNow(true)) ? article.id : null;
   }
 
   function openSaved(id: string) {
     if (isNew) router.replace(`/admin/articles/${id}`);
     else router.refresh();
   }
+
+  const authorName = options.people.find((p) => p.id === article.author_id)?.display_name ?? "";
+  const savedInfo = disabled ? (
+    <span>Read only</span>
+  ) : isNew && status === "saved" ? (
+    <span>Save before previewing your changes.</span>
+  ) : (
+    <SaveIndicator status={status} message={message} savedAt={savedAt} />
+  );
 
   return (
     <form
@@ -84,36 +106,6 @@ export function ArticleEditor({
       }}
       className="grid gap-6 min-[1101px]:grid-cols-[minmax(0,1fr)_320px]"
     >
-      {/* Sticks under the Studio top bar (64px, 68px from lg), not under the viewport edge where the bar would cover it. */}
-      <div className="sticky top-16 z-20 -mx-5 flex flex-wrap items-center gap-3 border-b border-line bg-surface/95 px-5 py-3 backdrop-blur lg:top-[68px] lg:-mx-8 lg:px-8 min-[1101px]:col-span-2">
-        <StatusBadge status={article.status} />
-        {disabled ? (
-          <span className="text-sm text-muted">Read only</span>
-        ) : isNew && status === "saved" ? (
-          <span className="text-sm text-muted">Not saved yet</span>
-        ) : (
-          <SaveIndicator status={status} message={message} savedAt={savedAt} />
-        )}
-        <div className={`ml-auto flex flex-wrap gap-2 ${isNew ? "hidden" : ""}`}>
-          {/* A new article has no id yet, so these two would point at pages that do not exist. */}
-          {!isNew && (
-            <>
-              <Link href={`/admin/preview/articles/${article.id}`} target="_blank" onClick={(e) => previewAfterSave(e, isDirty() && !disabled, saveNow)} className="btn btn-outline min-h-9 px-3 text-sm">
-                <Eye className="h-4 w-4" aria-hidden="true" /> Preview
-              </Link>
-              <Link href={`/admin/articles/${article.id}/history`} className="btn btn-outline min-h-9 px-3 text-sm">
-                <History className="h-4 w-4" aria-hidden="true" /> History
-              </Link>
-            </>
-          )}
-          {!disabled && (
-            <button type="submit" disabled={status === "saving" || status === "conflict"} className="btn btn-primary min-h-9 px-3 text-sm">
-              <Save className="h-4 w-4" aria-hidden="true" /> Save
-            </button>
-          )}
-        </div>
-      </div>
-
       {status === "conflict" && (
         <div className="min-[1101px]:col-span-2">
           <Notice tone="error">
@@ -141,12 +133,12 @@ export function ArticleEditor({
         </div>
       )}
 
-      <fieldset disabled={disabled} className="min-w-0 space-y-5">
+      <fieldset disabled={disabled} className="min-w-0 space-y-6">
         <Field label="Title" htmlFor="title" error={err("title")}>
           <input
             id="title"
             name="title"
-            className="field text-xl font-semibold"
+            className="field !min-h-14 text-xl font-semibold"
             required
             maxLength={300}
             placeholder="Write a headline…"
@@ -157,14 +149,46 @@ export function ArticleEditor({
             }}
           />
         </Field>
-        <Field label="Subtitle" htmlFor="subtitle" error={err("subtitle")}>
-          <input id="subtitle" name="subtitle" className="field" maxLength={400} defaultValue={article.subtitle ?? ""} />
+
+        <Field
+          label="Publisher name"
+          htmlFor="author_id"
+          hint={
+            <>
+              Name shown in the article byline. Manage your name in{" "}
+              <Link href="/admin/account" className="font-semibold text-brand hover:underline">
+                My account
+              </Link>
+              . Existing article credits are preserved.
+            </>
+          }
+        >
+          {perms.editAny ? (
+            <select id="author_id" name="author_id" className="field" defaultValue={article.author_id}>
+              {options.people.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.display_name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input id="author_id" className="field" value={authorName} readOnly />
+          )}
         </Field>
 
-        <Panel title="Body" description="Write and format your story. The toolbar adds headings, images, quotes, tables and video.">
-          <RichTextEditor name="body" initialContent={article.body} onChange={markDirty} disabled={disabled} label="Article body" />
-          <p className="mt-2 text-xs text-muted">Estimated reading time: {article.reading_minutes} min (recalculated on every save).</p>
-        </Panel>
+        <div id="body-panel" tabIndex={-1} className="outline-none">
+          <Panel title="Body" description="Add sections to build your story. Use the arrows to change their order.">
+            <SectionBodyEditor
+              sections={sections}
+              disabled={disabled}
+              onChange={(update) => {
+                setSections(update);
+                markDirty();
+              }}
+            />
+            <p className="mt-4 text-xs text-muted">Estimated reading time: {article.reading_minutes} min (recalculated on every save).</p>
+          </Panel>
+        </div>
 
         <Panel title="Sources and corrections">
           <div className="space-y-4">
@@ -186,8 +210,25 @@ export function ArticleEditor({
             canSave={!disabled}
             saving={status === "saving"}
             actions={actions}
+            issues={issues}
             prepare={prepare}
             onDone={openSaved}
+            footer={
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {savedInfo}
+                {/* A new article has no id yet, so these two would point at pages that do not exist. */}
+                {!isNew && (
+                  <>
+                    <Link href={`/admin/preview/articles/${article.id}`} target="_blank" onClick={(e) => previewAfterSave(e, isDirty() && !disabled, saveNow)} className="inline-flex items-center gap-1.5 font-semibold text-brand hover:underline">
+                      <Eye className="h-3.5 w-3.5" aria-hidden="true" /> Preview
+                    </Link>
+                    <Link href={`/admin/articles/${article.id}/history`} className="inline-flex items-center gap-1.5 font-semibold text-brand hover:underline">
+                      <History className="h-3.5 w-3.5" aria-hidden="true" /> History
+                    </Link>
+                  </>
+                )}
+              </div>
+            }
           />
         </Panel>
 
@@ -195,7 +236,7 @@ export function ArticleEditor({
           <Panel title="Story settings">
             <div className="space-y-4">
               <Field label="Category" htmlFor="category_id" hint="Required before submitting or publishing.">
-                <select id="category_id" name="category_id" className="field" defaultValue={article.category_id ?? ""}>
+                <select id="category_id" name="category_id" className="field" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
                   <option value="">— No category —</option>
                   {options.categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -205,10 +246,15 @@ export function ArticleEditor({
                   ))}
                 </select>
               </Field>
-              <div>
-                <p className="mb-2 text-sm font-semibold text-ink">Tags</p>
-                <TagPicker tags={options.tags} initial={data.tagIds} canCreate={perms.taxonomy} disabled={disabled} onChange={markDirty} />
-              </div>
+              {perms.placement && (
+                <label className="flex items-center gap-2 text-sm font-semibold text-ink">
+                  <input type="hidden" name="placement_present" value="1" />
+                  <input type="checkbox" name="is_featured" defaultChecked={article.is_featured} className="size-4" /> Feature on the homepage
+                </label>
+              )}
+              <Field label="Tags" htmlFor="tags_text" hint="Separate each tag with a comma." error={err("tags_text")}>
+                <input id="tags_text" name="tags_text" className="field" placeholder="Design, Culture, Manila" defaultValue={tagNames} maxLength={600} />
+              </Field>
               <Field
                 label="URL slug"
                 htmlFor="slug"
@@ -217,7 +263,7 @@ export function ArticleEditor({
                   article.first_published_at
                     ? "Already published: changing the slug breaks the old link."
                     : slugAuto
-                      ? "Generated from the title until you edit it."
+                      ? "Generated from the title. Keep existing article addresses unchanged."
                       : `/balita/${slug}`
                 }
               >
@@ -236,9 +282,17 @@ export function ArticleEditor({
                   }}
                 />
               </Field>
-              <Field label="Excerpt" htmlFor="excerpt" hint="Short summary for story cards and search results." error={err("excerpt")}>
+              <Field label="Excerpt" htmlFor="excerpt" hint="Optional. Taken from your story if left blank." error={err("excerpt")}>
                 <textarea id="excerpt" name="excerpt" className="field min-h-24" maxLength={600} defaultValue={article.excerpt ?? ""} />
               </Field>
+              <Field label="Subtitle" htmlFor="subtitle" hint="Optional line under the headline." error={err("subtitle")}>
+                <input id="subtitle" name="subtitle" className="field" maxLength={400} defaultValue={article.subtitle ?? ""} />
+              </Field>
+              <div id="thumbnail-panel" tabIndex={-1} className="outline-none">
+                <MediaPicker name="featured_image_id" label="Thumbnail image" defaultValue={data.image} onChange={(m) => (setFeatured(m), markDirty())} />
+                <p className="mt-1.5 text-xs text-muted">Required to publish or schedule. Landscape works best; any size can be uploaded.</p>
+                <ImageMeta image={featured} />
+              </div>
               <Field label="Location" htmlFor="location_id">
                 <select id="location_id" name="location_id" className="field" defaultValue={article.location_id ?? ""}>
                   <option value="">— No location —</option>
@@ -255,51 +309,27 @@ export function ArticleEditor({
                   ))}
                 </select>
               </Field>
-              {perms.editAny ? (
-                <Field label="Author" htmlFor="author_id">
-                  <select id="author_id" name="author_id" className="field" defaultValue={article.author_id}>
-                    {options.people.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.display_name}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              ) : (
-                <p className="text-sm">
-                  <span className="font-semibold text-ink">Author:</span> {options.people.find((p) => p.id === article.author_id)?.display_name ?? "—"}
-                </p>
-              )}
-              <div>
-                <p className="mb-1.5 text-sm font-semibold text-ink">Contributors</p>
-                <ContributorsPicker people={options.people} initial={data.contributors} disabled={disabled} onChange={markDirty} />
-              </div>
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="allow_comments" defaultChecked={article.allow_comments} /> Allow comments (moderated)
+                <input type="checkbox" name="allow_comments" defaultChecked={article.allow_comments} className="size-4" /> Allow comments (moderated)
               </label>
             </div>
           </Panel>
 
-          {perms.publish && (
-            <Panel title="Homepage placement" description="For users with publish permission.">
-              <input type="hidden" name="placement_present" value="1" />
+          {perms.placement && (
+            <Panel title="More homepage placement" description="For editors and above.">
               <div className="space-y-2 text-sm">
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="is_featured" defaultChecked={article.is_featured} /> Featured story
+                  <input type="checkbox" name="is_breaking" defaultChecked={article.is_breaking} className="size-4" /> Breaking news
                 </label>
                 <label className="flex items-center gap-2">
-                  <input type="checkbox" name="is_breaking" defaultChecked={article.is_breaking} /> Breaking news
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" name="is_editors_pick" defaultChecked={article.is_editors_pick} /> Editor’s pick
+                  <input type="checkbox" name="is_editors_pick" defaultChecked={article.is_editors_pick} className="size-4" /> Editor’s pick
                 </label>
               </div>
             </Panel>
           )}
 
-          <Panel title="Featured image">
-            <MediaPicker name="featured_image_id" label="Image" defaultValue={data.image} onChange={(m) => (setFeatured(m), markDirty())} />
-            <ImageMeta image={featured} />
+          <Panel title="Contributors">
+            <ContributorsPicker people={options.people} initial={data.contributors} disabled={disabled} onChange={markDirty} />
           </Panel>
 
           <Panel title="SEO and social">

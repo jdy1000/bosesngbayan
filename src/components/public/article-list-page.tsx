@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdSlot } from "@/components/public/ad-slot";
 import { ArticleCard, EmptyState } from "@/components/public/article-card";
 import type { ArticleCard as Article, Paginated } from "@/lib/cms/articles";
 import { fmt } from "@/lib/i18n/config";
@@ -34,8 +35,10 @@ export async function ArticleListPage({
   };
 
   return (
+    <>
+    <AdSlot placement="top" />
     <div className="container-site py-10 md:py-14">
-      <header className="section-kicker mb-8 max-w-3xl">
+      <header className="mb-8 max-w-3xl">
         {kicker && <p className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-accent">{kicker}</p>}
         <h1 className="text-4xl font-semibold leading-tight text-ink md:text-5xl">{title}</h1>
         {description && <p className="mt-3 text-lg text-ink-soft">{description}</p>}
@@ -75,6 +78,7 @@ export async function ArticleListPage({
         </nav>
       )}
     </div>
+    </>
   );
 }
 

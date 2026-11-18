@@ -2,6 +2,7 @@ import "server-only";
 import { createPublicClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/log";
 import { mediaUrl } from "@/lib/media";
+import type { AdPlacement } from "@/lib/ad-placements";
 
 export interface PublicAd {
   id: string;
@@ -17,7 +18,7 @@ export interface PublicAd {
  * only exposes active ads inside their start/end window. Errors return null so an ad outage
  * never takes down editorial pages.
  */
-export async function getLiveAd(placement: "home" | "article"): Promise<PublicAd | null> {
+export async function getLiveAd(placement: AdPlacement): Promise<PublicAd | null> {
   const { data, error } = await createPublicClient()
     .from("ad_slots")
     .select("id, name, alt_text, destination_url, image:media_assets(kind, storage_path, external_url, alt_text, width, height)")

@@ -52,6 +52,16 @@ afterAll(async () => {
   await db.close();
 });
 
+describe("ad placements", () => {
+  it("accepts the five news-site placements and refuses any other", async () => {
+    for (const placement of ["top", "home", "article_inline", "sidebar", "article"]) {
+      await asRole(db, "authenticated", admin, (tx) => tx.query(INSERT, [`p-${placement}`, placement, mediaId, "https://example.com/p", false, null, null]));
+    }
+    await expect(asRole(db, "authenticated", admin, (tx) => tx.query(INSERT, ["p-footer", "footer", mediaId, "https://example.com/p", false, null, null]))).rejects.toThrow();
+    await db.query("delete from public.ad_slots where name like 'p-%'"); // the other suites count ads
+  });
+});
+
 describe("ad_slots RLS", () => {
   it("grants ads.manage to owner and administrator only", async () => {
     const r = await db.query<{ role: string }>("select role::text from public.role_permissions where permission = 'ads.manage' order by role");

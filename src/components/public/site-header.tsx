@@ -38,9 +38,9 @@ export function SiteHeader({
   );
   return (
     <header className="sticky top-0 z-40 bg-navy-900 text-white">
-      <div className="container-site flex h-16 items-center gap-4">
+      <div className="container-site flex h-[4.5rem] items-center gap-4 sm:h-20">
         <Link href="/" className="shrink-0 rounded" aria-label={`${siteName} — ${t.homeSuffix}`}>
-          <Logo siteName={siteName} logoUrl={logoUrl} size="sm" inverted priority />
+          <Logo siteName={siteName} logoUrl={logoUrl} size="xl" inverted priority />
         </Link>
         <MainNav items={items} cta={cta} extras={extras}>
           <Link

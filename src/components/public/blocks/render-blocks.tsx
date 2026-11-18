@@ -14,14 +14,18 @@ import {
 } from "@/components/public/blocks/article-blocks";
 import { CommunityBlock, CustomCtaBlock, NewsletterBlock, PollShowcaseBlock } from "@/components/public/blocks/engagement-blocks";
 import { NewsQuizBlock, PhotoOfDayBlock, QuoteOfDayBlock } from "@/components/public/blocks/module-blocks";
+import { SurveysBlock } from "@/components/public/blocks/survey-blocks";
+import { getHomepageSurveys } from "@/lib/cms/surveys";
 
-function Block({ block, t }: { block: HomepageBlock; t: Messages }) {
+function Block({ block, t, between }: { block: HomepageBlock; t: Messages; between?: React.ReactNode }) {
   const { title, description } = block;
   switch (block.type) {
     case "hero":
       return <HeroBlock settings={block.settings} />;
     case "top_stories":
-      return <TopStoriesBlock settings={block.settings} />;
+      return <TopStoriesBlock settings={block.settings} between={between} />;
+    case "surveys":
+      return <SurveysBlock title={title} standalone />;
     case "trending_topics":
       return <TrendingTopicsBlock title={title} settings={block.settings} />;
     case "breaking_news":
@@ -59,7 +63,23 @@ function Block({ block, t }: { block: HomepageBlock; t: Messages }) {
   }
 }
 
+/**
+ * The block list as rendered: a Surveys block directly after the top stories is not a block of its own but the band
+ * between the lead story and the story grid (client request 2026-11-18), so it is handed to the top stories.
+ */
+export function attachedSurveys(blocks: HomepageBlock[], index: number): boolean {
+  return blocks[index]?.type === "surveys" && blocks[index - 1]?.type === "top_stories";
+}
+
 export async function RenderBlocks({ blocks }: { blocks: HomepageBlock[] }) {
   const { t } = await getI18n();
-  return blocks.map((block) => <Block key={block.id} block={block} t={t} />);
+  // Fetched once, here, so the top stories know whether there is a band to make room for (no published survey = no gap).
+  const surveys = blocks.some((_, i) => attachedSurveys(blocks, i)) ? await getHomepageSurveys() : [];
+  return blocks.map((block, i) => {
+    if (attachedSurveys(blocks, i)) return null;
+    const next = blocks[i + 1];
+    const between =
+      block.type === "top_stories" && next && attachedSurveys(blocks, i + 1) && surveys.length > 0 ? <SurveysBlock title={next.title} surveys={surveys} /> : undefined;
+    return <Block key={block.id} block={block} t={t} between={between} />;
+  });
 }

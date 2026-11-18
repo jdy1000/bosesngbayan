@@ -17,7 +17,7 @@ const DB_MESSAGES: Record<string, string> = {
   body_required: "The article body is empty.",
   schedule_must_be_future: "The schedule must be in the future.",
   workflow_fields_protected: "Status changes only through the editorial workflow.",
-  placement_requires_publish_permission: "Changing homepage flags requires publish permission.",
+  placement_requires_publish_permission: "Only editors and above can change homepage flags.",
   author_change_not_allowed: "You can't change the author.",
   poll_locked_after_votes: "This poll already has votes; its question and type can't change.",
   poll_options_locked_after_votes: "This poll already has votes; its options can't change. Close it and create a new poll.",

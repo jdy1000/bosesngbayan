@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ImagePlus, X } from "lucide-react";
 import type { MediaPickerItem } from "@/app/admin/api/media/route";
 import { uploadImage } from "@/app/admin/(studio)/_media/actions";
+import { fitImageForUpload } from "@/lib/client/fit-image";
 import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "@/lib/media";
 
 export interface PickedMedia {
@@ -70,12 +71,17 @@ export function MediaPicker({
 
   // Plain inputs + click handler: the picker usually sits inside another <form>, and forms cannot nest.
   async function upload() {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return setUploadError("Choose an image file.");
+    const chosen = fileRef.current?.files?.[0];
+    if (!chosen) return setUploadError("Choose an image file.");
     if (!alt.trim()) return setUploadError("Describe the image (alt text).");
-    if (file.size > MAX_UPLOAD_BYTES) return setUploadError(`The file is over ${MAX_UPLOAD_MB} MB.`);
     setUploading(true);
     setUploadError(null);
+    // Big photos are scaled down here, so any picture can be chosen whatever its pixel size or file size.
+    const file = await fitImageForUpload(chosen, MAX_UPLOAD_BYTES);
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setUploading(false);
+      return setUploadError(`This file is over ${MAX_UPLOAD_MB} MB and could not be reduced. Try a different image.`);
+    }
     const fd = new FormData();
     fd.set("file", file);
     fd.set("alt_text", alt);
@@ -167,7 +173,7 @@ export function MediaPicker({
             <button type="button" onClick={upload} disabled={uploading} className="btn btn-primary min-h-10 px-4 text-sm">
               {uploading ? "Uploading…" : "Upload and use"}
             </button>
-            <p className="text-xs text-muted">JPEG, PNG, WebP, GIF or AVIF · up to {MAX_UPLOAD_MB} MB.</p>
+            <p className="text-xs text-muted">JPEG, PNG, WebP, GIF or AVIF · any size or shape: large photos are scaled down automatically.</p>
           </div>
           {uploadError && (
             <p role="alert" className="text-sm font-medium text-accent-700 sm:col-span-2">

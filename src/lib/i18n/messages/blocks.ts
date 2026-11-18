@@ -1,5 +1,15 @@
 /** blocks strings. `fil` is the source; `en` must have every key (enforced by its type). */
 export const fil = {
+  surveys: "Mga Survey",
+  surveyOverall: "Pangkalahatang marka",
+  surveyTrust: "Tiwala",
+  surveyPerformance: "Pagganap",
+  surveyRank: "Ranggo",
+  surveyAsOf: "Inilabas noong {date}",
+  surveyPrev: "Nakaraang mga kandidato",
+  surveyNext: "Susunod na mga kandidato",
+  surveyPicker: "Pumili ng survey",
+  surveyScroll: "Mga resulta ng survey, mag-swipe o mag-scroll nang pahalang",
   topStories: "Mga pangunahing balita",
   moreStories: "Iba pang balita",
   topStoriesEmptyTitle: "Wala pang nailalathalang balita.",
@@ -52,6 +62,16 @@ export const fil = {
 };
 
 export const en: typeof fil = {
+  surveys: "Surveys",
+  surveyOverall: "Overall score",
+  surveyTrust: "Trust",
+  surveyPerformance: "Performance",
+  surveyRank: "Rank",
+  surveyAsOf: "Released {date}",
+  surveyPrev: "Previous candidates",
+  surveyNext: "Next candidates",
+  surveyPicker: "Choose a survey",
+  surveyScroll: "Survey results, swipe or scroll horizontally",
   topStories: "Top stories",
   moreStories: "More stories",
   topStoriesEmptyTitle: "No stories published yet.",

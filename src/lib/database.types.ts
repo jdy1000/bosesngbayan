@@ -1385,6 +1385,114 @@ export type Database = {
           { foreignKeyName: "site_settings_updated_by_fkey"; columns: ["updated_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
         ];
       };
+      survey_entries: {
+        Row: {
+          id: string;
+          survey_id: string;
+          position: number;
+          rank_no: number | null;
+          name: string;
+          area: string | null;
+          overall_pct: number | null;
+          trust_pct: number | null;
+          performance_pct: number | null;
+          photo_id: string | null;
+          created_at: string;
+          updated_at: string;
+          photo_x: number;
+          photo_y: number;
+          photo_zoom: number;
+        };
+        Insert: {
+          id?: string;
+          survey_id: string;
+          position?: number;
+          rank_no?: number | null;
+          name: string;
+          area?: string | null;
+          overall_pct?: number | null;
+          trust_pct?: number | null;
+          performance_pct?: number | null;
+          photo_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          photo_x?: number;
+          photo_y?: number;
+          photo_zoom?: number;
+        };
+        Update: {
+          id?: string;
+          survey_id?: string;
+          position?: number;
+          rank_no?: number | null;
+          name?: string;
+          area?: string | null;
+          overall_pct?: number | null;
+          trust_pct?: number | null;
+          performance_pct?: number | null;
+          photo_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          photo_x?: number;
+          photo_y?: number;
+          photo_zoom?: number;
+        };
+        Relationships: [
+          { foreignKeyName: "survey_entries_photo_id_fkey"; columns: ["photo_id"]; isOneToOne: false; referencedRelation: "media_assets"; referencedColumns: ["id"] },
+          { foreignKeyName: "survey_entries_survey_id_fkey"; columns: ["survey_id"]; isOneToOne: false; referencedRelation: "surveys"; referencedColumns: ["id"] },
+        ];
+      };
+      surveys: {
+        Row: {
+          id: string;
+          title: string;
+          scope: string | null;
+          subtitle: string | null;
+          note: string | null;
+          survey_date: string;
+          is_published: boolean;
+          show_on_homepage: boolean;
+          sort_order: number;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          scope?: string | null;
+          subtitle?: string | null;
+          note?: string | null;
+          survey_date?: string;
+          is_published?: boolean;
+          show_on_homepage?: boolean;
+          sort_order?: number;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          scope?: string | null;
+          subtitle?: string | null;
+          note?: string | null;
+          survey_date?: string;
+          is_published?: boolean;
+          show_on_homepage?: boolean;
+          sort_order?: number;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: "surveys_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "surveys_updated_by_fkey"; columns: ["updated_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
       tags: {
         Row: {
           id: string;

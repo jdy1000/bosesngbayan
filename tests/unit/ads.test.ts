@@ -36,7 +36,7 @@ describe("adSlotInputSchema", () => {
   it("rejects unsafe destinations, bad placements and inverted windows", () => {
     expect(adSlotInputSchema.safeParse({ ...base, destination_url: "http://example.com" }).success).toBe(false);
     expect(adSlotInputSchema.safeParse({ ...base, destination_url: "javascript:alert(1)" }).success).toBe(false);
-    expect(adSlotInputSchema.safeParse({ ...base, placement: "sidebar" }).success).toBe(false);
+    expect(adSlotInputSchema.safeParse({ ...base, placement: "footer" }).success).toBe(false);
     expect(adSlotInputSchema.safeParse({ ...base, image_id: "" }).success).toBe(false);
     expect(adSlotInputSchema.safeParse({ ...base, ends_at: "2026-11-07T07:00" }).success).toBe(false);
   });

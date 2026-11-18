@@ -7,6 +7,11 @@ import { formatDateTime } from "@/lib/format";
 import { fmt } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { mediaUrl } from "@/lib/media";
+import { sanitizeRichHtml } from "@/lib/rich-text/sanitize";
+import { splitAfterParagraph } from "@/lib/rich-text/split";
+
+/** The in-story ad sits after this many top-level paragraphs. */
+const INLINE_AD_AFTER_PARAGRAPH = 3;
 
 /**
  * Article presentation shared by the public page and the protected Studio preview.
@@ -18,12 +23,18 @@ export async function ArticleView({
   shareUrl,
   afterBody,
   banner,
+  inlineAd,
+  sideAd,
 }: {
   article: ArticleDetail;
   related: Card[];
   shareUrl: string;
   afterBody?: React.ReactNode;
   banner?: React.ReactNode;
+  /** Shown inside the story after the third paragraph (when the story is long enough). */
+  inlineAd?: React.ReactNode;
+  /** Sticks beside the story on screens 1440 px and wider. */
+  sideAd?: React.ReactNode;
 }) {
   const { locale, t } = await getI18n();
   const m = t.article;
@@ -33,6 +44,9 @@ export async function ArticleView({
     article.content_updated_at && firstPublished && new Date(article.content_updated_at).getTime() - new Date(firstPublished).getTime() > 60_000
       ? article.content_updated_at
       : null;
+
+  const bodyHtml = sanitizeRichHtml(article.body_html);
+  const split = inlineAd ? splitAfterParagraph(bodyHtml, INLINE_AD_AFTER_PARAGRAPH) : null;
 
   return (
     <article>
@@ -105,6 +119,14 @@ export async function ArticleView({
         </div>
       </div>
 
+      {/* Photo and story share one host, so the side rail starts beside the photo and stays in view down to the end of the story. */}
+      <div className="relative">
+        {sideAd && (
+          // Hangs in the margin to the right of the 760px text column (half of it from the centre), so the column and the photo never move.
+          <div className="pointer-events-none absolute inset-y-0 left-1/2 ml-[380px] hidden w-[300px] min-[1440px]:block">
+            <div className="pointer-events-auto sticky top-40 pt-8">{sideAd}</div>
+          </div>
+        )}
       {image && (
         // Same column as the body text below (760px), so the photo and its caption share the text's left and right edges.
         <figure className="container-site mt-8 max-w-[760px]">
@@ -127,7 +149,16 @@ export async function ArticleView({
             <p className="mt-1">{article.correction_note}</p>
           </aside>
         )}
-        <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: article.body_html }} />
+        {/* bodyHtml is sanitized again above: the column is writable by any staff session, so the saved HTML is not trusted on its own. */}
+        {split ? (
+          <>
+            <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: split[0] }} />
+            {inlineAd}
+            <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: split[1] }} />
+          </>
+        ) : (
+          <div className="prose-bnb" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+        )}
         {article.source_attribution && (
           <p className="mt-10 border-t border-line pt-4 text-sm text-muted">
             <strong className="font-semibold text-ink-soft">{m.sources}</strong> {article.source_attribution}
@@ -151,6 +182,7 @@ export async function ArticleView({
           </div>
         )}
         {afterBody}
+      </div>
       </div>
 
       {related.length > 0 && (

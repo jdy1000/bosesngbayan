@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { requireStaffPage } from "@/lib/auth/session";
 import { formatDateTime, isoToManilaLocal } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
-import { AD_PLACEMENT_LABELS, AD_PLACEMENTS, AD_STATUS, adStatus, type AdPlacement, type AdStatus } from "@/lib/studio/ads";
+import { AD_PLACEMENT_INFO, AD_PLACEMENT_LABELS, AD_PLACEMENTS, AD_STATUS, adStatus, type AdPlacement, type AdStatus } from "@/lib/studio/ads";
 import { ActionForm, SubmitButton } from "@/components/studio/action-form";
 import { MediaPicker, type PickedMedia } from "@/components/studio/media-picker";
 import {
@@ -150,8 +150,21 @@ export default async function AdsPage({ searchParams }: { searchParams: Search }
         </Panel>
       </div>
 
+      <Panel title="Where ads appear" description="Placements follow a news-site layout. Upload a creative of the size shown." className="mt-6">
+        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          {AD_PLACEMENTS.map((p) => (
+            <div key={p}>
+              <dt className="text-sm font-semibold text-ink">
+                {AD_PLACEMENT_INFO[p].label} <span className="font-normal text-muted">· {AD_PLACEMENT_INFO[p].size}</span>
+              </dt>
+              <dd className="mt-0.5 text-[13px] leading-[1.55] text-ink-soft">{AD_PLACEMENT_INFO[p].where}</dd>
+            </div>
+          ))}
+        </dl>
+      </Panel>
+
       <p className="mt-[18px] text-[13px] leading-[1.55] text-muted">
-        One live ad is shown per placement: the lowest order number wins, then the oldest. Ads are labelled “Anunsyo” / “Advertisement” on the public site and
+        One live ad is shown per placement: the lowest order number wins, then the oldest. Placements follow a news-site layout: a banner under the header, a banner between sections, a unit inside the story, a sticky side rail on wide screens, and one under the story. Wide creatives shrink to fit phones, so keep their text large. Ads are labelled “Anunsyo” / “Advertisement” on the public site and
         open in a new tab as sponsored links. Times are Asia/Manila.
       </p>
     </>
@@ -238,11 +251,11 @@ function AdFields({ idPrefix, r }: { idPrefix: string; r?: AdRow }) {
         <Field label="Name" htmlFor={`${idPrefix}-name`} hint="Internal name, e.g. advertiser and campaign.">
           <input id={`${idPrefix}-name`} name="name" required maxLength={120} defaultValue={r?.name} className="field" />
         </Field>
-        <Field label="Placement" htmlFor={`${idPrefix}-placement`}>
+        <Field label="Placement" htmlFor={`${idPrefix}-placement`} hint="Where each placement appears, and the image size to upload, is listed under the ads.">
           <select id={`${idPrefix}-placement`} name="placement" defaultValue={r?.placement ?? "home"} className="field">
             {AD_PLACEMENTS.map((p) => (
               <option key={p} value={p}>
-                {AD_PLACEMENT_LABELS[p]}
+                {AD_PLACEMENT_LABELS[p]} · {AD_PLACEMENT_INFO[p].size}
               </option>
             ))}
           </select>

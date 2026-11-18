@@ -18,6 +18,7 @@ export default async function NewArticlePage() {
     archive: false, // nothing to archive before the article exists
     editAny: has("articles.edit_any"),
     taxonomy: has("taxonomy.manage"),
+    placement: has("articles.publish") && has("articles.edit_any"),
   };
 
   return (
