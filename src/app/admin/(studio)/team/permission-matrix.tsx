@@ -54,7 +54,8 @@ export function PermissionMatrixView({ matrix, canEdit, editRole }: { matrix: Pe
           </ActionForm>
         </div>
       )}
-      <div className="overflow-x-auto">
+      {/* relative: the hidden screen-reader labels in the cells are absolutely positioned; without it they ignore the scroll box and widen the page. */}
+      <div className="relative overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="border-b border-line text-xs font-semibold uppercase tracking-wide text-muted">
             <tr>

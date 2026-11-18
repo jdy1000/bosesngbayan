@@ -94,10 +94,14 @@ export function EntryFields({ idPrefix, entry }: { idPrefix: string; entry?: Ent
         <Field label="Rank (optional)" htmlFor={`${idPrefix}-rank_no`} hint="Shown as the red tile. Ties can share a number.">
           <input id={`${idPrefix}-rank_no`} name="rank_no" type="number" min={1} max={999} step={1} defaultValue={entry?.rank_no ?? ""} className="field" />
         </Field>
-        <div className="grid grid-cols-3 gap-3 @lg:col-span-2">
-          {pct("overall_pct", "Overall %", entry?.overall_pct, "0–100")}
-          {pct("trust_pct", "Trust %", entry?.trust_pct)}
-          {pct("performance_pct", "Performance %", entry?.performance_pct)}
+        <div className="@lg:col-span-2">
+          {/* One short label per column, no % sign: the three inputs stay on one line and level with each other. */}
+          <div className="grid grid-cols-3 gap-3 [&_label]:whitespace-nowrap">
+            {pct("overall_pct", "Overall", entry?.overall_pct)}
+            {pct("trust_pct", "Trust", entry?.trust_pct)}
+            {pct("performance_pct", "Performance", entry?.performance_pct)}
+          </div>
+          <p className="mt-1.5 text-xs leading-[1.5] text-muted">Scores out of 100, for example 87.3.</p>
         </div>
         <div className="@lg:col-span-2">
           <EntryPhotoField

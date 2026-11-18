@@ -66,7 +66,9 @@ export function AccessChip({ children }: { children: React.ReactNode }) {
   return <span className="inline-flex shrink-0 items-center rounded-full border border-line bg-paper px-3 py-[7px] text-xs text-muted">{children}</span>;
 }
 
-const PANEL = "rounded-[10px] border border-line bg-paper shadow-panel";
+// min-w-0: a panel (or table) that is a grid cell must be able to shrink to the screen; its automatic minimum width would
+// otherwise be the longest unbroken label inside it, and one long title would push the whole page wider than a phone.
+const PANEL = "min-w-0 rounded-[10px] border border-line bg-paper shadow-panel";
 
 /**
  * Card with an optional header. `flush` removes the body padding for lists, tables and toolbars that run
